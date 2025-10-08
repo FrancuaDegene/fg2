@@ -1,0 +1,66 @@
+/* Стили для Header */
+.header {
+    background-color: #f8f9fa; /* Цвет фона */
+    padding: 10px 20px; /* Внутренние отступы */
+    display: flex;
+    justify-content: center; /* Центрируем по горизонтали */
+    align-items: center; /* Центрируем по вертикали */
+    border-bottom: 1px solid #ddd; /* Разделительная линия */
+}
+
+/* Контейнер логотипа */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Расстояние между SVG и текстом */
+    position: relative; /* Для работы псевдоэлементов */
+}
+
+/* Стили для SVG */
+.logo-container svg {
+    width: 50px;
+    height: 50px;
+    position: relative; /* Для позиционирования анимации */
+    z-index: 1; /* Логотип поверх анимации */
+}
+
+/* Анимация обводки для SVG */
+.logo-container::before {
+    content: '';
+    position: absolute;
+    inset: -10px; /* Отступ для обводки */
+    border-radius: 50%; /* Круговая форма */
+    border: solid 5px;
+    border-image: conic-gradient(
+        from var(--a), 
+        #669900, #99cc33, #ccee66, 
+        #006699, #3399cc, #990066, #cc3399, 
+        #ff6600, #ff9900, #ffcc00, #669900
+    ) 1;
+    filter: blur(10px); /* Размытие обводки */
+    animation: a 4s linear infinite; /* Анимация вращения */
+    z-index: 0; /* Обводка позади логотипа */
+}
+
+/* Текст логотипа */
+.logo-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333; /* Цвет текста */
+    margin: 0;
+}
+
+/* Регистрация пользовательского свойства */
+@property --a {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+/* Анимация вращения */
+@keyframes a {
+    to {
+        --a: 1turn;
+    }
+}
+

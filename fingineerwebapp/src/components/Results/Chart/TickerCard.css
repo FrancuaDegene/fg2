@@ -1,0 +1,72 @@
+﻿.ticker-card{
+  --tc-bg: rgba(255,255,255,.92);
+  --tc-br: 14px;
+  --tc-bd: 1px solid rgba(213,218,230,.9);
+  --tc-shadow: 0 16px 32px rgba(20,24,35,.06), 0 4px 12px rgba(34,40,60,.06);
+
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  row-gap: 6px;
+  width: 240px;
+  padding: 12px 14px;
+  text-align: left;
+  background: var(--tc-bg);
+  border: var(--tc-bd);
+  border-radius: var(--tc-br);
+  box-shadow: var(--tc-shadow);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  user-select: none;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.ticker-card:hover{ transform: translateY(-1px); }
+.ticker-card:active{ transform: translateY(0); }
+
+.ticker-card .tc-row{
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  column-gap: 10px;
+  align-items: center;
+}
+
+.ticker-card .tc-logo{
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(180deg,#fff,rgba(245,248,255,.9));
+  border: 1px solid rgba(213,218,230,.85);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.ticker-card .tc-logo img{ width: 100%; height: 100%; object-fit: cover; }
+.ticker-card .tc-logo-fallback{ font-size: 20px; color: #2bb24a; line-height: 1; }
+
+.ticker-card .tc-head{ display: grid; row-gap: 2px; }
+.ticker-card .tc-symbol{ font-weight: 700; letter-spacing: .4px; color: #1c2430; }
+.ticker-card .tc-exchange{ font-size: 12px; color: #8892a6; }
+
+.ticker-card .tc-price{
+  font-size: 28px; font-weight: 800; letter-spacing: .2px;
+  color: #121826;
+  margin-top: 4px;
+}
+
+.ticker-card .tc-chip{
+  display: inline-block;
+  font-size: 14px; font-weight: 600;
+  padding: 4px 10px; border-radius: 10px;
+  background: #eaf7ef; color: #1c7f3c;
+  width: fit-content;
+}
+.ticker-card .tc-chip.down{ background:#fde9ea; color:#b3272d; }
+
+.ticker-card .tc-meta{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: #99a3b8;
+}
+.ticker-card .tc-dot{ width: 4px; height: 4px; border-radius: 50%; background:#c9d3e6; }
+
+@media (max-width: 1360px){
+  .ticker-card{ width: 220px; }
+}
+

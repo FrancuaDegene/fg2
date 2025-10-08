@@ -1,0 +1,448 @@
+/* Новая структура с отдельной панелью */
+.chart-container {
+  width: 100%;
+  height: 700px;
+  position: relative;
+  background: #131722;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chart-container.expanded {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  border-radius: 0;
+}
+
+.chart-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: #131722;
+}
+
+.chart-container-with-toolbar.expanded {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.chart-toolbar-section {
+  background: #ffffff;
+  border-radius: 8px 8px 0 0;
+  border-bottom: none;
+  padding: 0;
+  overflow: visible;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.chart-toolbar-section.expanded {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chart-separator {
+  height: 1px;
+  background: #e6e8ea;
+  width: 100%;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.chart-wrapper {
+  width: 100%;
+  height: 400px;
+  position: relative;
+  background: #131722;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+}
+
+.chart-wrapper.expanded {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: none;
+  background: transparent;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: #131722;
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container.expanded {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  min-height: auto;
+  border-radius: 8px;
+}
+
+.chart-container > div {
+  border: none !important;
+  outline: none !important;
+  position: relative !important;
+  overflow: visible !important;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ ПРОСТОЕ И ЭФФЕКТИВНОЕ РЕШЕНИЕ: Убираем все границы */
+.chart-container *,
+.chart-container canvas,
+.chart-container div,
+.chart-container table,
+.chart-container tr,
+.chart-container td {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Основные canvas элементы правильно позиционируем */
+.chart-container > div:first-child {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Убираем overflow: hidden, которое мешает выпадающим меню */
+.chart-wrapper,
+.chart-container {
+  overflow: visible !important;
+}
+
+.chart-wrapper,
+.chart-container,
+.chart-container > div:first-child {
+  box-sizing: border-box;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(19, 23, 34, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #d1d4dc;
+  min-height: 400px;
+  z-index: 2;
+}
+
+.loading-overlay.expanded {
+  min-height: auto;
+}
+
+.loader {
+  border: 4px solid #e6e8ea;
+  border-top: 4px solid #2962ff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(19, 23, 34, 0.9);
+  color: #ef5350;
+  font-weight: 500;
+  font-size: 16px;
+  z-index: 2;
+}
+
+.error-message.expanded {
+  min-height: auto;
+}
+
+.chart-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #131722;
+  color: #787b86;
+  font-size: 16px;
+  font-weight: 500;
+  z-index: 2;
+}
+
+.chart-placeholder.expanded {
+  min-height: auto;
+}
+
+.chart-container .tv-lightweight-charts table tr td {
+  color: #d1d4dc !important;
+}
+
+.chart-container .tv-lightweight-charts .crosshair-label {
+  background: rgba(17, 24, 39, 0.9) !important;
+  color: #d1d4dc !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+}
+
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 300px;
+  }
+  
+  .chart-wrapper.expanded {
+    height: calc(100vh - 80px);
+  }
+  
+  .loading-overlay,
+  .error-message,
+  .chart-placeholder {
+    min-height: 300px;
+  }
+  
+  .loading-overlay.expanded,
+  .error-message.expanded,
+  .chart-placeholder.expanded {
+    min-height: calc(100vh - 80px);
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .chart-wrapper {
+    height: 350px;
+  }
+  
+  .chart-wrapper.expanded {
+    height: calc(100vh - 80px);
+  }
+}
+
+@media (min-width: 1200px) {
+  .chart-wrapper {
+    height: 500px;
+  }
+  
+  .chart-wrapper.expanded {
+    height: calc(100vh - 80px);
+  }
+}
+
+.chart-wrapper {
+  overflow: visible;
+  contain: layout style paint;
+}
+
+.chart-container {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.chart-container * {
+  color-scheme: dark;
+}
+
+.expand-button {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 10;
+  padding: 6px 12px;
+  background-color: #f7f8fa;
+  color: #434651;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.expand-button:hover {
+  background-color: #e6e8ea;
+  border-color: #d1d4dc;
+  transform: translateY(-1px);
+}
+
+.search-button {
+  position: absolute;
+  top: 12px;
+  right: 150px;
+  z-index: 10;
+  padding: 6px 12px;
+  background-color: rgba(226, 226, 226, 0.8);
+  color: #ffffff;
+  border: 1px solid #485161;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: #485161;
+  transform: scale(1.05);
+}
+
+.chart-wrapper.expanded .chart-container {
+  flex: 1 1 0%;
+  height: 100% !important;
+  min-height: 0;
+}
+
+/* Убрать фиксированные высоты для expanded */
+@media (min-width: 1200px) {
+  .chart-wrapper.expanded {
+    height: calc(100vh - 80px) !important;
+  }
+  .chart-wrapper.expanded .chart-container {
+    height: 100% !important;
+  }
+}
+
+/* Оставить фиксированные высоты только для обычного режима */
+.chart-wrapper:not(.expanded) {
+  height: 400px;
+}
+
+@media (min-width: 1200px) {
+  .chart-wrapper:not(.expanded) {
+    height: 500px;
+  }
+}
+
+.chart-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(17, 24, 39, 0.96);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.chart-modal-centered {
+  width: 100%;
+  height: 100%;
+  max-width: 95vw;
+  max-height: 95vh;
+  background-color: #131722;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.chart-wrapper.expanded {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    /*padding: 30px; /* одинаковный отступ со всех сторон */
+    box-sizing: border-box;
+    position: relative;
+    border: 2px solid #e5e7eb;
+}
+
+/* Убрать фиксированные высоты для expanded */
+@media (min-width: 1200px) {
+  .chart-wrapper.expanded {
+    height: calc(100vh - 80px) !important;
+  }
+  .chart-wrapper.expanded .chart-container {
+    height: 100% !important;
+  }
+}
+
+/* Оставить фиксированные высоты только для обычного режима */
+.chart-wrapper:not(.expanded) {
+  height: 400px;
+}
+
+@media (min-width: 1200px) {
+  .chart-wrapper:not(.expanded) {
+    height: 500px;
+  }
+}
+
+.expanded-search-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1001;
+  width: 80%;
+  max-width: 700px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

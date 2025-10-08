@@ -1,0 +1,247 @@
+/* SearchModal.css - Модальное окно поиска в стиле TradingView */
+
+.search-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.search-modal-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+  margin: 0 20px;
+}
+
+.search-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e6e8ea;
+  background: #f7f8fa;
+}
+
+.search-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #434651;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.search-modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-modal-close:hover {
+  background: #e6e8ea;
+  color: #434651;
+}
+
+.search-modal-body {
+  padding: 20px;
+}
+
+.search-input-container {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.search-modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e6e8ea;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  background: white;
+}
+
+.search-modal-input:focus {
+  border-color: #2962ff;
+}
+
+.search-modal-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-input-actions {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.search-clear-btn {
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-clear-btn:hover {
+  background: #f7f8fa;
+  color: #434651;
+}
+
+.search-loading {
+  text-align: center;
+  padding: 16px;
+  color: #6c757d;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.search-suggestions {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  background: white;
+}
+
+.search-suggestion-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f3f4;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.search-suggestion-item:hover {
+  background: #f7f8fa;
+}
+
+.suggestion-ticker {
+  font-weight: 600;
+  color: #434651;
+  font-size: 14px;
+}
+
+.suggestion-name {
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.search-no-results {
+  text-align: center;
+  padding: 24px 16px;
+  color: #6c757d;
+  font-size: 14px;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  background: #f7f8fa;
+}
+
+/* Стили для скроллбара */
+.search-suggestions::-webkit-scrollbar {
+  width: 6px;
+}
+
+.search-suggestions::-webkit-scrollbar-track {
+  background: #f1f3f4;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb {
+  background: #d1d4dc;
+  border-radius: 3px;
+}
+
+.search-suggestions::-webkit-scrollbar-thumb:hover {
+  background: #bcc0c8;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .search-modal-overlay {
+    padding-top: 5vh;
+  }
+  
+  .search-modal-content {
+    margin: 0 16px;
+    max-height: 80vh;
+  }
+  
+  .search-modal-header {
+    padding: 12px 16px;
+  }
+  
+  .search-modal-body {
+    padding: 16px;
+  }
+  
+  .search-modal-input {
+    font-size: 16px; /* Предотвращает зум на iOS */
+  }
+}

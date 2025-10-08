@@ -1,0 +1,65 @@
+/* ChartWrapper.css - Чистый дизайн без границ как у TradingView */
+
+.chart-border-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  background: transparent;
+}
+
+.chart-border-wrapper.expanded {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: white;
+}
+
+.chart-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: transparent;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-content.expanded {
+  width: 100%;
+  height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ ПРОСТОЕ И ЭФФЕКТИВНОЕ РЕШЕНИЕ: Убираем все границы */
+.chart-content *,
+.chart-content canvas,
+.chart-content div,
+.chart-content table,
+.chart-content tr,
+.chart-content td {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+}
+
+/* Убираем любые возможные разделители */
+.bottom-border,
+.right-border,
+.corner-border,
+.custom-borders {
+  display: none !important;
+}
+
+/* Контейнер должен заполнять все пространство */
+.chart-content > div {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: visible !important;
+}

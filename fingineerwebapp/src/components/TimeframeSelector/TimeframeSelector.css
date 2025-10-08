@@ -1,0 +1,43 @@
+/* src/components/TimeframeSelector/TimeframeSelector.css */
+
+.timeframe-selector-container {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto 20px auto;
+  display: flex; /* Используем flexbox для расположения кнопок в ряд */
+  gap: 5px; /* Промежуток между кнопками */
+  margin-bottom: 20px; /* Отступ под селектором таймфрейма */
+  padding: 10px; /* Внутренний отступ */
+  background-color: #f0f0f0; /* Светлый фон контейнера */
+  border-radius: 5px; /* Скругление углов */
+  flex-wrap: wrap; /* Разрешить перенос кнопок на новую строку при необходимости */
+}
+
+.timeframe-button {
+  padding: 8px 12px; /* Внутренние отступы кнопки */
+  border: 1px solid #ccc; /* Рамка кнопки */
+  border-radius: 4px; /* Скругление углов кнопки */
+  background-color: #fff; /* Белый фон кнопки */
+  cursor: pointer; /* Курсор-указатель при наведении */
+  font-size: 1em; /* Размер шрифта */
+  transition: background-color 0.2s ease; /* Плавный переход цвета фона */
+}
+
+.timeframe-button:hover {
+  background-color: #e9e9e9; /* Цвет фона при наведении */
+}
+
+/* Стили для активной (выбранной) кнопки */
+.timeframe-button.active {
+  background-color: #007bff; /* Синий фон */
+  color: white; /* Белый текст */
+  border-color: #007bff; /* Синяя рамка */
+  cursor: default; /* Курсор по умолчанию для неактивной кнопки */
+  font-weight: bold; /* Жирный текст */
+}
+
+/* Стили для неактивной (текущей) кнопки */
+.timeframe-button:disabled {
+  opacity: 0.8; /* Немного затемнить */
+  cursor: default; /* Курсор по умолчанию */
+}

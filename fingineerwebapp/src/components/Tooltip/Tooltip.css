@@ -1,0 +1,78 @@
+.custom-tooltip {
+  position: fixed;
+  z-index: 9999;
+  color: rgb(25, 20, 20);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  max-width: 280px;
+  min-width: 180px;
+  line-height: 1.3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  
+  /* Стекло-морфизм с акцентом на стрелку */
+  backdrop-filter: blur(11px);
+  -webkit-backdrop-filter: blur(11px);
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: rgba(0, 0, 0, 0.2) 2px 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: 1px solid rgba(40, 40, 40, 0.15);
+  border-right: 1px solid rgba(40, 40, 40, 0.15);
+  
+  /* Улучшение читаемости */
+  font-weight: 500;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+.tooltip-content {
+  position: relative;
+  z-index: 1;
+}
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent; /* Увеличил для лучшей видимости */
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Яркая контрастная стрелка */
+.positioned-right .tooltip-arrow {
+  left: -10px; /* Увеличил отступ */
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: rgba(117, 117, 117, 0.9);
+  border-left-width: 0;
+  z-index: 1;
+}
+
+/* Эффект "плавающей" стрелки */
+.positioned-right .tooltip-arrow::after {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  background: inherit;
+  transform: rotate(45deg);
+  z-index: -1;
+}
+
+@media (max-width: 768px) {
+  .custom-tooltip {
+    max-width: 200px;
+    font-size: 13px;
+    padding: 10px 14px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  
+  .positioned-right .tooltip-arrow {
+    border-width: 6px;
+    left: -12px;
+  }
+}

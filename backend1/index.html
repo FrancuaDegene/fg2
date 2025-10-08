@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Chart with Widget</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #chartContainer {
+            position: relative;
+            width: 100%;
+        }
+
+        #chartCanvas {
+            width: 100%;
+            height: auto;
+        }
+
+        #widget {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #fff;
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Chart with Widget</h1>
+    <div id="chartContainer">
+        <div id="widget">
+            <h2 id="secId">SBER</h2>
+            <p id="date"></p>
+            <p id="price"></p>
+            <p id="priceChange"></p>
+            <p id="priceChangePercentage"></p>
+        </div>
+        <canvas id="chartCanvas"></canvas>
+    </div>
+
+    <script>
+        const socket = io();
+
+        // Создаем график при первом получении данных
+        let chart;
+        socket.on('initialData', (data) => {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Price',
+                        data: data.prices,
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: false
+                            }
+                        }]
+                    }
+                }
+            });
+
+            // Обновляем виджет
+            updateWidget(data);
+        });
+
+        // Обновляем график и виджет при получении новых данных
+        socket.on('updateData', (data) => {
+            chart.data.labels = data.labels;
+            chart.data.datasets[0].data = data.prices;
+            chart.update();
+
+            // Обновляем виджет
+            updateWidget(data);
+        });
+
+        // Функция для обновления виджета
+        function updateWidget(data) {
+            const latestData = data.prices[data.prices.length - 1];
+            const secId = data.secIds[data.secIds.length - 1]; // Получаем SECID
+            document.getElementById('secId').textContent = secId;
+            document.getElementById('date').textContent = "31.05.2024";
+            document.getElementById('price').textContent = `Цена акций: ${latestData} ₽`;
+            const priceChange = latestData - data.prices[data.prices.length - 2];
+            document.getElementById('priceChange').textContent = `Цена акций опустилась на ${priceChange.toFixed(2)} ₽`;
+            const priceChangePercentage = ((priceChange / latestData) * 100).toFixed(2);
+            document.getElementById('priceChangePercentage').textContent = `Цена акций опустилась на ${priceChangePercentage}%`;
+        }
+    </script>
+</body>
+</html>
+

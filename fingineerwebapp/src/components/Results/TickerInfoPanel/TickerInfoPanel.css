@@ -1,0 +1,84 @@
+.ticker-panel {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative; /* 🔧 вот это главное! */
+  width: 100%;
+  background: #ffffff;
+  border-radius: 16px;
+  /*border: 2px solid #000000;*/
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+
+.ticker-panel:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.ticker-title {
+  font-size: 1.25rem;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+}
+
+.close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 24px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.ticker-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticker-details p {
+  margin: 0;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+@media (max-width: 576px) {
+  .ticker-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-height: 50vh;
+    overflow-y: auto;
+    border-radius: 12px 12px 0 0;
+    background: #fff;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    animation: slideUp 0.3s ease;
+    z-index: 1000;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .close-btn {
+    top: 12px;
+    right: 14px;
+  }
+}

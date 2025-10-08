@@ -1,0 +1,43 @@
+.dividends-info {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border: 2px solid #000000;
+    border-radius: 25px;
+  }
+  
+  .dividend-links {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .dividend-links a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .dividend-links a:hover {
+    text-decoration: underline;
+  }
+  
+  .dividends-info dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.8rem;
+  }
+  
+  .dividends-info dt {
+    font-weight: bold;
+  }
+  
+  @media (max-width: 768px) {
+    .dividends-info {
+      padding: 1rem;
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .dividends-info {
+      padding: 2rem;
+    }
+  }

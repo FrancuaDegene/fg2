@@ -1,0 +1,70 @@
+{
+  "name": "fingineerwebapp",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@skeletonlabs/skeleton-react": "^1.2.3",
+    "@testing-library/react": "^13.4.0",
+    "axios": "^1.7.9",
+    "framer-motion": "^12.9.2",
+    "lucide-react": "^0.525.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "recharts": "^2.15.0",
+    "simplebar-react": "^3.3.0",
+    "socket.io-client": "^4.8.1",
+    "styled-components": "^6.1.15",
+    "web-vitals": "^4.2.4"
+  },
+  "overrides": {
+    "loader-utils": "^2.0.4",
+    "babel-loader": "^8.3.0",
+    "html-webpack-plugin": "^5.5.3"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/indicators/*.worker.js"
+        ],
+        "env": {
+          "worker": true
+        },
+        "rules": {
+          "no-restricted-globals": "off"
+        }
+      }
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "resolutions": {
+    "loader-utils": "^2.0.4"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "lightweight-charts": "^4.2.3",
+    "typescript": "^4.9.5"
+  }
+}

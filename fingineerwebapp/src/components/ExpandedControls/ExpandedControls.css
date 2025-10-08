@@ -1,0 +1,133 @@
+/* ExpandedControls.css */
+
+/* Общие стили для AppBar */
+.s-app-bar {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #f7f7f7; /* Светлый фон панели */
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 10000;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Внутренний контейнер для строк панели */
+.expanded-controls-inner {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px; /* Внутренние отступы для всего содержимого */
+    gap: 8px; /* Расстояние между строками */
+}
+
+/* Стили для каждой строки (верхней и нижней) */
+.expanded-controls__row {
+    display: flex;
+    align-items: center;
+    gap: 16px; /* Расстояние между группами элементов */
+    width: 100%;
+    min-height: 32px;
+}
+
+/* Стили для кнопок, использующих компонент Skeleton Button */
+.expanded-controls__btn.s-button {
+    background: transparent;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #4a4a4a;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+    min-width: unset; /* Переопределяем минимальную ширину Skeleton, если есть */
+}
+
+.expanded-controls__btn.s-button:hover {
+    background-color: #e9e9e9;
+    color: #2a2a2a;
+}
+
+/* Стили для метки текста рядом с иконкой */
+.expanded-controls__label {
+    /* Дополнительные стили, если нужны */
+}
+
+/* Стилизация оверлея панели поиска */
+.search-panel-overlay {
+    position: fixed;
+    top: 0; /* Отрегулируется позже, чтобы быть под AppBar */
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Полупрозрачный фон */
+    z-index: 9999; /* Должен быть выше графика, но ниже AppBar */
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Выравнивание по верху */
+    padding-top: 80px; /* Отступ сверху, чтобы панель была под AppBar. 80px - примерное значение */
+    box-sizing: border-box;
+}
+
+.search-panel-content-wrapper { /* Внутренняя обертка для контента панели */
+    background-color: #fff; /* Белый фон для самой панели */
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 500px; /* Максимальная ширина панели */
+    max-height: 80vh; /* Максимальная высота, чтобы не выходить за экран */
+    overflow-y: auto; /* Прокрутка, если контент не помещается */
+    padding: 20px;
+}
+
+.search-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.search-panel-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.search-panel-header .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #777;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.search-panel-header .close-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.search-panel-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.search-panel-body li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    color: #555;
+}
+.search-panel-body li:last-child {
+    border-bottom: none;
+}
+.search-panel-body li:hover {
+    background-color: #f9f9f9;
+}

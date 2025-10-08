@@ -1,0 +1,767 @@
+/* ChartToolbar.css - Современная панель инструментов FG 2025 */
+:root {
+  --fg-primary-start: #2962ff;
+  --fg-primary-end: #1976d2;
+  --fg-neutral-bg: #f5f7fa;
+  --fg-neutral-hover: #e8ecf0;
+  --fg-border: #e6e8ea;
+  --fg-text: #434651;
+  --fg-text-light: #6c757d;
+  --fg-shadow-light: rgba(41, 98, 255, 0.15);
+  --fg-shadow-active: rgba(41, 98, 255, 0.3);
+}
+.chart-host .chart-toolbar-section {
+  display: flex;
+  justify-content: flex-start;
+  padding: 8px 8px 0;
+}
+/* Верхняя полоса в expanded: контент начинается строго справа от рельсы */.chart-host[data-expanded="1"] .chart-toolbar-section{
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 0 var(--host-pad-x);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.chart-toolbar {
+  display: flex;
+  gap: 20px;
+  padding: 14px 24px;
+  align-items: center;
+  background: transparent;
+  border-bottom: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 12px;
+  min-height: 52px;
+  overflow: visible;
+  white-space: nowrap;
+  position: relative;
+  z-index: 1000;
+  box-shadow: none;
+}
+
+.chart-toolbar.normal {
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.chart-toolbar.expanded {
+  padding: 18px 32px;
+  min-height: 60px;
+  gap: 24px;
+}
+.chart-host[data-expanded='1'] .chart-separator {
+  display: none !important;
+}
+/* Логичная группировка элементов */
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+}
+/* Capsule Groups - современные группы кнопок */
+.capsule-group {
+  display: flex;
+  background: var(--fg-neutral-bg);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+.capsule-group:hover {
+  background: var(--fg-neutral-hover);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.capsule-btn {
+  background: transparent;
+  border: none;
+  border-radius: 16px;
+  padding: 8px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-text);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
+  min-width: 42px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.capsule-btn:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.capsule-btn.active {
+  background: linear-gradient(135deg, var(--fg-primary-start), var(--fg-primary-end));
+  color: white;
+  box-shadow: 0 4px 12px var(--fg-shadow-active);
+  transform: scale(1.05);
+  z-index: 2;
+}
+.capsule-btn.active:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px var(--fg-shadow-active);
+}
+/* Анимация для переключения */
+.capsule-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--fg-primary-start), var(--fg-primary-end));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+.capsule-btn.active::before {
+  opacity: 1;
+}
+/* Современные иконки с tooltips */
+.icon-btn {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  color: #6c757d;
+  z-index: 1000;
+}
+.icon-btn:hover {
+  background: #e8ecf0;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--fg-text);
+}
+.icon-btn.active {
+  background: linear-gradient(135deg, var(--fg-primary-start), var(--fg-primary-end));
+  color: white;
+  box-shadow: 0 4px 16px var(--fg-shadow-active);
+  transform: scale(1.05);
+}
+/* Иконки с текстом (для dropdown) */
+.icon-btn-with-text {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  color: var(--fg-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 1000;
+}
+.icon-btn-with-text:hover {
+  background: #e8ecf0;
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.icon-btn-with-text.active {
+  background: linear-gradient(135deg, var(--fg-primary-start), var(--fg-primary-end));
+  color: white;
+  box-shadow: 0 4px 16px var(--fg-shadow-active);
+}
+/* Современные Dropdown меню */
+.dropdown-container {
+  position: relative;
+  z-index: 10000;
+  flex-shrink: 0;
+}
+/* === Expanded capsule styling === */
+[data-expanded="1"] .toolbar-group {
+  gap: 12px;
+}
+[data-expanded="1"] .toolbar-separator {
+  height: 36px;
+  background: rgba(210, 216, 228, 0.6);
+}
+[data-expanded="1"] .icon-btn,
+[data-expanded="1"] .icon-btn-with-text {
+  background: rgba(243, 246, 254, 0.95);
+  border-radius: 50px;
+  box-shadow: 0 4px 12px rgba(42, 46, 64, 0.08);
+  color: #768199;
+}
+[data-expanded="1"] .icon-btn:hover,
+[data-expanded="1"] .icon-btn-with-text:hover {
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(42, 46, 64, 0.12);
+  transform: translateY(-1px);
+}
+[data-expanded="1"] .icon-btn .tooltip,
+[data-expanded="1"] .icon-btn-with-text .tooltip {
+  background: rgba(40, 44, 52, 0.85);
+  color: #f0f3f9;
+}
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 999999;
+  background: white;
+  border: 1px solid #e6e8ea;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  min-width: 180px;
+  max-height: 350px;
+  overflow-y: auto;
+  backdrop-filter: blur(8px);
+  animation: dropdownFadeIn 0.2s ease-out;
+  margin-top: 4px;
+}
+.dropdown-option {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  display: block;
+  margin: 1px 0;
+}
+.dropdown-option:hover {
+  background: #f7f8fa;
+}
+.dropdown-option.active {
+  background: linear-gradient(135deg, var(--fg-primary-start), var(--fg-primary-end));
+  color: white;
+  box-shadow: 0 2px 8px var(--fg-shadow-light);
+}
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.tooltip {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 10000;
+  pointer-events: none;
+}
+.tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+}
+.icon-btn:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-2px);
+}
+/* Разделители */
+.toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: #e6e8ea;
+  margin: 0 4px;
+}
+/* Кнопки типов свечей */
+.candle-type-buttons {
+  display: flex;
+  gap: 2px;
+}
+.candle-type-btn {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 36px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.candle-type-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+.candle-type-btn.active {
+  background: #2962ff;
+  border-color: #2962ff;
+  color: white;
+}
+/* Календарь */
+.date-picker-container {
+  position: relative;
+}
+.date-picker-btn {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #434651;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 120px;
+}
+.date-picker-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+.date-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 999999;
+  background: white;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  min-width: 200px;
+  margin-top: 4px;
+}
+.date-picker-dropdown input[type="date"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.date-today-btn {
+  width: 100%;
+  background: #2962ff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  color: white;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.date-today-btn:hover {
+  background: #1e53e5;
+}
+/* Индикаторы */
+.indicators-container {
+  position: relative;
+}
+.indicators-btn {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #434651;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 140px;
+  max-width: 140px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.indicators-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+.indicators-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 999999;
+  background: white;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  width: 140px;
+  max-width: 140px;
+  max-height: none;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+.indicator-option {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #434651;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  margin: 1px 0;
+}
+.indicator-option:hover {
+  background: #f7f8fa;
+}
+.indicator-option.active {
+  background: #2962ff;
+  color: white;
+}
+/* Дополнительные инструменты */
+.tools {
+  margin-left: auto;
+}
+.tool-btn {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tool-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+/* Иконка расширения */
+.expand-icon-btn {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 32px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #434651;
+}
+.expand-icon-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+/* Кнопка поиска в панели */
+.search-btn-toolbar {
+  background: #f7f8fa;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #434651;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.search-btn-toolbar:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+}
+.expand-icon-btn:hover {
+  background: #e6e8ea;
+  border-color: #d1d4dc;
+  transform: translateY(-1px);
+}
+.expand-icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+/* Адаптивность для маленьких экранов */
+@media (max-width: 768px) {
+/* Убираем обрезку выпадающих меню родительскими контейнерами */
+.chart-toolbar,
+.chart-toolbar * {
+  box-sizing: border-box;
+}
+/* Обеспечиваем видимость выпадающих меню */
+.chart-toolbar .dropdown-container,
+.chart-toolbar .date-picker-container,
+.chart-toolbar .indicators-container {
+  overflow: visible !important;
+}
+/* Высокий z-index для всех выпадающих элементов */
+.dropdown-menu,
+.date-picker-dropdown,
+.indicators-dropdown {
+  position: absolute !important;
+  z-index: 999999 !important;
+  background: white !important;
+  border: 1px solid #e6e8ea !important;
+  border-radius: 6px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+/* Дополнительная защита от обрезки */
+.chart-wrapper {
+  overflow: visible !important;
+}
+/* Отладочные стили для проверки видимости */
+.dropdown-menu.debug,
+.date-picker-dropdown.debug,
+.indicators-dropdown.debug {
+  background: red !important;
+  opacity: 1 !important;
+  display: block !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+/* Компактные стили для маленьких кнопок */
+.toolbar-group.intervals .dropdown-btn,
+.toolbar-group.timeframes .dropdown-btn {
+  font-size: 11px;
+  padding: 6px 8px;
+  min-width: 100px;
+  width: 100px;
+  max-width: 100px;
+  justify-content: flex-start;
+}
+.toolbar-group.intervals .dropdown-menu,
+.toolbar-group.timeframes .dropdown-menu {
+  width: 100px;
+  max-width: 100px;
+  min-width: 100px;
+}
+.toolbar-group.intervals .dropdown-option,
+.toolbar-group.timeframes .dropdown-option {
+  font-size: 14px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  display: block;
+  margin: 1px 0;
+}
+/* Дополнительная защита от растягивания */
+.dropdown-container {
+  position: relative;
+  z-index: 10000;
+  flex-shrink: 0;
+  width: auto;
+  max-width: 100px;
+}
+/* Принудительное ограничение размеров выпадающих меню */
+.dropdown-menu {
+  width: 100px !important;
+  max-width: 100px !important;
+  min-width: 100px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.dropdown-btn {
+  width: 100px !important;
+  max-width: 100px !important;
+  min-width: 100px !important;
+}
+.dropdown-option {
+  display: block !important;
+  width: 100% !important;
+  margin: 1px 0 !important;
+}
+.indicator-option {
+  display: block !important;
+  width: 100% !important;
+  margin: 1px 0 !important;
+}
+/* ===== FG 2025 — Dropdown reset & polish (append at the very end) ===== */
+/* ===== FG 2025 — Dropdown reset & polish (append at the very end) ===== */
+.chart-toolbar .dropdown-container {
+  max-width: none !important;
+  width: auto !important;
+}
+.chart-toolbar .dropdown-menu {
+  width: clamp(220px, 28vw, 320px) !important;
+  min-width: 220px !important;
+  max-width: 320px !important;
+  max-height: 300px !important;
+  padding: 8px !important;
+  overflow: auto !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.12) !important;
+  inline-size: max-content !important;   /* ширина = самый длинный пункт */
+  min-inline-size: 100% !important;      /* не уже кнопки */
+  max-inline-size: 36ch !important;      /* общий верхний лимит (≈36 символов) */
+}
+.chart-toolbar .dropdown-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.chart-toolbar .dropdown-option .option-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chart-toolbar .dropdown-option .option-icon { flex: 0 0 auto; display: inline-flex; }
+.chart-toolbar .dropdown-option .option-check { flex: 0 0 auto; font-weight: 600; opacity: .85; }
+.chart-toolbar .dropdown-option:hover {
+  background: rgba(22, 22, 25, 0.15) !important;
+}
+.chart-toolbar .dropdown-option.active {
+  background: rgba(22, 22, 25, 0.15) !important;
+}
+/* тонкий скролл */
+.chart-toolbar .dropdown-menu::-webkit-scrollbar { height: 8px; width: 8px; }
+.chart-toolbar .dropdown-menu::-webkit-scrollbar-track { background: transparent; }
+.chart-toolbar .dropdown-menu::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 8px; }
+.chart-toolbar:not([data-expanded='1']) {
+  border-bottom: 1px solid var(--fg-border);
+}
+.chart-host[data-expanded='1'] .chart-separator {
+  display: none !important;
+}
+/* Сама капсула остаётся «парить» справа */
+[data-expanded="1"].chart-toolbar{
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  z-index: 30;
+}
+
+/* Разделитель под панелью в expanded скрыт */
+.chart-host[data-expanded="1"] .chart-separator{
+  display: none !important;
+}
+
+.chart-host[data-expanded="1"] .chart-toolbar-section::before{
+  content: "";
+  position: absolute;
+  left: calc(var(--chart-left) - 16px);
+  right: var(--host-pad-x);
+  top: -10px;
+  height: 96px;
+  border-radius: 14px;
+  background: linear-gradient(
+    180deg,
+    rgba(250,253,255,.98) 0%,
+    rgba(250,253,255,.96) 55%,
+    rgba(250,253,255,.94) 85%,
+    rgba(250,253,255,.92) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.chart-host[data-expanded="1"] .chart-toolbar-section::after{
+  content: "";
+  position: absolute;
+  left: calc(var(--chart-left) - 16px);
+  right: var(--host-pad-x);
+  bottom: -2px;
+  height: 8px;
+  border-radius: 10px;
+  background: rgba(250,253,255,.98);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.chart-host[data-expanded="1"] .toolbar-right-slot{
+  margin-left: calc(
+    var(--host-pad-x)
+    + var(--dock-left-width)
+    + ((var(--gutter-width) - var(--dock-rail-width)) / 2)
+    + var(--chart-gap-from-rail)
+  );
+  margin-right: var(--host-pad-x);
+  display: flex;
+  align-items: center;
+  z-index: 3;
+}
+
+}

@@ -1,0 +1,183 @@
+/* Основной контейнер с контентом */
+.company-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    /*background-color: #f9f9f9;*/
+    /*border: 1px solid #ddd;*/
+    border-radius: 20px;
+    max-width: 500px; /* Ограничение ширины */
+    margin: 1rem auto;
+}
+
+/* Общий стиль для секций */
+.company-header, 
+.price-info, 
+.chart-container, 
+.news-container,
+.key-indicators,
+.dividends-info {
+    background-color: #ffffff;
+    padding: 1.5rem; /* Увеличено для комфорта */
+    border: 2px solid #000000;
+    border-radius: 40px;
+    /*box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);*/
+}
+
+/* Адаптивная сетка для цен */
+.price-info dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+}
+
+.price-info dt {
+    font-weight: bold;
+    text-align: left;
+    color: #333;
+}
+
+.price-info dd {
+    margin: 0;
+    text-align: right;
+    color: #666;
+}
+
+/* График */
+.chart-container {
+    padding: 1rem 0;
+    overflow-x: auto; /* Защита от переполнения */
+}
+
+/* Новости */
+.news-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.news-container li {
+    margin-bottom: 1rem;
+    font-size: 1rem; /* Размер шрифта */
+}
+
+.news-container a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.news-container a:hover {
+    text-decoration: underline;
+}
+
+.news-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.news-container li {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.5rem;
+}
+
+.news-title {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    font-style: italic;
+    color: #333;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    padding: 0.5rem 0;
+}
+
+.news-title:hover {
+    color: #007bff;
+}
+
+.news-content {
+    margin-top: 0.5rem;
+    padding: 0 1rem; /* Внутренние отступы для текста */
+    color: #555;
+    font-size: 0.9rem;
+    word-wrap: break-word; /* Перенос длинных слов */
+    overflow-wrap: break-word; /* Защита от переполнения */
+    text-align: justify; /* Выровнять текст по ширине */
+    max-width: 100%; /* Ограничение ширины */
+}
+
+.news-link {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.news-link:hover {
+    text-decoration: underline;
+}
+
+/* Стили для даты новости, выделенной как тег */
+.news-date {
+    display: inline-block; /* Чтобы элемент занимал только необходимое пространство */
+    padding: 5px 10px; /* Отступы вокруг текста */
+    background-color: #f0f0f0; /* Светлый фон */
+    border: 1px solid #ccc; /* Обводка */
+    border-radius: 12px; /* Скругление углов */
+    font-size: 0.9rem; /* Размер шрифта */
+    color: #333; /* Цвет текста */
+    font-weight: bold; /* Жирный шрифт */
+    margin-left: 10px; /* Отступ от заголовка */
+}
+
+/* --- Адаптивность --- */
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
+    .company-info {
+        padding: 0.5rem; /* Уменьшение отступов */
+    }
+
+    .company-header, 
+    .price-info, 
+    .chart-container, 
+    .news-container {
+        padding: 1rem;
+    }
+
+    .price-info dl {
+        grid-template-columns: 1fr; /* Одна колонка на мобильных */
+    }
+
+    .news-container {
+    max-height: 400px; /* Ограничиваем высоту блока с новостями */
+    overflow-y: auto;  /* Добавляем вертикальную прокрутку */
+    padding-right: 1rem; /* Отступ справа для полосы прокрутки */
+    }
+
+}
+
+/* Для больших экранов */
+@media (min-width: 1200px) {
+    .company-info {
+        max-width: 1000px; /* Расширение для десктопа */
+    }
+
+    .company-header, 
+    .price-info, 
+    .chart-container, 
+    .news-container {
+        padding: 2rem; /* Более крупные секции */
+    }
+
+    .news-container {
+    max-height: 400px; /* Ограничиваем высоту блока с новостями */
+    overflow-y: auto;  /* Добавляем вертикальную прокрутку */
+    padding-right: 1rem; /* Отступ справа для полосы прокрутки */
+    }
+}
+

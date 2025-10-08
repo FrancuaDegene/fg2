@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск Тиккеров</title>
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Подключение стилей Bootstrap (может потребоваться дополнительная настройка) -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+  <!-- Подключение вашего собственного стиля -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Подключение скриптов Bootstrap и Telegram -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/service-worker.js"></script>
+
+  <style>
+    /* Увеличение размера шрифта для всех устройств */
+    body {
+      font-size: 18px;
+    }
+
+    /* Стили для мобильных устройств */
+    @media only screen and (max-width: 600px) {
+      body {
+        font-size: 16px;
+      }
+
+      /* Дополнительные стили для мобильных устройств здесь */
+    }
+
+    /* Дополнительные медиа-запросы и стили для планшетов и больших экранов можно добавить по аналогии */
+
+    /* Стили для подсказок */
+    #suggestions {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      padding: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    #suggestions ul {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #suggestions ul li {
+      cursor: pointer;
+    }
+  </style>
+
+  <script>
+    // JavaScript код вашего приложения остается неизменным
+
+    // Функция поиска из URL
+    async function searchFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const query = urlParams.get('query');
+      if (query) {
+        await search(query);
+      }
+    }
+
+    // Функция поиска
+    async function search(query) {
+      const response = await fetch(`/api/ticker/${encodeURIComponent(query)}`); // Обновленный эндпоинт для запроса информации о тикере
+      const data = await response.json();
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '';
+
+      if (data.error) {
+        resultDiv.textContent = data.error;
+      } else {
+        // Добавляем заголовок "Информация о компании"
+        resultDiv.innerHTML = '<h2>Информация о компании</h2>';
+
+        // Выводим информацию о тикере
+        const companyInfo = document.createElement('div');
+        companyInfo.innerHTML = `
+          <p><strong>Полное наименование компании:</strong> ${data.companyName}</p>
+          <p><strong>Тикер компании:</strong> ${data.ticker}</p>
+          <p><strong>Описание компании:</strong> ${data.description}</p>
+          <p><strong>Дата:</strong> ${data.date}</p>
+          <p><strong>Время:</strong> ${data.time}</p>
+          <p><strong>Цена закрытия:</strong> ${data.closingPrice}</p>
+          <p><strong>Цена открытия:</strong> ${data.openingPrice}</p>
+          <p><strong>Минимальная цена:</strong> ${data.minPrice}</p>
+          <p><strong>Максимальная цена:</strong> ${data.maxPrice}</p>
+        `;
+        resultDiv.appendChild(companyInfo);
+
+        // Получаем и отображаем новости
+        getNews(resultDiv);
+      }
+    }
+
+    // Функция для показа/скрытия кнопки очистки при вводе текста
+    function showClearButton() {
+      var input = document.getElementById('searchInput');
+      var clearButton = document.getElementById('clearButton');
+      if (input.value !== '') {
+        clearButton.style.display = 'inline-block';
+      } else {
+        clearButton.style.display = 'none';
+      }
+    }
+
+    // Функция для очистки поля ввода и результатов поиска
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearButton').style.display = 'none';
+      document.getElementById('result').innerHTML = ''; // Очищаем результаты поиска
+    }
+
+    // Функция для получения и отображения новостей
+    async function getNews(container) {
+      try {
+        const response = await fetch('/api/news');
+        const news = await response.json();
+
+        // Создание списка для новостей
+        const newsList = document.createElement('ul');
+
+        // Добавление каждой новости в список
+        news.forEach(item => {
+          const newsItem = document.createElement('li');
+          newsItem.innerHTML = `<strong>${item.title}:</strong> ${item.content}`;
+          newsList.appendChild(newsItem);
+        });
+
+        // Создание контейнера для раздела новостей
+        const newsContainer = document.createElement('div');
+        newsContainer.innerHTML = '<h2>Новости по компании</h2>';
+        newsContainer.appendChild(newsList);
+
+        // Вставка контейнера с новостями на страницу
+        container.appendChild(newsContainer);
+      } catch (error) {
+        console.error('Ошибка при загрузке новостей:', error);
+      }
+    }
+
+    // Функция для получения подсказок по введенному тексту
+    async function getSuggestions(query) {
+      try {
+        const response = await fetch(`/api/suggestions/${encodeURIComponent(query)}`);
+        const suggestions = await response.json();
+
+        const suggestionsContainer = document.getElementById('suggestions');
+        suggestionsContainer.innerHTML = '';
+
+        if (suggestions.length > 0) {
+          const suggestionList = document.createElement('ul');
+          suggestions.forEach(suggestion => {
+            const listItem = document.createElement('li');
+            listItem.textContent = suggestion;
+            suggestionList.appendChild(listItem);
+          });
+          suggestionsContainer.appendChild(suggestionList);
+          } else {
+          suggestionsContainer.textContent = 'Нет подсказок';
+        }
+      } catch (error) {
+        console.error('Ошибка при получении подсказок:', error);
+      }
+    }
+
+    // Функция для обновления подсказок при вводе текста
+    function updateSuggestions() {
+      const query = document.getElementById('searchInput').value;
+      if (query.trim() !== '') {
+        getSuggestions(query);
+      } else {
+        document.getElementById('suggestions').innerHTML = '';
+      }
+    }
+
+    // Вызываем функцию поиска из URL при загрузке страницы
+    document.addEventListener('DOMContentLoaded', searchFromURL);
+  </script>
+</head>
+
+<body class="container mt-4">
+
+  <!-- Форма поиска -->
+  <div class="form-group">
+    <div class="input-group">
+      <input type="text" id="searchInput" class="form-control" oninput="updateSuggestions()" placeholder="Введите слово для поиска">
+      <div class="input-group-append">
+        <button onclick="search(document.getElementById('searchInput').value)" class="btn btn-primary" type="button">Поиск</button>
+        <button onclick="clearSearch()" class="btn btn-outline-secondary" type="button" id="clearButton" style="display: none;">&#10006;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Подсказки -->
+  <div id="suggestions" class="mt-2"></div>
+
+  <!-- Результаты поиска -->
+  <div id="result"></div>
+
+</body>
+
+</html>
+
+       
+

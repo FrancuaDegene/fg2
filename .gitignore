@@ -1,0 +1,32 @@
+# Node
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Python / Django
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+db.sqlite3
+media/
+staticfiles/
+
+# Env & logs
+.env*
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# DB/Cache dumps
+redis-data/
+mysql-data/
+*.sql*
+
+# certs/keys
+*.key
+*.crt
+backend2/cert/
