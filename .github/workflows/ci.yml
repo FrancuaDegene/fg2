@@ -1,16 +1,4 @@
 ﻿name: CI
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-New-Item -ItemType Directory -Force .github\workflows
-
-@"
-name: CI
-
 on:
   push:
     branches: [ main ]
@@ -32,11 +20,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint (если есть)
+      - name: Lint
         run: npm run lint --if-present
 
-      - name: Test (если есть)
+      - name: Test
         run: npm test --if-present
 
-      - name: Build (если есть)
+      - name: Build
         run: npm run build --if-present
