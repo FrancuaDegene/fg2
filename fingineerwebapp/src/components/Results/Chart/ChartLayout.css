@@ -1,169 +1,130 @@
-﻿:root {
-  /* --- ГЕОМЕТРИЯ --- */
-  --rail-thickness: 2px;        /* толщина декоративной рельсы */
-  --dock-left-width: 64px;      /* ширина левой док-панели */
-  --host-pad-x: 12px;           /* внутренние отступы хоста */
-  --stage-padding: 16px;        /* отступы сцены от края окна */
-  --gutter-width: 12px;         /* базовый паз в обычном режиме */
-  --price-scale-gap: 60px;      /* место под шкалу цен справа */
-  --chart-card-radius: 20px;    /* радиус "стеклянной" карточки */
+﻿/* ======================================================================
+   ГЛОБАЛЬНЫЕ ТОКЕНЫ
+   ====================================================================== */
+:root {
+  /* Геометрия базовой сцены (нормальный режим) */
+  --rail-thickness: 2px;       /* толщина декоративной рельсы по умолчанию */
+  --dock-left-width: 64px;     /* ширина левой док-панели (нормальная) */
+  --host-pad-x: 12px;          /* внутренние отступы хоста слева/справа */
+  --stage-padding: 16px;       /* отступ сцены от краёв окна */
+  --gutter-width: 12px;        /* базовый «паз» между доком и графиком (нормальный режим) */
+
+  /* Прочее */
+  --price-scale-gap: 60px;     /* место справа под шкалу цен от TVC */
+  --chart-card-radius: 20px;   /* радиус «стеклянной» карточки графика */
 }
 
+/* ======================================================================
+   БАЗОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ CHART HOST (единый источник)
+   ====================================================================== */
 .chart-host{
   position: relative;
+  isolation: isolate; /* свой стек слоёв для всех детей: z-index снова честно сравнивается */
+  /* Геометрия expanded-режима (используем как основные значения) */
+   --rail-offset: 0px;        /* смещение рельсы вправо (+) или влево (-) относительно центра паза */
   --host-pad-x: 16px;
   --dock-left-width: 72px;
-  --gutter-width: 32px;     /* стабильный паз в expanded */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
-  --rail-thickness: 6px;
+  --gutter-width: 70px;              /* стабильный паз в expanded */
+  --overlay-gap: 12px;                /* зазор: рельса ↔ оверлеи (карточки/слоты) */
+
+  /* Рельса */
+  --rail-thickness: 6px;              /* толщина рельсы в expanded */
+  --dock-rail-width: var(--rail-thickness); /* фолбэк, чтобы рельса не «пропадала» */
   --toolbar-margin: 4px;
   --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
-  --left-slot-min: 220px;
-  --toolbar-scrim-height: 84px;
-  --toolbar-scrim-start: rgba(245,248,255,1);
-  --toolbar-scrim-mid: rgba(245,248,255,.92);
-  --toolbar-scrim-end: rgba(245,248,255,0);
-}
 
-/* === Expanded: больше воздуха слева === */root {
-  /* --- ГЕОМЕТРИЯ --- */
-  --rail-thickness: 2px;        /* толщина декоративной рельсы */
-  --dock-left-width: 64px;       /* ширина левой док-панели */
-  --host-pad-x: 12px;            /* внутренние отступы хоста */
-  --stage-padding: 16px;         /* отступы сцены от края окна */
-  --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */          /* зазор между доком и карточкой */
-  --price-scale-gap: 60px;       /* место под шкалу цен справа */
-  --chart-card-radius: 20px;     /* радиус "стеклянной" карточки */
-}
+  /* Левый слот под TickerCard (связан с шириной самой карточки) */
+  --left-slot-min: 360px;             /* выбери целевую ширину, 260–300px */
 
-.chart-host{
-  position: relative;
-  --host-pad-x: 16px;
-  --dock-left-width: 72px;
-  --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  --chart-gap-from-rail: 16px;
+  /* Сдвиг «карточки графика» ближе к рельсе, остаётся небольшой просвет */
+  --chart-gap-from-rail: 70px;
+
+  --toolbar-left: calc(
+  var(--chart-left)
+  + ( var(--chart-gap-from-rail)
+      - ( (var(--gutter-width) - var(--dock-rail-width)) / 2 )
+    )
+);
+  /* Вспомогательные вычисления */
   --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
-  --rail-thickness: 6px;
-  --toolbar-margin: 4px;
-  --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
-  --left-slot-min: 220px;
+
+  /* Scrim под верхними капсулами */
   --toolbar-scrim-height: 84px;
   --toolbar-scrim-start: rgba(245,248,255,1);
-  --toolbar-scrim-mid: rgba(245,248,255,.92);
-  --toolbar-scrim-end: rgba(245,248,255,0);
+  --toolbar-scrim-mid:   rgba(245,248,255,.92);
+  --toolbar-scrim-end:   rgba(245,248,255,0);
 }
 
-
-
-
-
-/* === Expanded: больше воздуха слева === */
+/* Expanded — точечные оверрайды, если захочешь отличать от обычного режима */
 .chart-host[data-expanded="1"]{
-  --host-pad-x: 16px;      /* правый внешний отступ капсулы/сцены */
-  --dock-left-width: 72px; /* ширина левой док-панели */
-  --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */   /* расширяем среднюю колонку для бейджа */
+  /* при необходимости меняй тут */
   --dock-rail-width: 6px;
-  --rail-thickness: 6px;
-  --toolbar-margin: 4px;
-  --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
-  --chart-left: calc(
-    var(--host-pad-x)
-    + var(--dock-left-width)
-    + var(--gutter-width)
-  );
+  --rail-offset: 24px;
+  /* и на всякий случай фиксируем ширину рельсы */
+  --dock-rail-width: 6px;
+  /* --left-slot-min: 280px; // можно варьировать */
   padding: 0 var(--host-pad-x);
+  --rail-offset: 35px; /* смещение рельсы вправо; подбери 12–24px по вкусу */
 }
 
-
+/* Адаптив — меняем ТОЛЬКО ширину левого слота (и тем самым карточки) */
 @media (max-width: 1439px){
-  .chart-host{
-  position: relative;
-  --host-pad-x: 16px;
-  --dock-left-width: 72px;
-  --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  --chart-gap-from-rail: 16px;
-  --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
-  --rail-thickness: 6px;
-  --toolbar-margin: 4px;
-  --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
-  --left-slot-min: 220px;
-  --toolbar-scrim-height: 84px;
-  --toolbar-scrim-start: rgba(245,248,255,1);
-  --toolbar-scrim-mid: rgba(245,248,255,.92);
-  --toolbar-scrim-end: rgba(245,248,255,0);
+  .chart-host{ --left-slot-min: 240px; }
 }
-  .chart-host[data-expanded="1"]{
-    --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  }
-}
-
 @media (max-width: 1279px){
-  .chart-host{
-  position: relative;
-  --host-pad-x: 16px;
-  --dock-left-width: 72px;
-  --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  --chart-gap-from-rail: 16px;
-  --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
-  --rail-thickness: 6px;
-  --toolbar-margin: 4px;
-  --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
-  --left-slot-min: 220px;
-  --toolbar-scrim-height: 84px;
-  --toolbar-scrim-start: rgba(245,248,255,1);
-  --toolbar-scrim-mid: rgba(245,248,255,.92);
-  --toolbar-scrim-end: rgba(245,248,255,0);
-}
-  .chart-host[data-expanded="1"]{
-    --gutter-width: 32px;     /* стабильный паз */
-  --overlay-gap: 12px;      /* зазор между карточкой и рельсой */
-  }
+  .chart-host{ --left-slot-min: 220px; }
 }
 
-/* Вертикальная «рельса» между левой док-панелью и карточкой */
+/* ======================================================================
+   РЕЛЬСА (изолирована и не двигает остальную геометрию)
+   ====================================================================== */
 .chart-host .global-rail{
-  display: none;
+  display: none; /* показываем только в expanded */
   position: absolute;
   top: 0;
   bottom: 0;
-  width: var(--dock-rail-width);
-  /* центр \"паза\": host + док + половина gutter; отнимаем половину ширины рельсы */
+
+  width: var(--dock-rail-width, var(--rail-thickness));
+  /* центр «паза»: host + dock + половина gutter; минус половина ширины рельсы */
   left: calc(
     var(--host-pad-x) + var(--dock-left-width)
-    + (var(--gutter-width) - var(--dock-rail-width)) / 2
+    + (var(--gutter-width) - var(--dock-rail-width, var(--rail-thickness))) / 2
+    + var(--rail-offset, 0px)
   );
-  background: rgba(210, 218, 233, 0.55);
+
+  background: rgba(210, 218, 233, .55);
   border-radius: 3px;
   box-shadow: 0 0 0 1px rgba(210,218,233,.06) inset;
   pointer-events: none;
-  z-index: 10;
+  z-index: 28; /* выше toolbar-scrim (20), ниже .chart-toolbar (30) */
+}
+.chart-host[data-expanded="1"] .global-rail{
+  display: block !important; /* на случай, если где-то выше осталось display:none */
+  z-index: 40 !important;    /* выше .toolbar-scrim (20), ниже .chart-toolbar (50) */
 }
 
-.chart-host[data-expanded="1"] .global-rail {
-  display: block;
-}
-
-/* ОСНОВНАЯ СЦЕНА В РАСШИРЕННОМ РЕЖИМЕ (isExpanded) */
+/* ======================================================================
+   ОСНОВНАЯ СЦЕНА С ДОКАМИ
+   ====================================================================== */
 .chart-stage.with-docks {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
   padding: var(--stage-padding);
+
   display: grid;
   grid-template-columns: var(--dock-left-width) var(--gutter-width) 1fr;
   grid-template-rows: 1fr;
   gap: 0;
-  background: linear-gradient(180deg, rgba(248, 251, 255, 0.85) 0%, rgba(236, 240, 252, 0.92) 100%);
+
+  background: linear-gradient(
+    180deg,
+    rgba(248, 251, 255, 0.85) 0%,
+    rgba(236, 240, 252, 0.92) 100%
+  );
 }
 
-/* ЛЕВАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ */
+/* Левая панель инструментов */
 .chart-stage.with-docks .dock-left {
   grid-column: 1;
   grid-row: 1;
@@ -175,7 +136,14 @@
   padding-top: 100px;
 }
 
-/* ОБЛАСТЬ ГРАФИКА */
+/* Лёгкий внутренний отступ док-панели,
+   чтобы визуально не «липла» к рельсе */
+.chart-host .dock-left{
+  margin-left: calc(var(--host-pad-x) + 12px);
+  padding-right: 6px;
+}
+
+/* Область графика (карточка) */
 .chart-stage.with-docks .chart-area {
   grid-column: 3;
   grid-row: 1;
@@ -184,36 +152,32 @@
   background: #ffffff;
   border-radius: var(--chart-card-radius);
   border: 1px solid rgba(216, 222, 235, 0.85);
-  box-shadow: 0 20px 36px rgba(18, 24, 42, 0.08); /* Сдвигаем карточку влево */ /* Компенсируем ширину */  /* сдвигаем карточку ближе к рельсе, оставляя зазор */  margin-left: calc(\    -1 * (      ((var(--gutter-width) - var(--dock-rail-width)) / 2) - var(--chart-gap-from-rail)    )  );}
-  
+  box-shadow: 0 20px 36px rgba(18, 24, 42, 0.08);
 
-/* ВНУТРЕННИЙ КОНТЕЙНЕР CANVAS */
+  /* Сдвигаем карточку ближе к рельсе, сохраняя небольшой зазор */
+  margin-left: calc(
+    -1 * (
+      ((var(--gutter-width) - var(--dock-rail-width, var(--rail-thickness))) / 2)
+      - var(--chart-gap-from-rail)
+    )
+  );
+}
+
+/* Внутренний контейнер под канвас */
 .chart-stage.with-docks .chart-inner {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   box-sizing: border-box;
   padding-right: var(--price-scale-gap);
 }
 
-/* ЛОКАЛЬНЫЙ СЕПАРАТОР В СЦЕНЕ (отключаем, т.к. есть глобальная рельса) */
-.chart-stage.with-docks .dock-separator {
-  position: relative;
-  pointer-events: none;
-}
+/* Локальный сепаратор в сцене отключаем (есть глобальная рельса) */
+.chart-stage.with-docks .dock-separator { position: relative; pointer-events: none; }
+.chart-stage.with-docks .dock-sep-left { grid-column: 2; grid-row: 1; }
+.chart-stage.with-docks .dock-sep-left::before { display: none; }
 
-.chart-stage.with-docks .dock-sep-left {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.chart-stage.with-docks .dock-sep-left::before {
-  display: none;
-}
-
-/* Стекло для карточки графика в expanded */
+/* Стекло/обводка для карточки графика */
 .chart-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .64));
   backdrop-filter: blur(10px);
@@ -222,49 +186,39 @@
   box-shadow:
     0 24px 48px rgba(20,24,35,.08),
     0  6px 18px rgba(34,40,60,.08),
-    inset 0 1px 0 rgba(255,255,255,.55); /* мягкий внутренний блик */
+    inset 0 1px 0 rgba(255,255,255,.55);
 }
 
-/* В expanded отключаем старую «полосу», чтобы не было дубля */
-.chart-stage.with-docks .dock-separator.dock-sep-left::before{
-  display: none;
-}
-
-/* лёгкий внутренний отступ док-панели, чтобы она визуально не «липла» к рельсе */
-.chart-host .dock-left{
-  margin-left: calc(var(--host-pad-x) + 12px);
-  padding-right: 6px;   /* не влияет на сетку, даёт микрозазор справа внутри колонки */
-}
-
-/* Полоса-«scrim» под верхними капсулами */
+/* ======================================================================
+   S C R I M  под верхними капсулами
+   ====================================================================== */
 .chart-host .toolbar-scrim{
   position: absolute;
   top: 0;
-  left: var(--chart-left);
+   left: var(--toolbar-left);
   right: var(--host-pad-x);
   height: var(--toolbar-scrim-height);
+
   background: linear-gradient(
     180deg,
     var(--toolbar-scrim-start) 0%,
     var(--toolbar-scrim-mid)   60%,
     var(--toolbar-scrim-end)   100%
   );
+
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   pointer-events: none;
   z-index: 20;
 }
 
-/* Переопределение для сдвига панели инструментов */
-
-
-/* Слои (на всякий случай, чтобы всё было предсказуемо) */
+/* Слои на всякий случай */
 .chart-host .global-rail{ z-index: 10; }
 [data-expanded="1"].chart-toolbar{ z-index: 30; }
 
-
-
-/* Шапка и слоты в expanded */
+/* ======================================================================
+   ВЕРХНЯЯ ПАНЕЛЬ (expanded)
+   ====================================================================== */
 .chart-host[data-expanded="1"] .chart-toolbar-section{
   display: flex;
   align-items: center;
@@ -275,15 +229,19 @@
   border: none !important;
 }
 
+/* Левый слот — «липнет» к рельсе: margin-left = chart-left */
 .chart-host[data-expanded="1"] .toolbar-left-slot{
-  margin-left: var(--host-pad-x);
+  margin-left: var(--toolbar-left);
   min-width: var(--left-slot-min);
+  width: var(--left-slot-min);   /* фиксируем ширину, чтобы дети не «гуляли» */
+  height: 36px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   pointer-events: none;
-  z-index: 4;
+  z-index: 3;
 }
 
+/* Разрешаем интерактив детям слота */
 .chart-host[data-expanded="1"] .toolbar-left-slot > *{
   pointer-events: auto;
 }
@@ -292,17 +250,13 @@
   margin-right: var(--host-pad-x);
 }
 
-
-
-
-
-
-
-
-
-/* На всякий: если оставался макетный левый слот — он не нужен */
+/* На всякий: если остался макетный левый слот вне expanded — скрываем */
 .chart-host .toolbar-left-slot{ display: none; }
-/* Контейнер оверлея слева: ширина = от левого поля до рельсы минус небольшой зазор */
+
+/* ======================================================================
+   OVERLAY: контейнер слева + TickerCard
+   ====================================================================== */
+/* Контейнер оверлея: от левого поля до рельсы с небольшим зазором */
 .chart-host .overlay-left{
   position: absolute;
   top: 12px;
@@ -311,12 +265,11 @@
   display: flex;
   align-items: flex-start;
   pointer-events: none;   /* сам контейнер клики не ловит */
-  z-index: 4;            /* выше рельсы (2) и капсулы (3) */
+  z-index: 4;            /* выше рельсы (10) достаточно */
 }
 
-/* Сама карточка: интерактивна, ширину не навязываем больше «окна» */
+/* Сама карточка интерактивна и привязана к ширине слота */
 .chart-host .overlay-left .ticker-card{
   pointer-events: auto;
-  width: min(260px, 100%);
+  width: min(var(--left-slot-min), 100%);
 }
-
