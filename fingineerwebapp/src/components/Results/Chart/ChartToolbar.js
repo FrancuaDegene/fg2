@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 
 // Сторонние библиотеки
 import {

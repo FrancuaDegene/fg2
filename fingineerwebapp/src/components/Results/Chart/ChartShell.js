@@ -1,4 +1,4 @@
-﻿// src/components/Results/Chart/ChartShell.js
+// src/components/Results/Chart/ChartShell.js
 import React, { memo } from 'react';
 import DrawToolbar, { TOOL_IDS } from './DrawToolbar';
 

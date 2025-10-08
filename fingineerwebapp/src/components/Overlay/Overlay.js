@@ -1,4 +1,4 @@
-﻿// src/components/Overlay/Overlay.js
+// src/components/Overlay/Overlay.js
 import React from 'react';
 import PropTypes from 'prop-types';
 

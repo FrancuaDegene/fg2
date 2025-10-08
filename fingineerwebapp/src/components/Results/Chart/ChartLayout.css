@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   /* --- ГЕОМЕТРИЯ --- */
   --rail-thickness: 2px;        /* толщина декоративной рельсы */
   --dock-left-width: 64px;      /* ширина левой док-панели */
@@ -319,3 +319,4 @@
   pointer-events: auto;
   width: min(260px, 100%);
 }
+

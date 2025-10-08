@@ -1,4 +1,4 @@
-﻿// src/components/Primitives/useDropdown.js
+// src/components/Primitives/useDropdown.js
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**

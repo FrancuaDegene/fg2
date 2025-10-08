@@ -1,4 +1,4 @@
-﻿// ChartRenderer.js
+// ChartRenderer.js
 import React, { useEffect, memo, useState } from 'react';
 import ChartToolbar from './ChartToolbar';
 import ChartCanvas from './ChartCanvas';
