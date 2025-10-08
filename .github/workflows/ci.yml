@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fingineerwebapp
     steps:
       - uses: actions/checkout@v4
 
@@ -17,8 +20,8 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install dependencies (try npm ci, fall back to npm install)
+        run: npm ci || npm install
 
       - name: Lint
         run: npm run lint --if-present
