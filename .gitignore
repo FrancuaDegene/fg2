@@ -29,4 +29,19 @@ mysql-data/
 # certs/keys
 *.key
 *.crt
+
 backend2/cert/
++# --- Secrets / Env ---
++# игнорируем любые реальные env-файлы во всём репо
++.env
++.env.*
++**/.env
++**/.env.*
++
++# но разрешаем шаблоны для коммита
++!.env.example
++!**/.env.example
++!.env*.example
++!**/.env*.example
++
++# (остальной твой .gitignore ниже без изменений)

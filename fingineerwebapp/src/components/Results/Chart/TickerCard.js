@@ -25,12 +25,21 @@ export default function TickerCard({
 }) {
   const positive = typeof changePct === "number" ? changePct >= 0 : true;
 
+  const handleClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof onClick === 'function') {
+      onClick();
+    }
+  };
+
   return (
     <button
       type="button"
-      className={`ticker-card ${size}`}
-      onClick={onClick}
+      className={`ticker-card has-tooltip ${size}`}
+      onClick={onClick ? handleClick : undefined}
       aria-label={`Инструмент ${symbol}, цена ${formatNumber(price, 2)} ${currency}, изменение ${formatNumber(changePct, 2)}%`}
+      aria-describedby="tc-tip"
     >
       <div className="tc-row">
         <div className="tc-logo" aria-hidden="true">
@@ -55,6 +64,10 @@ export default function TickerCard({
         <span className="tc-dot" />
         <span className="tc-vol">Объём {formatCompact(volume)}</span>
       </div>
+
+      <span id="tc-tip" className="tc-tooltip tc-tooltip--east" role="tooltip">
+        Сменить тикер
+      </span>
     </button>
   );
 }

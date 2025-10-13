@@ -45,12 +45,11 @@ const ChartContent = ({
   }
 }, [onToggleExpand]);
 
-  const handleSearch = useCallback((searchQuery) => {
-    if (typeof onSearch === 'function') {
-  console.log('[ChartContent] calling onSearch with', searchQuery);
-  onSearch(searchQuery);
+  const handleOpenSearch = useCallback(() => {
+    if (typeof onToggleSearch === 'function') {
+      onToggleSearch();
     }
-  }, [onSearch]);
+  }, [onToggleSearch]);
 
   const handleCandleTypeChange = useCallback((type) => {
     if (typeof setCandleType === 'function') {
@@ -71,7 +70,7 @@ const ChartContent = ({
         onTimeframeChange={handleTimeframeChange}
         onToggleExpand={handleToggleExpand}
         onCandleTypeChange={handleCandleTypeChange}
-        onSearch={handleSearch}
+        onOpenSearch={handleOpenSearch}
       />
     </>
   );

@@ -16,12 +16,11 @@ import {
 import { CHART_CONFIG } from '../../../constants';
 
 // Компоненты проекта
-import SearchModal from '../../SearchModal/SearchModal';
 import useDropdown from '../../Primitives/useDropdown';
 import { useChart } from './ChartContext';
 
 // Стили
-import './ChartToolbar.css';
+import './toolbar/index.css';
 
 /* --- Мини-иконки под виды графика (16x16, наследуют currentColor) --- */
 const IconCandles = () => (
@@ -86,7 +85,7 @@ const ChartToolbar = ({
   currentCandleType,
   onCandleTypeChange,
   onToggleExpand,
-  onSearch,
+  onOpenSearch,
   isExpanded = false,
 }) => {
   // из контекста: список активных индикаторов и переключатель
@@ -96,7 +95,6 @@ const ChartToolbar = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isIndicatorOpen, setIsIndicatorOpen] = useState(false);
   const [isCandleTypeOpen, setIsCandleTypeOpen] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const {
     isOpen: isTfOpen,
@@ -180,8 +178,9 @@ const ChartToolbar = ({
   };
 
   const handleSearchClick = () => {
-    if (onSearch) onSearch();
-    setIsSearchModalOpen(true);
+    if (typeof onOpenSearch === 'function') {
+      onOpenSearch();
+    }
   };
 
   const handleIndicatorToggle = useCallback(
@@ -192,200 +191,202 @@ const ChartToolbar = ({
   );
 
   return (
-    <>
-      <div
-        className={`chart-toolbar ${isExpanded ? 'expanded' : 'normal'}`}
-        data-expanded={isExpanded ? '1' : undefined}
-      >
-        {/* ====== NAVIGATION ====== */}
-        <div className="toolbar-group navigation">
-          {isExpanded && (
-            <button className="icon-btn" onClick={handleSearchClick} aria-label="Поиск">
-              <Search size={18} />
-              <span className="tooltip">Поиск</span>
-            </button>
-          )}
-
-          <div className="dropdown-container" ref={intAnchorRef}>
-            <button
-              className="icon-btn-with-text"
-              onClick={toggleInt}
-              aria-expanded={isIntOpen}
-            >
-              <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
-            </button>
-            {isIntOpen && (
-              <div className="dropdown-menu" ref={intContentRef}>
-                {intervals.map((interval) => (
-                  <button
-                    key={interval.id}
-                    className={`dropdown-option ${currentInterval === interval.id ? 'active' : ''}`}
-                    onClick={() => handleIntervalChange(interval.id)}
-                    title={interval.label}
-                  >
-                    <span className="option-label">{interval.label}</span>
-                    {currentInterval === interval.id && <span className="option-check">✓</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="toolbar-separator"></div>
-
-          <div className="dropdown-container" ref={tfAnchorRef}>
-            <button
-              className="icon-btn-with-text"
-              onClick={toggleTf}
-              aria-expanded={isTfOpen}
-            >
-              <BarChart3 size={16} /> {timeframes.find((tf) => tf.id === currentTimeframe)?.id || '1d'}
-            </button>
-            {isTfOpen && (
-              <div className="dropdown-menu" ref={tfContentRef}>
-                {timeframes.map((timeframe) => (
-                  <button
-                    key={timeframe.id}
-                    className={`dropdown-option ${currentTimeframe === timeframe.id ? 'active' : ''}`}
-                    onClick={() => handleTimeframeChange(timeframe.id)}
-                    title={timeframe.label}
-                  >
-                    <span className="option-label">{timeframe.label}</span>
-                    {currentTimeframe === timeframe.id && <span className="option-check">✓</span>}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="toolbar-separator"></div>
-
-        {/* ====== VIEW ====== */}
-        <div className="toolbar-group view">
-  <div className="dropdown-container" ref={candleTypeRef}>
-    <button
-      className="icon-btn" /* было icon-btn-with-text */
-      onClick={() => setIsCandleTypeOpen(!isCandleTypeOpen)}
-      aria-expanded={isCandleTypeOpen}
-      aria-label={titleForType(currentCandleType)}
-      title={titleForType(currentCandleType)}
+    <div
+      className={`chart-toolbar ${isExpanded ? 'expanded' : 'normal'}`}
+      data-expanded={isExpanded ? '1' : undefined}
     >
-      {iconForType(currentCandleType)}
-      <span className="tooltip">{titleForType(currentCandleType)}</span>
-    </button>
+      {/* ====== NAVIGATION ====== */}
+      <div className="tb__group tb__group--navigation">
+        {isExpanded && (
+          <button className="tb-btn tb-btn--icon" onClick={handleSearchClick} aria-label="Поиск">
+            <Search size={18} />
+            <span className="tooltip">Поиск</span>
+          </button>
+        )}
 
-    {isCandleTypeOpen && (
-      <div className="dropdown-menu" ref={tfContentRef}>
-        {candleTypes.map((type) => {
-          const active = currentCandleType === type.value;
-          return (
-            <button
-              key={type.value}
-              className={`dropdown-option ${active ? 'active' : ''}`}
-              onClick={() => handleCandleTypeChange(type.value)}
-              title={type.title}
-              role="menuitemradio"
-              aria-checked={active}
-              data-active={active ? '1' : '0'}
-            >
-              <span className="option-icon">{iconForType(type.value)}</span>
-              <span className="option-label">{type.title}</span>
-              {active && <span className="option-check">✓</span>}
-            </button>
-          );
-        })}
-      </div>
-    )}
-  </div>
-</div>
+        <div className="dropdown-container tb-dd" ref={intAnchorRef}>
+          <button
+            className="tb-btn tb-btn--with-text"
+            onClick={toggleInt}
+            aria-expanded={isIntOpen}
+          >
+            <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
+          </button>
 
-
-        <div className="toolbar-separator"></div>
-
-        {/* ====== ANALYSIS ====== */}
-        <div className="toolbar-group analysis">
-          {/* Календарь — ТОЛЬКО в expanded */}
-          {isExpanded && (
-            <div className="dropdown-container" ref={calendarRef}>
-              <button className="icon-btn" onClick={() => setIsCalendarOpen(!isCalendarOpen)}>
-                <Calendar size={18} />
-                <span className="tooltip">Календарь</span>
-              </button>
-              {isCalendarOpen && (
-                <div className="date-picker-dropdown">
-                  <input
-                    type="date"
-                    defaultValue={formatDate(new Date().toISOString().split('T')[0])}
-                    max={new Date().toISOString().split('T')[0]}
-                    onChange={handleDateChange}
-                  />
-                  <button className="date-today-btn" onClick={() => setIsCalendarOpen(false)}>
-                    Сегодня
-                  </button>
-                </div>
-              )}
+          {isIntOpen && (
+            <div className="dropdown-menu" ref={intContentRef}>
+              {intervals.map((interval) => (
+                <button
+                  key={interval.id}
+                  className="tb-dd__item"
+                  data-state={currentInterval === interval.id ? 'active' : undefined}
+                  onClick={() => handleIntervalChange(interval.id)}
+                  title={interval.label}
+                >
+                  <span className="tb-dd__label">{interval.label}</span>
+                  {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
+                </button>
+              ))}
             </div>
           )}
-
-          <div className="dropdown-container" ref={indicatorRef}>
-            <button
-              className="icon-btn-with-text"
-              onClick={() => setIsIndicatorOpen(!isIndicatorOpen)}
-              aria-expanded={isIndicatorOpen}
-            >
-              <LineChart size={16} /> Индикаторы
-            </button>
-
-            {isIndicatorOpen && (
-              <div className="dropdown-menu" role="menu">
-                {indicators.map((indicator) => {
-                  const isActive = activeIndicators?.some((i) => i?.id === indicator.id);
-                  return (
-                    <button
-                      key={indicator.id}
-                      className={`dropdown-option ${isActive ? 'active' : ''}`}
-                      onClick={() => handleIndicatorToggle(indicator)}
-                      role="menuitemcheckbox"
-                      title={indicator.label}
-                      aria-checked={isActive}
-                      data-active={isActive ? '1' : '0'}
-                    >
-                      <span className="option-icon">
-                        <LineChart size={16} />
-                      </span>
-                      <span className="option-label">{indicator.label}</span>
-                      {isActive && <span className="option-check">✓</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className="toolbar-separator"></div>
+        <div className="tb-separator" />
 
-        {/* ====== SERVICE ====== */}
-        <div className="toolbar-group service" style={{ marginLeft: 'auto' }}>
-          <button className="icon-btn" aria-label="Скриншот">
-            <Camera size={18} />
-            <span className="tooltip">Скриншот</span>
+        <div className="dropdown-container tb-dd" ref={tfAnchorRef}>
+          <button
+            className="tb-btn tb-btn--with-text"
+            onClick={toggleTf}
+            aria-expanded={isTfOpen}
+          >
+            <BarChart3 size={16} /> {timeframes.find((tf) => tf.id === currentTimeframe)?.id || '1d'}
           </button>
-          <button className="icon-btn" aria-label="Настройки">
-            <Settings size={18} />
-            <span className="tooltip">Настройки</span>
+
+          {isTfOpen && (
+            <div className="dropdown-menu" ref={tfContentRef}>
+              {timeframes.map((timeframe) => (
+                <button
+                  key={timeframe.id}
+                  className="tb-dd__item"
+                  data-state={currentTimeframe === timeframe.id ? 'active' : undefined}
+                  onClick={() => handleTimeframeChange(timeframe.id)}
+                  title={timeframe.label}
+                >
+                  <span className="tb-dd__label">{timeframe.label}</span>
+                  {currentTimeframe === timeframe.id && <span className="tb-dd__check">✓</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>{/* /tb__group--navigation */}
+
+      <div className="tb-separator" />
+
+      {/* ====== VIEW ====== */}
+      <div className="tb__group tb__group--view">
+        <div className="dropdown-container tb-dd" ref={candleTypeRef}>
+          {/* было icon-btn-with-text */}
+          <button
+            className="tb-btn tb-btn--icon"
+            onClick={() => setIsCandleTypeOpen(!isCandleTypeOpen)}
+            aria-expanded={isCandleTypeOpen}
+            aria-label={titleForType(currentCandleType)}
+            title={titleForType(currentCandleType)}
+          >
+            {iconForType(currentCandleType)}
+            <span className="tooltip">{titleForType(currentCandleType)}</span>
           </button>
-          <button className="icon-btn expand-btn" onClick={handleToggleExpand} aria-label="Развернуть">
-            <Maximize size={18} />
-            <span className="tooltip">Развернуть</span>
-          </button>
+
+          {isCandleTypeOpen && (
+            <div className="dropdown-menu" ref={tfContentRef /* лучше завести отдельный candleMenuRef */}>
+              {candleTypes.map((type) => {
+                const active = currentCandleType === type.value;
+                return (
+                  <button
+                    key={type.value}
+                    className={`dropdown-option ${active ? 'active' : ''}`}
+                    onClick={() => handleCandleTypeChange(type.value)}
+                    title={type.title}
+                    role="menuitemradio"
+                    aria-checked={active}
+                    data-active={active ? '1' : '0'}
+                  >
+                    <span className="tb-dd__icon">{iconForType(type.value)}</span>
+                    <span className="tb-dd__label">{type.title}</span>
+                    {active && <span className="tb-dd__check">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
-      <SearchModal isOpen={isSearchModalOpen} onClose={() => setIsSearchModalOpen(false)} onSearch={onSearch} />
-    </>
+      <div className="tb-separator" />
+
+      {/* ====== ANALYSIS ====== */}
+      <div className="tb__group tb__group--analysis">
+        {isExpanded && (
+          <div className="dropdown-container tb-dd" ref={calendarRef}>
+            <button className="tb-btn tb-btn--icon" onClick={() => setIsCalendarOpen(!isCalendarOpen)}>
+              <Calendar size={18} />
+              <span className="tooltip">Календарь</span>
+            </button>
+
+            {isCalendarOpen && (
+              <div className="date-picker-dropdown">
+                <input
+                  type="date"
+                  defaultValue={formatDate(new Date().toISOString().split('T')[0])}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={handleDateChange}
+                />
+                <button className="date-today-btn" onClick={() => setIsCalendarOpen(false)}>
+                  Сегодня
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="dropdown-container tb-dd" ref={indicatorRef}>
+          <button
+            className="tb-btn tb-btn--with-text"
+            onClick={() => setIsIndicatorOpen(!isIndicatorOpen)}
+            aria-expanded={isIndicatorOpen}
+          >
+            <LineChart size={16} /> Индикаторы
+          </button>
+
+          {isIndicatorOpen && (
+            <div className="dropdown-menu" role="menu">
+              {indicators.map((indicator) => {
+                const isActive = activeIndicators?.some((i) => i?.id === indicator.id);
+                return (
+                  <button
+                    key={indicator.id}
+                    className={`dropdown-option ${isActive ? 'active' : ''}`}
+                    onClick={() => handleIndicatorToggle(indicator)}
+                    role="menuitemcheckbox"
+                    title={indicator.label}
+                    aria-checked={isActive}
+                    data-active={isActive ? '1' : '0'}
+                  >
+                    <span className="tb-dd__icon">
+                      <LineChart size={16} />
+                    </span>
+                    <span className="tb-dd__label">{indicator.label}</span>
+                    {isActive && <span className="tb-dd__check">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="tb-separator" />
+
+      {/* ====== SERVICE ====== */}
+      <div className="tb__group tb__group--service" style={{ marginLeft: 'auto' }}>
+        <button className="tb-btn tb-btn--icon" aria-label="Скриншот">
+          <Camera size={18} />
+          <span className="tooltip">Скриншот</span>
+        </button>
+        <button className="tb-btn tb-btn--icon" aria-label="Настройки">
+          <Settings size={18} />
+          <span className="tooltip">Настройки</span>
+        </button>
+        <button className="icon-btn expand-btn" onClick={handleToggleExpand} aria-label="Развернуть">
+          <Maximize size={18} />
+          <span className="tooltip">Развернуть</span>
+        </button>
+      </div>
+    </div>
   );
+
+
 };
 
 const areEqual = (prevProps, nextProps) =>
@@ -397,7 +398,7 @@ const areEqual = (prevProps, nextProps) =>
   prevProps.onTimeframeChange === nextProps.onTimeframeChange &&
   prevProps.onCandleTypeChange === nextProps.onCandleTypeChange &&
   prevProps.onToggleExpand === nextProps.onToggleExpand &&
-  prevProps.onSearch === nextProps.onSearch;
+  prevProps.onOpenSearch === nextProps.onOpenSearch;
 
 export default memo(ChartToolbar, areEqual);
 
@@ -409,3 +410,11 @@ export default memo(ChartToolbar, areEqual);
 
 
 
+
+
+
+
+
+
+
+            
