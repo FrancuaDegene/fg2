@@ -1,5 +1,5 @@
 // ChartRenderer.js
-import React, { useEffect, memo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ChartToolbar from './ChartToolbar';
 import ChartCanvas from './ChartCanvas';
 import './ChartModal.css';
@@ -25,7 +25,7 @@ const ChartRenderer = ({
   onTimeframeChange,
   onToggleExpand,
   onCandleTypeChange,
-  onSearch
+  onOpenSearch,
 }) => {
   // ⬇️ state панели рисовалок — здесь, а не в ChartShell
   const [activeTool, setActiveTool] = useState(TOOL_IDS.SELECT);
@@ -78,8 +78,9 @@ const ChartRenderer = ({
           margin: 0
         }}
       >
-        <div className="chart-toolbar-section">        <div className="toolbar-left-slot" />
-          <div className="toolbar-right-slot">
+        <div className="tb__section">
+          <div className="tb__slot--left" />
+          <div className="tb__slot--right">
             <ChartToolbar
               isExpanded={isExpanded}
               currentInterval={currentInterval}
@@ -89,7 +90,7 @@ const ChartRenderer = ({
               currentCandleType={currentCandleType}
               onCandleTypeChange={onCandleTypeChange}
               onToggleExpand={onToggleExpand}
-              onSearch={onSearch}
+              onOpenSearch={onOpenSearch}
             />
           </div>
         </div>
@@ -104,7 +105,7 @@ const ChartRenderer = ({
               changePct={changePct ?? 1.26}
               currency={currency || "RUB"}
               volume={dayVolume ?? 38200000}
-              onClick={onSearch}
+              onClick={onOpenSearch}
             />
           </div>
         )}
@@ -135,16 +136,7 @@ const ChartRenderer = ({
   );
 };
       
-export default memo(ChartRenderer, (prevProps, nextProps) => {
-  return (
-    prevProps.currentInterval === nextProps.currentInterval &&
-    prevProps.currentTimeframe === nextProps.currentTimeframe &&
-    prevProps.currentCandleType === nextProps.currentCandleType &&
-    prevProps.isExpanded === nextProps.isExpanded &&
-    prevProps.isChartLoading === nextProps.isChartLoading &&
-    prevProps.chartData?.candles?.length === nextProps.chartData?.candles?.length
-  );
-});
+export default ChartRenderer;
 
 
 

@@ -21,6 +21,8 @@
   position: relative;
   isolation: isolate; /* свой стек слоёв для всех детей: z-index снова честно сравнивается */
   /* Геометрия expanded-режима (используем как основные значения) */
+  /* Геометрию слева задаём ТОЛЬКО через --anchor-left: график, панель и скрим читают её.
+     Меняем «воздух» ↔ правим --chart-gap-from-rail (рейлган тянет всех синхронно). */
    --rail-offset: 0px;        /* смещение рельсы вправо (+) или влево (-) относительно центра паза */
   --host-pad-x: 16px;
   --dock-left-width: 72px;
@@ -39,14 +41,16 @@
   /* Сдвиг «карточки графика» ближе к рельсе, остаётся небольшой просвет */
   --chart-gap-from-rail: 70px;
 
-  --toolbar-left: calc(
-  var(--chart-left)
-  + ( var(--chart-gap-from-rail)
-      - ( (var(--gutter-width) - var(--dock-rail-width)) / 2 )
-    )
-);
   /* Вспомогательные вычисления */
   --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
+
+  /* Единый якорь для графика, тулбара и скрима */
+  --anchor-left: calc(
+    var(--chart-left)
+    - ( (var(--gutter-width) - var(--dock-rail-width, var(--rail-thickness))) / 2 )
+    + var(--chart-gap-from-rail)
+  );
+  --toolbar-left: var(--anchor-left);
 
   /* Scrim под верхними капсулами */
   --toolbar-scrim-height: 84px;
@@ -222,16 +226,22 @@
 .chart-host[data-expanded="1"] .chart-toolbar-section{
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
-  padding: 12px 16px 0;
+  padding-top: 12px;
+  padding-right: 16px;
+  padding-bottom: 0;
+  left: auto;
+  right: auto;
+  margin: 0;
+  transform: none;
   background: transparent !important;
   border: none !important;
 }
 
-/* Левый слот — «липнет» к рельсе: margin-left = chart-left */
+/* Левый слот «прилипает» за счёт паддинга родителя */
 .chart-host[data-expanded="1"] .toolbar-left-slot{
-  margin-left: var(--toolbar-left);
+  margin-left: 0;
   min-width: var(--left-slot-min);
   width: var(--left-slot-min);   /* фиксируем ширину, чтобы дети не «гуляли» */
   height: 36px;
@@ -239,6 +249,11 @@
   align-items: center;
   pointer-events: none;
   z-index: 3;
+}
+.chart-host[data-expanded="1"] .toolbar-left-slot:empty{
+  min-width: 0;
+  width: 0;
+  display: none;
 }
 
 /* Разрешаем интерактив детям слота */
