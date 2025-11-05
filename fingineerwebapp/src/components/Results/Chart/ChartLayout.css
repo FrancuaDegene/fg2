@@ -42,6 +42,16 @@
   --chart-rail-gap: 48px;             /* фиксированный зазор между рельсой и сценой */
   --chart-gap-from-rail: 86px;
 
+  /* === Панель рисовалок (между рельсой и сценой) ===
+     В expanded позиционируем так, чтобы ПРАВЫЙ край панели
+     находился левее левого края графика на небольшой отступ:
+     left = anchor-left - drawtb-margin - drawtb-width */
+  /* ширина панели = диаметр кнопки + суммарные паддинги (4px + 4px) */
+  --drawtb-width: calc(var(--fg-drawtb-btn, 30px) + 8px);
+  /* сдвиг к рельсе: больше значение — ближе к рельсе */
+  --drawtb-margin: 14px; /* было 8px */
+  --drawtb-top: 96px;     /* вертикальный отступ от верха .chart-host */
+
   /* Вспомогательные вычисления */
   --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
 

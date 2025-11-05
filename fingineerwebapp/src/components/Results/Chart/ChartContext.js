@@ -8,6 +8,9 @@ const actionTypes = {
   SET_TIMEFRAME: 'SET_TIMEFRAME',
   SET_EXPANDED: 'SET_EXPANDED',
   SET_CANDLE_TYPE: 'SET_CANDLE_TYPE',
+  SET_ACTIVE_TICKER: 'SET_ACTIVE_TICKER',
+  SET_INSTRUMENT_META: 'SET_INSTRUMENT_META',
+  SET_LAST_CANDLE: 'SET_LAST_CANDLE',
   TOGGLE_INDICATOR: 'TOGGLE_INDICATOR',
   REMOVE_INDICATOR: 'REMOVE_INDICATOR',
   TOGGLE_VISIBILITY: 'TOGGLE_VISIBILITY',
@@ -62,7 +65,19 @@ function chartReducer(state, action) {
     case actionTypes.SET_CANDLE_TYPE:
       if (state.currentCandleType === action.payload) return state;
       return { ...state, currentCandleType: action.payload };
-      
+
+    case actionTypes.SET_ACTIVE_TICKER:
+      if (state.activeTicker === action.payload) return state;
+      return { ...state, activeTicker: action.payload ?? null };
+
+    case actionTypes.SET_INSTRUMENT_META:
+      if (state.instrumentMeta === action.payload) return state;
+      return { ...state, instrumentMeta: action.payload ?? null };
+
+    case actionTypes.SET_LAST_CANDLE:
+      if (state.lastCandleData === action.payload) return state;
+      return { ...state, lastCandleData: action.payload ?? null };
+
     // ChartContext.js (внутри chartReducer)
 
     case actionTypes.TOGGLE_INDICATOR: {
@@ -152,6 +167,9 @@ export const ChartProvider = ({ children, initialData }) => {
     isExpanded: initialData?.isExpanded || false,
     currentCandleType: initialData?.currentCandleType || 'candlestick',
     activeIndicators: [],
+    activeTicker: initialData?.activeTicker ?? null,
+    instrumentMeta: initialData?.instrumentMeta ?? null,
+    lastCandleData: initialData?.lastCandleData ?? null,
   });
 
   // Actions
@@ -178,54 +196,73 @@ export const ChartProvider = ({ children, initialData }) => {
   const setCandleType = useCallback((candleType) => {
     dispatch({ type: actionTypes.SET_CANDLE_TYPE, payload: candleType });
   }, []);
-  // Actions
-const toggleIndicator = useCallback((indicator) => {
-  dispatch({ type: actionTypes.TOGGLE_INDICATOR, payload: indicator });
-}, []);
 
-const removeIndicator = useCallback((id) => {
-  dispatch({ type: actionTypes.REMOVE_INDICATOR, payload: id });
-}, []);
+  const setActiveTicker = useCallback((ticker) => {
+    dispatch({ type: actionTypes.SET_ACTIVE_TICKER, payload: ticker });
+  }, []);
 
-const toggleIndicatorVisibility = useCallback((id) => {
-  dispatch({ type: actionTypes.TOGGLE_VISIBILITY, payload: id });
-}, []);
+  const setInstrumentMeta = useCallback((meta) => {
+    dispatch({ type: actionTypes.SET_INSTRUMENT_META, payload: meta });
+  }, []);
 
-const updateIndicator = useCallback((id, patch) => {
-  if (!id || !patch) return;
-  dispatch({ type: actionTypes.UPDATE_INDICATOR, payload: { id, patch } });
-}, []);
+  const setLastCandleData = useCallback((candle) => {
+    dispatch({ type: actionTypes.SET_LAST_CANDLE, payload: candle });
+  }, []);
 
-  
+  const toggleIndicator = useCallback((indicator) => {
+    dispatch({ type: actionTypes.TOGGLE_INDICATOR, payload: indicator });
+  }, []);
 
-const value = useMemo(
-  () => ({
-    ...state,
-    setChartData,
-    setChartLoading,
-    setInterval,
-    setTimeframe,
-    setExpanded,
-    setCandleType,
-    toggleIndicator,
-    removeIndicator,
-    toggleIndicatorVisibility,
-    updateIndicator,
-  }),
-  [
-    state,
-    setChartData,
-    setChartLoading,
-    setInterval,
-    setTimeframe,
-    setExpanded,
-    setCandleType,
-    toggleIndicator,
-    removeIndicator,
-    toggleIndicatorVisibility,
-    updateIndicator,
-  ]
-);
+  const removeIndicator = useCallback((id) => {
+    dispatch({ type: actionTypes.REMOVE_INDICATOR, payload: id });
+  }, []);
+
+  const toggleIndicatorVisibility = useCallback((id) => {
+    dispatch({ type: actionTypes.TOGGLE_VISIBILITY, payload: id });
+  }, []);
+
+  const updateIndicator = useCallback((id, patch) => {
+    if (!id || !patch) return;
+    dispatch({ type: actionTypes.UPDATE_INDICATOR, payload: { id, patch } });
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      ...state,
+      state,
+      setChartData,
+      setChartLoading,
+      setInterval,
+      setTimeframe,
+      setExpanded,
+      setCandleType,
+      setActiveTicker,
+      setInstrumentMeta,
+      setLastCandleData,
+      toggleIndicator,
+      removeIndicator,
+      toggleIndicatorVisibility,
+      updateIndicator,
+      dispatch,
+    }),
+    [
+      state,
+      setChartData,
+      setChartLoading,
+      setInterval,
+      setTimeframe,
+      setExpanded,
+      setCandleType,
+      setActiveTicker,
+      setInstrumentMeta,
+      setLastCandleData,
+      toggleIndicator,
+      removeIndicator,
+      toggleIndicatorVisibility,
+      updateIndicator,
+      dispatch,
+    ]
+  );
 
 return <ChartContext.Provider value={value}>{children}</ChartContext.Provider>;
 };
@@ -236,4 +273,16 @@ export const useChart = () => {
   const ctx = useContext(ChartContext);
   if (!ctx) throw new Error('useChart must be used within a ChartProvider');
   return ctx;
+};
+
+export const useChartState = () => {
+  const ctx = useContext(ChartContext);
+  if (!ctx) throw new Error('useChartState must be used within a ChartProvider');
+  return ctx.state ?? {};
+};
+
+export const useChartDispatch = () => {
+  const ctx = useContext(ChartContext);
+  if (!ctx) throw new Error('useChartDispatch must be used within a ChartProvider');
+  return ctx.dispatch;
 };
