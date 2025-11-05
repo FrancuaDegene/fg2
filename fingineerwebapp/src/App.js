@@ -68,6 +68,9 @@ function App() {
                 setData(result);
                 setNews(result.news || []);
                 setDividends(result.dividends || []);
+                if (result?.date) {
+                    setSelectedDate(result.date);
+                }
                 // Данные для графика будут запрошены в отдельном useEffect
             }
         } catch (error) {
@@ -168,6 +171,7 @@ function App() {
                         setChartData({ candles: [], error: null });
                         setNews([]);
                         setDividends([]);
+                        setSelectedDate('');
                     }}
                     isSubmitted={!!data}
                     onFocus={() => setIsSearchActive(true)}

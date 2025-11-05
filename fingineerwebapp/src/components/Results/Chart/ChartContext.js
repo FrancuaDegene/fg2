@@ -11,6 +11,7 @@ const actionTypes = {
   TOGGLE_INDICATOR: 'TOGGLE_INDICATOR',
   REMOVE_INDICATOR: 'REMOVE_INDICATOR',
   TOGGLE_VISIBILITY: 'TOGGLE_VISIBILITY',
+  UPDATE_INDICATOR: 'UPDATE_INDICATOR',
 };
 
 // Reducer
@@ -64,24 +65,40 @@ function chartReducer(state, action) {
       
     // ChartContext.js (внутри chartReducer)
 
-case actionTypes.TOGGLE_INDICATOR: {
-  // Ищем существующий индикатор по action.payload.id
-  const exists = state.activeIndicators.find(i => i.id === action.payload.id);
+    case actionTypes.TOGGLE_INDICATOR: {
+      const indicator = action.payload;
+      if (!indicator || !indicator.id) return state;
+      const exists = state.activeIndicators.find((i) => i.id === indicator.id);
 
-  if (exists) {
-    // Если нашли - удаляем его
-    return { 
-      ...state, 
-      activeIndicators: state.activeIndicators.filter(i => i.id !== action.payload.id) 
-    };
-  } else {
-    // Если не нашли - добавляем, устанавливая флаг видимости
-    return { 
-      ...state, 
-      activeIndicators: [...state.activeIndicators, { ...action.payload, visible: true }] 
-    };
-  }
-}
+      if (exists) {
+        return {
+          ...state,
+          activeIndicators: state.activeIndicators.filter((i) => i.id !== indicator.id),
+        };
+      }
+
+      const BOTTOM_INDICATORS = new Set(['volume', 'rsi']);
+      const sanitizedIndicator = {
+        ...indicator,
+        visible: true,
+        params: indicator.params ? { ...indicator.params } : undefined,
+        settings: indicator.settings
+          ? { ...indicator.settings }
+          : indicator.id === 'rsi'
+          ? { showLevels: true }
+          : undefined,
+      };
+
+      const nextIndicators = state.activeIndicators.filter((i) => {
+        if (!BOTTOM_INDICATORS.has(indicator.id)) return true;
+        return !BOTTOM_INDICATORS.has(i.id);
+      });
+
+      return {
+        ...state,
+        activeIndicators: [...nextIndicators, sanitizedIndicator],
+      };
+    }
 
     case actionTypes.REMOVE_INDICATOR:
       return { ...state, activeIndicators: state.activeIndicators.filter(i => i.id !== action.payload) };
@@ -93,6 +110,29 @@ case actionTypes.TOGGLE_INDICATOR: {
           i.id === action.payload ? { ...i, visible: !i.visible } : i
         ),
       };
+
+    case actionTypes.UPDATE_INDICATOR: {
+      const { id, patch } = action.payload || {};
+      if (!id || !patch) return state;
+      let changed = false;
+      const nextIndicators = state.activeIndicators.map((indicator) => {
+        if (indicator.id !== id) return indicator;
+        changed = true;
+        const { params: paramsPatch, settings: settingsPatch, ...rest } = patch;
+        return {
+          ...indicator,
+          ...rest,
+          params: paramsPatch
+            ? { ...(indicator.params || {}), ...paramsPatch }
+            : indicator.params,
+          settings: settingsPatch
+            ? { ...(indicator.settings || {}), ...settingsPatch }
+            : indicator.settings,
+        };
+      });
+      if (!changed) return state;
+      return { ...state, activeIndicators: nextIndicators };
+    }
 
     default:
       return state;
@@ -151,6 +191,11 @@ const toggleIndicatorVisibility = useCallback((id) => {
   dispatch({ type: actionTypes.TOGGLE_VISIBILITY, payload: id });
 }, []);
 
+const updateIndicator = useCallback((id, patch) => {
+  if (!id || !patch) return;
+  dispatch({ type: actionTypes.UPDATE_INDICATOR, payload: { id, patch } });
+}, []);
+
   
 
 const value = useMemo(
@@ -165,6 +210,7 @@ const value = useMemo(
     toggleIndicator,
     removeIndicator,
     toggleIndicatorVisibility,
+    updateIndicator,
   }),
   [
     state,
@@ -177,6 +223,7 @@ const value = useMemo(
     toggleIndicator,
     removeIndicator,
     toggleIndicatorVisibility,
+    updateIndicator,
   ]
 );
 

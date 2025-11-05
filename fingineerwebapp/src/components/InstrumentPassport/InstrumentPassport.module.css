@@ -1,0 +1,266 @@
+.passport {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px 24px;
+  background: var(--fg-surface-elevated, #10131a);
+  border-radius: 16px;
+  border: 1px solid var(--fg-border-color, rgba(255, 255, 255, 0.08));
+}
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 8px;
+  align-items: flex-start;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #1a1d29;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tickerBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ticker {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--fg-text-primary, #ffffff);
+}
+
+.metaLine {
+  font-size: 14px;
+  color: var(--fg-text-secondary, #96a1b3);
+}
+
+.pulseWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 90px;
+  max-width: 90px;
+  flex-shrink: 0;
+  overflow: visible;
+  margin-left: 8px;
+  margin-top: 2px;
+  text-align: right;
+}
+
+.metaSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--fg-divider, rgba(255, 255, 255, 0.12));
+  border: 0;
+}
+
+.metaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.metaColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metaLabel {
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--fg-text-muted, #7a8498);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.metaLabelText {
+  display: inline-block;
+}
+
+.metaValue {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--fg-text-primary, #ffffff);
+}
+
+.ctaRow {
+  display: flex;
+  gap: 8px;
+}
+
+.ctaButton,
+.ctaButtonSecondary {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.ctaButton {
+  background: var(--fg-accent-bg, #2563eb);
+  color: var(--fg-accent-fg, #ffffff);
+  border: none;
+}
+
+.ctaButtonSecondary {
+  background: transparent;
+  color: var(--fg-text-primary, #1a1d29);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.ctaButtonSecondary:hover {
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.infoHintBtn {
+  background: transparent;
+  border: 0;
+  padding: 0 0 0 4px;
+  margin: 0;
+  line-height: 0;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.infoHintBtn[data-active="1"] {
+  color: inherit;
+}
+
+.infoHintBtn svg {
+  pointer-events: none;
+}
+
+.hintTooltip {
+  position: absolute;
+  z-index: 9999;
+  min-width: 160px;
+  max-width: 220px;
+  top: calc(100% + 6px);
+  left: 0;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 400;
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  margin-top: 4px;
+  margin-left: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.hintTooltip[data-visible="1"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.compact {
+  padding: 8px 12px 10px;
+  border-radius: 8px;
+  width: 220px;
+  max-width: 220px;
+  min-width: 0;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: #1a1d29;
+}
+
+.compact .metaLine {
+  font-size: 12px;
+  line-height: 1.2;
+  color: rgba(26, 29, 41, 0.6);
+}
+
+.compact .ticker {
+  font-size: 20px;
+  color: #1a1d29;
+}
+
+.compact .pulseWrapper {
+  transform: none;
+  transform-origin: top right;
+}
+
+.compact .metaSection {
+  gap: 6px;
+}
+
+.compact .metaGrid {
+  row-gap: 4px;
+  column-gap: 16px;
+}
+
+.compact .metaColumn {
+  min-width: 0;
+}
+
+.compact .metaLabel {
+  color: rgba(26, 29, 41, 0.6);
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.compact .metaValue {
+  color: #1a1d29;
+  font-size: 13px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.compact .ctaRow {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}

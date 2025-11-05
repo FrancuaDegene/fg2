@@ -20,7 +20,6 @@ const ChartLayout = ({ children, isExpanded }) => {
 // Компонент для синхронизации пропсов с контекстом
 const ChartContextSync = ({ isExpanded, chartData, isChartLoading, currentInterval, currentTimeframe, currentCandleType }) => {
   const {
-    chartData: ctxChartData,
     isChartLoading: ctxIsChartLoading,
     isExpanded: contextIsExpanded,
     setExpanded,
@@ -80,6 +79,7 @@ const ChartContextSync = ({ isExpanded, chartData, isChartLoading, currentInterv
 
 const ChartContainer = ({
   chartData,
+  instrumentMeta,
   isChartLoading,
   currentInterval,
   currentTimeframe,
@@ -123,6 +123,7 @@ const ChartContainer = ({
           onIntervalChange={handleIntervalChange}
           onTimeframeChange={handleTimeframeChange}
           onCandleTypeChange={handleCandleTypeChange}
+          instrumentMeta={instrumentMeta}
           onToggleExpand={handleToggleExpand}
           onToggleSearch={onToggleSearch}
           onSearch={handleSearch}

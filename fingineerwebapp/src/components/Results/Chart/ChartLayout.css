@@ -21,11 +21,13 @@
   position: relative;
   isolation: isolate; /* свой стек слоёв для всех детей: z-index снова честно сравнивается */
   /* Геометрия expanded-режима (используем как основные значения) */
+  /* Геометрию слева задаём ТОЛЬКО через --anchor-left: график, панель и скрим читают её.
+     Меняем «воздух» ↔ правим --chart-gap-from-rail (рейлган тянет всех синхронно). */
    --rail-offset: 0px;        /* смещение рельсы вправо (+) или влево (-) относительно центра паза */
   --host-pad-x: 16px;
   --dock-left-width: 72px;
   --gutter-width: 70px;              /* стабильный паз в expanded */
-  --overlay-gap: 12px;                /* зазор: рельса ↔ оверлеи (карточки/слоты) */
+  --overlay-gap: 16px;                /* зазор: рельса ↔ оверлеи (карточки/слоты) */
 
   /* Рельса */
   --rail-thickness: 6px;              /* толщина рельсы в expanded */
@@ -34,19 +36,22 @@
   --rail-gap: calc(var(--rail-thickness) + var(--toolbar-margin));
 
   /* Левый слот под TickerCard (связан с шириной самой карточки) */
-  --left-slot-min: 360px;             /* выбери целевую ширину, 260–300px */
+  --left-slot-min: 204px;             /* базовая ширина слота под паспорт */
 
   /* Сдвиг «карточки графика» ближе к рельсе, остаётся небольшой просвет */
-  --chart-gap-from-rail: 70px;
+  --chart-rail-gap: 48px;             /* фиксированный зазор между рельсой и сценой */
+  --chart-gap-from-rail: 86px;
 
-  --toolbar-left: calc(
-  var(--chart-left)
-  + ( var(--chart-gap-from-rail)
-      - ( (var(--gutter-width) - var(--dock-rail-width)) / 2 )
-    )
-);
   /* Вспомогательные вычисления */
   --chart-left: calc(var(--host-pad-x) + var(--dock-left-width) + var(--gutter-width));
+
+  /* Единый якорь для графика, тулбара и скрима */
+  --anchor-left: calc(
+    var(--chart-left)
+    - ( (var(--gutter-width) - var(--dock-rail-width, var(--rail-thickness))) / 2 )
+    + var(--chart-gap-from-rail)
+  );
+  --toolbar-left: var(--anchor-left);
 
   /* Scrim под верхними капсулами */
   --toolbar-scrim-height: 84px;
@@ -57,22 +62,23 @@
 
 /* Expanded — точечные оверрайды, если захочешь отличать от обычного режима */
 .chart-host[data-expanded="1"]{
-  /* при необходимости меняй тут */
   --dock-rail-width: 6px;
-  --rail-offset: 24px;
-  /* и на всякий случай фиксируем ширину рельсы */
-  --dock-rail-width: 6px;
-  /* --left-slot-min: 280px; // можно варьировать */
+  --rail-offset: calc(
+    var(--left-slot-min)
+    + var(--overlay-gap)
+    - var(--dock-left-width)
+    - ((var(--gutter-width) + var(--dock-rail-width, var(--rail-thickness))) / 2)
+  );
+  --chart-gap-from-rail: calc(var(--rail-offset) + var(--chart-rail-gap));
   padding: 0 var(--host-pad-x);
-  --rail-offset: 35px; /* смещение рельсы вправо; подбери 12–24px по вкусу */
 }
 
 /* Адаптив — меняем ТОЛЬКО ширину левого слота (и тем самым карточки) */
-@media (max-width: 1439px){
-  .chart-host{ --left-slot-min: 240px; }
+@media (max-width: 1360px){
+  .chart-host{ --left-slot-min: 204px; }
 }
 @media (max-width: 1279px){
-  .chart-host{ --left-slot-min: 220px; }
+  .chart-host{ --left-slot-min: 188px; }
 }
 
 /* ======================================================================
@@ -92,7 +98,7 @@
     + var(--rail-offset, 0px)
   );
 
-  background: rgba(210, 218, 233, .55);
+  background: rgba(190, 198, 215, .85);
   border-radius: 3px;
   box-shadow: 0 0 0 1px rgba(210,218,233,.06) inset;
   pointer-events: none;
@@ -222,16 +228,22 @@
 .chart-host[data-expanded="1"] .chart-toolbar-section{
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
-  padding: 12px 16px 0;
+  padding-top: 12px;
+  padding-right: 16px;
+  padding-bottom: 0;
+  left: auto;
+  right: auto;
+  margin: 0;
+  transform: none;
   background: transparent !important;
   border: none !important;
 }
 
-/* Левый слот — «липнет» к рельсе: margin-left = chart-left */
+/* Левый слот «прилипает» за счёт паддинга родителя */
 .chart-host[data-expanded="1"] .toolbar-left-slot{
-  margin-left: var(--toolbar-left);
+  margin-left: 0;
   min-width: var(--left-slot-min);
   width: var(--left-slot-min);   /* фиксируем ширину, чтобы дети не «гуляли» */
   height: 36px;
@@ -239,6 +251,11 @@
   align-items: center;
   pointer-events: none;
   z-index: 3;
+}
+.chart-host[data-expanded="1"] .toolbar-left-slot:empty{
+  min-width: 0;
+  width: 0;
+  display: none;
 }
 
 /* Разрешаем интерактив детям слота */
@@ -261,11 +278,15 @@
   position: absolute;
   top: 12px;
   left: var(--host-pad-x);
-  right: calc(100% - var(--chart-left) + var(--overlay-gap));
+  right: auto;
+  width: min(
+    var(--left-slot-min),
+    max(0px, calc(var(--anchor-left) - var(--chart-rail-gap) - var(--host-pad-x) - var(--overlay-gap)))
+  );
   display: flex;
   align-items: flex-start;
   pointer-events: none;   /* сам контейнер клики не ловит */
-  z-index: 4;            /* выше рельсы (10) достаточно */
+  z-index: 12;            /* выше рельсы, чтобы паспорт не резался */
 }
 
 /* Сама карточка интерактивна и привязана к ширине слота */
@@ -273,3 +294,5 @@
   pointer-events: auto;
   width: min(var(--left-slot-min), 100%);
 }
+
+

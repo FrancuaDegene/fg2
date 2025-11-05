@@ -1,0 +1,75 @@
+Обновлённый План
+
+Токены паддингов
+
+Ввести: --tc-pad-top, --tc-pad-x, --tc-pad-bottom (вместо --tc-pad(16/14/12)).
+Проставить значения по макету: 16 / 14 / 12.
+Палитра чипов и контраст
+
+Определить тона и контраст текста ≥ 4.5:1 (light/dark):
+default: bg rgba(34,38,44,0.06), fg #2b3037
+amber (auction): bg #FFECB3, fg #4A3D10
+danger (halted): bg #FAD0D3, fg #7A1F25
+muted (unknown/closed): bg rgba(34,38,44,0.06), fg rgba(78,85,98,0.72)
+В css: токены --chip-bg-*, --chip-fg-*; чип «Сессия» меняет только фон/fg.
+Identity/бейджи
+
+[MOEX] [TQBR] [₽] с aria-label/title; капсула валюты показывается всегда (скрывать только <200px).
+Лого 24–28; onError скрывать изображение и показывать инициал (уже есть).
+Название эмитента
+
+line-clamp: 2 + title (mouse), long‑press tooltip на тач (~1.5s, без анимаций при prefers-reduced-motion).
+Чип‑линия
+
+«Сектор: … ⓘ» — внутри чипа полный текст; ограничить max-width, text-overflow: ellipsis; tooltip по :hover/:focus и long‑press.
+«Сессия: Осн. ⓘ» — текст нейтральный, фон по тону: default/amber/danger/muted; короткие подписи: «Осн.», «Аукц.», «Закр.», «Неизв.».
+Див‑чип: условие показа 0 ≤ diffDays ≤ 14 строго в Europe/Moscow; нейтральный фон + тонкая рамка.
+Tooltip’ы
+
+CSS‑only отображение через data-visible; добавить короткий JS‑листенер на Esc для закрытия; long‑press на тач (авто‑hide ~1.5s); учитывать prefers-reduced-motion: reduce.
+Действия
+
+Ghost‑кнопки 28–32px: [↔ Сравнить] (lucide arrow-left-right) и [📰 Новости] (lucide newspaper).
+<220px — скрывать «Сравнить», выравнивание влево, внешнего CLS нет (карточка — изолированный модуль).
+Focus‑ring видимый; курсор только на кликабельных.
+A11y/таб‑порядок
+
+tabIndex/порядок: лого/тикер → Сравнить → Новости → ⓘ(Сектор) → ⓘ(Сессия).
+Лого/тикер: role="button" + aria-label="Открыть поиск по инструментам".
+Производительность
+
+React.memo(TickerCard); чип‑массивы мемоизировать; обработчики через useCallback.
+Tooltip не вызывает setState на mousemove; переключение видимости — через атрибуты.
+Не рендерим пустые чипы: нет данных — чип не показываем.
+Layout‑синхронизация
+
+В ChartLayout.css привязать --left-slot-min к текущей --tc-width-md (200–220) + запас под тень; проверить брейки 1360/1279 и overlay-left.
+Телеметрия
+
+Лог passport_action_click с { action: 'compare'|'news', symbolId }.
+Действия по файлам
+
+src/components/Results/Chart/TickerCard.css
+
+Ввести --tc-pad-top/--tc-pad-x/--tc-pad-bottom, токены фон/текст чипов для light/dark.
+Настроить clamp‑2 имени, стили капсул, чип‑линии (flex-wrap; gap:8; min-width (line 0)), divider только под шапкой.
+src/components/Results/Chart/TickerCard.js
+
+Перестроить шапку (лого→тикер→капсулы MOEX/TQBR/₽, имя 2 строки).
+Заменить KV‑строки на чип‑линию («Сектор», «Сессия», «Див»).
+Добавить ghost‑кнопки с иконками; скрытие «Сравнить» <220px.
+Tooltip API: data-visible, aria-haspopup, Esc‑листенер; long‑press.
+src/components/Results/Chart/ChartLayout.css
+
+Синхронизировать --left-slot-min с 200–220px; проверить overlay-left ширину/зазор.
+Данные/нормализация
+
+Использовать sectorName/industry, session.tone, currencySymbol (RUB→₽, USD→$, EUR→€; остальное ISO).
+Расчёт diffDays для дивов — по МСК (ночь‑к‑ночи); короткие подписи статусов.
+Критерии приёмки
+
+CLS карточки = 0 (появление подсказок/чипов не двигает layout).
+Контраст чипов соответствует WCAG (≥4.5:1) в светлой/тёмной подложке.
+На ширине <220px «Сравнить» скрывается, остальная компоновка не «прыгает».
+Название: clamp‑2, title/long‑press показывает полное.
+Tooltip’ы: hover/focus/long‑press, закрытие Esc, без анимаций при prefers-reduced-motion.

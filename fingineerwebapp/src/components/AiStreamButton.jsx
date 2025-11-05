@@ -1,45 +1,53 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { streamAI } from '../api/aiService';
 
 export default function AiStreamButton() {
+  const [prompt, setPrompt] = useState('Что такое ETF? Дай кратко, по-русски.');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const stopRef = useRef(null);
 
-  const start = () => {
-    if (loading) return;
+  function startStream() {
+    if (!prompt.trim() || loading) return;
     setAnswer('');
     setLoading(true);
 
+    // стартуем стрим по текущему prompt
     stopRef.current = streamAI(
-      'Проверка стрима: короткая фраза что интеграция работает.',
+      prompt.trim(),
       (chunk) => {
-        // наши SSE-события приходят по словам — аккуратно склеиваем
-        setAnswer((prev) => (prev ? prev + ' ' + chunk : chunk));
+        // аккуратно дописываем кусочки без лишних пробелов
+        setAnswer((prev) => (prev || '') + chunk);
       },
-      () => setLoading(false) // onEnd
+      () => setLoading(false) // onEnd / onError
     );
-  };
+  }
 
-  const stop = () => {
+  function stopStream() {
     stopRef.current?.();
     stopRef.current = null;
     setLoading(false);
-  };
-
-  useEffect(() => () => stopRef.current?.(), []);
+  }
 
   return (
-    <div style={{ padding: 8 }}>
-      <button onClick={start} disabled={loading}>
-        {loading ? 'Стримим…' : 'AI стрим'}
-      </button>
-      {loading && (
-        <button onClick={stop} style={{ marginLeft: 8 }}>
-          Стоп
+    <div style={{ display: 'grid', gap: 8, maxWidth: 700 }}>
+      <label style={{ fontSize: 14, color: '#666' }}>Промпт (живой стрим):</label>
+      <textarea
+        value={prompt}
+        onChange={(e) => setPrompt(e.target.value)}
+        rows={3}
+        style={{ width: '100%', padding: 10, borderRadius: 8 }}
+        placeholder="Введите вопрос…"
+      />
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={startStream} disabled={loading || !prompt.trim()}>
+          {loading ? 'Стриминг…' : 'AI стрим'}
         </button>
-      )}
-      <div style={{ marginTop: 8, whiteSpace: 'pre-wrap' }}>{answer}</div>
+        <button onClick={stopStream} disabled={!loading}>Стоп</button>
+      </div>
+
+      <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{answer}</pre>
     </div>
   );
 }

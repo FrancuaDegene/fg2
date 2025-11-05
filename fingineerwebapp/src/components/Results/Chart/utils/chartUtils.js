@@ -1,5 +1,3 @@
-import { TickMarkType } from 'lightweight-charts';
-
 // --- Вспомогательные функции ---
 
 export const calculateBarSpacing = (interval, timeframe) => {

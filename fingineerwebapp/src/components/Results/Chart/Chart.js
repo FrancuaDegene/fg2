@@ -2,9 +2,26 @@ import React from 'react'; // Убрали useState, он больше не ну
 import PropTypes from 'prop-types';
 import ChartContainer from './ChartContainer';
 import './Chart.css';
+import { normalizeExchange } from '../../../utils/normalizeExchange';
+
+// Generic small helpers moved to module scope to keep component hooks' deps stable
+const toNumber = (value) => {
+  if (value === null || value === undefined) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
+const pickNumber = (...values) => {
+  for (const candidate of values) {
+    const parsed = toNumber(candidate);
+    if (parsed !== null) return parsed;
+  }
+  return null;
+};
 
 const Chart = ({
   chartData,
+  data,
   isChartLoading,
   query,
   onToggleSearch,
@@ -48,9 +65,99 @@ const Chart = ({
     setCandleType(newType);
   };
 
+  const instrumentMeta = React.useMemo(() => {
+    const rawSymbol = data?.ticker || query || '';
+    const symbol = rawSymbol ? String(rawSymbol).toUpperCase() : (query ? String(query).toUpperCase() : 'SBER');
+    const exchange = normalizeExchange(data?.exchange || data?.market || 'MOEX');
+    const exchangeShort = data?.exchangeShort ? String(data?.exchangeShort).toUpperCase() : exchange;
+    const currency = (data?.currency || data?.currencyCode || 'RUB')?.toString().toUpperCase();
+
+    const symbolId =
+      data?.symbolId ||
+      (exchange && symbol ? `${String(exchange).toUpperCase()}:${symbol}` : symbol);
+
+    const lastPrice = pickNumber(
+      data?.close,
+      data?.currentPrice,
+      data?.lastPrice,
+      data?.price
+    );
+
+    const dayChangePct = pickNumber(
+      data?.dayChangePct,
+      data?.changePercent,
+      data?.priceChangePercent,
+      data?.change_percentage,
+      data?.changePct
+    );
+
+    const dayVolume = pickNumber(
+      data?.volume,
+      data?.dayVolume,
+      data?.avgVolume,
+      data?.averageVolume
+    );
+
+    const prevClose = pickNumber(
+      data?.prevClose,
+      data?.previousClose,
+      data?.prev_close
+    );
+
+    const instrumentType = (data?.instrumentType || data?.type || 'stock').toLowerCase();
+    const secName = data?.shortName || data?.secName || data?.name || '';
+    const instrumentName = data?.name || data?.fullName || secName;
+    const board = data?.board || data?.boardCode || data?.primaryBoard || '';
+    const lotSize = pickNumber(data?.lotSize, data?.lot, data?.lotsize) || 1;
+    const tickSize = pickNumber(data?.tickSize, data?.minPriceIncrement, data?.min_step, data?.stepPrice);
+    const displayDecimals = toNumber(data?.displayDecimals ?? data?.pricePrecision ?? data?.decimals);
+    const sectorName = data?.sectorName || data?.sectorTitle || data?.sectorLong || data?.sectorLabel || '';
+    const industry = data?.industry || data?.industryName || '';
+    const sectorCode = data?.sectorCode || data?.sector || '';
+    const sector = sectorName || industry || sectorCode || '';
+    const country = data?.country || data?.countryCode || '';
+    const logoUrl = data?.logoUrl || data?.logo || null;
+    const exDivDate = data?.exDivDate || data?.dividendDate || data?.nextDividendDate || data?.dividendNextDate;
+    const divNextAmount = pickNumber(data?.dividendAmount, data?.dividendNextAmount, data?.nextDividendValue);
+    const session = data?.session || data?.tradingSession || data?.tradeSession || 'main';
+    const auction = data?.auction || data?.auctionState || 'none';
+    const halted = Boolean(data?.isHalted || data?.halted || data?.suspended);
+
+    return {
+      symbol,
+      symbolId: symbolId ? String(symbolId).toUpperCase() : symbol,
+      exchange,
+      exchangeShort,
+      currency,
+      lastPrice,
+      dayChangePct,
+      dayVolume,
+      prevClose,
+      instrumentType,
+      secName,
+      instrumentName,
+      board,
+      lotSize,
+      tickSize,
+      displayDecimals,
+      sector,
+      sectorName,
+      sectorCode,
+      industry,
+      country,
+      logoUrl,
+      exDivDate,
+      divNextAmount,
+      session,
+      auction,
+      halted,
+    };
+  }, [data, query]);
+
   return (
     <ChartContainer
       chartData={chartData}
+      instrumentMeta={instrumentMeta}
       isChartLoading={isChartLoading}
       currentInterval={currentInterval}
       currentTimeframe={currentTimeframe}
@@ -72,6 +179,7 @@ Chart.propTypes = {
     candles: PropTypes.array,
     error: PropTypes.string,
   }),
+  data: PropTypes.object,
   isChartLoading: PropTypes.bool,
   currentInterval: PropTypes.string,
   currentTimeframe: PropTypes.string,

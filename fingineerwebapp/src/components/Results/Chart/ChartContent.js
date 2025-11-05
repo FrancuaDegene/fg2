@@ -1,6 +1,5 @@
 import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import ChartToolbar from './ChartToolbar';
 import ChartRenderer from './ChartRenderer';
 import { useChart } from './ChartContext';
 import './Chart.css';
@@ -11,6 +10,7 @@ const ChartContent = ({
   onToggleExpand,
   onToggleSearch,
   onSearch,
+  instrumentMeta,
   query,
 }) => {
   const {
@@ -21,6 +21,7 @@ const ChartContent = ({
     currentCandleType,
     isExpanded,
     setCandleType,
+    activeIndicators,
   } = useChart();
 
   console.log('ChartContent rendered with chartData:', chartData);
@@ -45,12 +46,11 @@ const ChartContent = ({
   }
 }, [onToggleExpand]);
 
-  const handleSearch = useCallback((searchQuery) => {
-    if (typeof onSearch === 'function') {
-  console.log('[ChartContent] calling onSearch with', searchQuery);
-  onSearch(searchQuery);
+  const handleOpenSearch = useCallback(() => {
+    if (typeof onToggleSearch === 'function') {
+      onToggleSearch();
     }
-  }, [onSearch]);
+  }, [onToggleSearch]);
 
   const handleCandleTypeChange = useCallback((type) => {
     if (typeof setCandleType === 'function') {
@@ -62,6 +62,8 @@ const ChartContent = ({
     <>
       <ChartRenderer
         chartData={chartData}
+        instrumentMeta={instrumentMeta}
+        activeIndicators={activeIndicators}
         currentInterval={currentInterval}
         currentTimeframe={currentTimeframe}
         currentCandleType={currentCandleType}
@@ -71,7 +73,7 @@ const ChartContent = ({
         onTimeframeChange={handleTimeframeChange}
         onToggleExpand={handleToggleExpand}
         onCandleTypeChange={handleCandleTypeChange}
-        onSearch={handleSearch}
+        onOpenSearch={handleOpenSearch}
       />
     </>
   );
@@ -83,6 +85,7 @@ ChartContent.propTypes = {
   onToggleExpand: PropTypes.func,
   onToggleSearch: PropTypes.func,
   onSearch: PropTypes.func,
+  instrumentMeta: PropTypes.object,
   query: PropTypes.string,
 };
 
@@ -93,6 +96,7 @@ const MemoizedChartContent = memo(ChartContent, (prevProps, nextProps) => {
     prevProps.onToggleExpand === nextProps.onToggleExpand &&
     prevProps.onToggleSearch === nextProps.onToggleSearch &&
     prevProps.onSearch === nextProps.onSearch &&
+    prevProps.instrumentMeta === nextProps.instrumentMeta &&
     prevProps.query === nextProps.query
   );
 });

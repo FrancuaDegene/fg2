@@ -29,4 +29,24 @@ mysql-data/
 # certs/keys
 *.key
 *.crt
+
 backend2/cert/
+# --- Secrets / Env ---
+# игнорируем любые реальные env-файлы во всём репо
+.env
+.env.*
+**/.env
+**/.env.*
+
+# но разрешаем шаблоны для коммита
+!.env.example
+!**/.env.example
+!.env*.example
+!**/.env*.example
+
+# Misc local artifacts
+*.swp
+/ssh -T git@github.com
+/ssh -T git@github.com.pub
+fingineerwebapp/passport_*.txt
+docs/passport_*.txt
