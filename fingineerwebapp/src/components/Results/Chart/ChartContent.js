@@ -1,7 +1,8 @@
 import React, { memo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import ChartRenderer from './ChartRenderer';
-import { useChart } from './ChartContext';
+import DashboardColumn from '../../DashboardColumn/DashboardColumn';
+import { useChart, useChartState } from './ChartContext';
 import './Chart.css';
 
 const ChartContent = ({
@@ -23,6 +24,8 @@ const ChartContent = ({
     setCandleType,
     activeIndicators,
   } = useChart();
+  const { activeTicker, instrumentMeta: stateInstrumentMeta, lastCandleData } = useChartState();
+  const enableDashboard = String(process.env.REACT_APP_FEATURE_DASHBOARD) === '1';
 
   console.log('ChartContent rendered with chartData:', chartData);
   console.log('ChartContent rendered with isExpanded:', isExpanded);
@@ -74,6 +77,15 @@ const ChartContent = ({
         onToggleExpand={handleToggleExpand}
         onCandleTypeChange={handleCandleTypeChange}
         onOpenSearch={handleOpenSearch}
+        dashboardColumn={
+          enableDashboard ? (
+            <DashboardColumn
+              activeTicker={activeTicker}
+              instrumentMeta={stateInstrumentMeta || instrumentMeta}
+              lastCandleData={lastCandleData}
+            />
+          ) : null
+        }
       />
     </>
   );
