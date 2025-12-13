@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 // Сторонние библиотеки
 import {
@@ -14,6 +15,7 @@ import {
 
 // Константы
 import { CHART_CONFIG } from '../../../constants';
+import { fixIntervalForTimeframe } from '../../../lib/timeframes';
 
 // Компоненты проекта
 import useDropdown from '../../Primitives/useDropdown';
@@ -135,6 +137,8 @@ const ChartToolbar = ({
 
   const intervals = CHART_CONFIG.INTERVALS;
   const timeframes = CHART_CONFIG.TIMEFRAMES;
+  const ranges = CHART_CONFIG.RANGES;
+  const tfOptions = isExpanded ? timeframes : ranges;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -176,12 +180,17 @@ const ChartToolbar = ({
   const handleDateChange = () => setIsCalendarOpen(false);
 
   const handleIntervalChange = (intervalId) => {
-    if (onIntervalChange) onIntervalChange(intervalId);
+    const fixed = fixIntervalForTimeframe(intervalId, currentTimeframe, { isExpanded });
+    if (onIntervalChange) onIntervalChange(fixed);
     closeInt();
   };
 
-  const handleTimeframeChange = (timeframeId) => {
-    if (onTimeframeChange) onTimeframeChange(timeframeId);
+  const handleTimeframeChange = (nextTf) => {
+    if (onTimeframeChange) onTimeframeChange(nextTf);
+    const forced = fixIntervalForTimeframe(currentInterval, nextTf, { isExpanded });
+    if (onIntervalChange && forced !== currentInterval) {
+      onIntervalChange(forced);
+    }
     closeTf();
   };
 
@@ -221,34 +230,36 @@ const ChartToolbar = ({
           </button>
         )}
 
-        <div className="dropdown-container tb-dd" ref={intAnchorRef}>
-          <button
-            className="tb-btn tb-btn--with-text"
-            onClick={toggleInt}
-            aria-expanded={isIntOpen}
-          >
-            <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
-          </button>
+        {isExpanded && (
+          <div className="dropdown-container tb-dd" ref={intAnchorRef}>
+            <button
+              className="tb-btn tb-btn--with-text"
+              onClick={toggleInt}
+              aria-expanded={isIntOpen}
+            >
+              <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
+            </button>
 
-          {isIntOpen && (
-            <div className="dropdown-menu" ref={intContentRef}>
-              {intervals.map((interval) => (
-                <button
-                  key={interval.id}
-                  className="tb-dd__item"
-                  data-state={currentInterval === interval.id ? 'active' : undefined}
-                  onClick={() => handleIntervalChange(interval.id)}
-                  title={interval.label}
-                >
-                  <span className="tb-dd__label">{interval.label}</span>
-                  {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+            {isIntOpen && (
+              <div className="dropdown-menu" ref={intContentRef}>
+                {intervals.map((interval) => (
+                  <button
+                    key={interval.id}
+                    className="tb-dd__item"
+                    data-state={currentInterval === interval.id ? 'active' : undefined}
+                    onClick={() => handleIntervalChange(interval.id)}
+                    title={interval.label}
+                  >
+                    <span className="tb-dd__label">{interval.label}</span>
+                    {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-        <div className="tb-separator" />
+        {isExpanded && <div className="tb-separator" />}
 
         <div className="dropdown-container tb-dd" ref={tfAnchorRef}>
           <button
@@ -256,12 +267,12 @@ const ChartToolbar = ({
             onClick={toggleTf}
             aria-expanded={isTfOpen}
           >
-            <BarChart3 size={16} /> {timeframes.find((tf) => tf.id === currentTimeframe)?.id || '1d'}
+            <BarChart3 size={16} /> {tfOptions.find((option) => option.id === currentTimeframe)?.label || '1 день'}
           </button>
 
           {isTfOpen && (
             <div className="dropdown-menu" ref={tfContentRef}>
-              {timeframes.map((timeframe) => (
+              {tfOptions.map((timeframe) => (
                 <button
                   key={timeframe.id}
                   className="tb-dd__item"
@@ -406,6 +417,18 @@ const ChartToolbar = ({
 
 };
 
+ChartToolbar.propTypes = {
+  currentInterval: PropTypes.string.isRequired,
+  onIntervalChange: PropTypes.func,
+  currentTimeframe: PropTypes.string.isRequired,
+  onTimeframeChange: PropTypes.func,
+  currentCandleType: PropTypes.string,
+  onCandleTypeChange: PropTypes.func,
+  onToggleExpand: PropTypes.func,
+  onOpenSearch: PropTypes.func,
+  isExpanded: PropTypes.bool,
+};
+
 const areEqual = (prevProps, nextProps) =>
   prevProps.currentInterval === nextProps.currentInterval &&
   prevProps.currentTimeframe === nextProps.currentTimeframe &&
@@ -418,20 +441,3 @@ const areEqual = (prevProps, nextProps) =>
   prevProps.onOpenSearch === nextProps.onOpenSearch;
 
 export default memo(ChartToolbar, areEqual);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            

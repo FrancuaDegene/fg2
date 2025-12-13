@@ -23,6 +23,7 @@ const Results = ({
     onSelectTimeframe,
     selectedDate,
     onSelectDate,
+    socket,
     isLoading,
     isChartLoading,
     currentInterval,
@@ -33,6 +34,7 @@ const Results = ({
     onToggleSearch,
     onSearch,
 }) => {
+  console.log('[RESULTS_INIT] component mounted/rendered');
   
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -84,8 +86,24 @@ const Results = ({
         return <div className="error">{data.error}</div>;
     }
 
+    console.log('[Results] render START', {
+      hasData: !!data,
+      hasTicker: !!data?.ticker,
+      hasChartData: !!chartData,
+      isChartExpanded,
+      isSearchVisible,
+      currentTimeframe,
+      currentInterval,
+    });
+
     console.log('Results rendering with chartData:', chartData);
     console.log('Results rendering with isChartExpanded:', isChartExpanded);
+    console.log(
+      '[Results] currentTimeframe on render:',
+      currentTimeframe,
+      '| isChartExpanded:',
+      isChartExpanded
+    );
 
     return (
         <div className="results-container">
@@ -138,6 +156,8 @@ const Results = ({
                     chartData={chartData}
                     data={data}
                     isChartLoading={isChartLoading}
+                    selectedDate={selectedDate}
+                    socket={socket}
                     currentTimeframe={currentTimeframe}
                     onTimeframeChange={handleSelectTimeframe}
                     currentInterval={currentInterval}
@@ -185,6 +205,8 @@ Results.propTypes = {
     onToggleExpand: PropTypes.func.isRequired,
     onToggleSearch: PropTypes.func.isRequired,
     onSearch: PropTypes.func.isRequired,
+    socket: PropTypes.object,
 };
 
 export default Results;
+

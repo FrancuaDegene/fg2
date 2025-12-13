@@ -103,9 +103,9 @@ async function getAggregatedCandles(ticker, interval, startDate, endDate) {
       volume: Number(row.volume),
     }));
 
-    if (candles.length > 3000) {
-      candles = candles.slice(-3000);
-    }
+    // Не режем массив свечей на бэкенде:
+    // фронтенд сам применяет LOD/децимацию по timeframe/interval
+    // и выбирает эффективный интервал отображения.
 
     if (candles.length) {
       await cache.set(cacheKey, candles);
@@ -116,6 +116,70 @@ async function getAggregatedCandles(ticker, interval, startDate, endDate) {
   } catch (err) {
     logger.error('db', 'Failed to aggregate candles', err);
     return [];
+  }
+}
+
+async function getLastCandleTime(ticker) {
+  if (!ticker) {
+    return null;
+  }
+
+  const sql = `
+    SELECT MAX(SYSTIME) AS maxTime
+    FROM moex_marketdata
+    WHERE SECID = ? AND BOARDID = 'TQBR'
+  `;
+
+  try {
+    const rows = await query(sql, [ticker]);
+    if (!rows || rows.length === 0 || !rows[0].maxTime) {
+      return null;
+    }
+
+    const raw = rows[0].maxTime; // "YYYY-MM-DD hh:mm:ss" as string (dateStrings: true)
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      logger.warn('db', 'Failed to parse maxTime for ticker', { ticker, raw });
+      return null;
+    }
+
+    const unixSec = Math.floor(parsed.getTime() / 1000);
+    return unixSec;
+  } catch (err) {
+    logger.error('db', 'Error in getLastCandleTime', { ticker, err });
+    return null;
+  }
+}
+
+async function getFirstCandleTime(ticker) {
+  if (!ticker) {
+    return null;
+  }
+
+  const sql = `
+    SELECT MIN(SYSTIME) AS firstTime
+    FROM moex_marketdata
+    WHERE SECID = ? AND BOARDID = 'TQBR'
+  `;
+
+  try {
+    const rows = await query(sql, [ticker]);
+    if (!rows || rows.length === 0 || !rows[0].firstTime) {
+      return null;
+    }
+
+    const raw = rows[0].firstTime;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) {
+      logger.warn('db', 'Failed to parse firstTime for ticker', { ticker, raw });
+      return null;
+    }
+
+    const unixSec = Math.floor(parsed.getTime() / 1000);
+    return unixSec;
+  } catch (err) {
+    logger.error('db', 'Error in getFirstCandleTime', { ticker, err });
+    return null;
   }
 }
 
@@ -135,5 +199,7 @@ function closePool() {
 module.exports = {
   query,
   getAggregatedCandles,
+  getFirstCandleTime,
+  getLastCandleTime,
   closePool,
 };

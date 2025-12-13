@@ -33,6 +33,7 @@ const ExpandedControls = ({
       />
       <IntervalSelector
         currentInterval={currentInterval}
+        currentTimeframe={currentTimeframe}
         onSelectInterval={onSelectInterval}
       />
       {isExpanded && (

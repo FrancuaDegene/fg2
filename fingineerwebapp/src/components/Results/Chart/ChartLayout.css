@@ -294,9 +294,22 @@
     max(0px, calc(var(--anchor-left) - var(--chart-rail-gap) - var(--host-pad-x) - var(--overlay-gap)))
   );
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;     /* паспорт сверху, колонка ниже */
+  align-items: stretch;       /* тянем на всю ширину слота */
+  gap: 8px;                   /* небольшой зазор между блоками */
   pointer-events: none;   /* сам контейнер клики не ловит */
   z-index: 12;            /* выше рельсы, чтобы паспорт не резался */
+}
+
+/* DashboardColumn внутри overlay-left: кликабельна и подчиняется ширине слота */
+.chart-host .overlay-left .dc-root{
+  pointer-events: auto;
+  width: 100%;
+  max-width: var(--left-slot-min);
+  box-sizing: border-box;
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Сама карточка интерактивна и привязана к ширине слота */

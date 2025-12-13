@@ -14,6 +14,7 @@ import Overlay from './components/Overlay/Overlay';
 
 // Инициализация Socket.IO клиента с конфигурацией
 const socket = io(config.SOCKET_URL, config.SOCKET_OPTIONS);
+const FG_AGG_ENABLED = String(process.env.REACT_APP_FG_AGG_ENABLED || '') === '1';
 
 function App() {
     // Состояния для управления данными и UI
@@ -24,7 +25,7 @@ function App() {
     const [dividends, setDividends] = useState([]);
     const [isLoading, setIsLoading] = useState(false); // Для общей загрузки данных
     const [isChartLoading, setIsChartLoading] = useState(false); // Для загрузки данных графика
-    const [timeframe, setTimeframe] = useState('1d'); // Временной интервал для графика (например, 1 день)
+    const [timeframe, setTimeframe] = useState('3mth'); // Дефолтный таймфрейм для графика: 3 месяца (выравниваем compact/expanded)
     const [selectedDate, setSelectedDate] = useState('2023-10-10'); // Выбранная дата для графика
     const [socketConnected, setSocketConnected] = useState(false); // Состояние подключения к сокету
     const [interval, setIntervalValue] = useState('1m'); // Интервал свечей для графика (например, 1 минута)
@@ -37,6 +38,7 @@ function App() {
     // Функция для отправки запроса на данные графика через сокет
     const emitChartDataRequest = useCallback(
         (ticker, currenttimeframe, currentDate, currentInterval) => {
+            if (FG_AGG_ENABLED) return;
             socket.emit('requestChartData', {
                 ticker,
                 timeframe: currenttimeframe,
@@ -90,18 +92,27 @@ function App() {
 
     // ✅ ГЛАВНОЕ ИЗМЕНЕНИЕ: Отдельный эффект для запроса данных графика
     useEffect(() => {
+        if (FG_AGG_ENABLED) return;
         // Запрашиваем данные, только если есть тикер (query) и сокет подключен
         if (query && socketConnected) {
             console.log('Requesting chart data with params:', { query, timeframe, selectedDate, interval });
-            
+
             setIsChartLoading(true); // Показываем лоадер именно для графика
-            
+
             emitChartDataRequest(query, timeframe, selectedDate, interval);
         }
     }, [query, timeframe, interval, selectedDate, socketConnected, emitChartDataRequest]); // Зависимости от всех параметров графика
 
     // Эффект для управления подключениями и событиями Socket.IO
     useEffect(() => {
+        if (FG_AGG_ENABLED) {
+            socket.on('connect', () => setSocketConnected(true));
+            socket.on('disconnect', () => setSocketConnected(false));
+            return () => {
+                socket.off('connect');
+                socket.off('disconnect');
+            };
+        }
         const handleConnect = () => {
             console.log('[SOCKET] Подключено к Socket.IO');
             setSocketConnected(true);
@@ -184,6 +195,7 @@ function App() {
             ) : (
                 <Results
                     data={data}
+                    socket={socket}
                     chartData={chartData}
                     news={news}
                     dividends={dividends}

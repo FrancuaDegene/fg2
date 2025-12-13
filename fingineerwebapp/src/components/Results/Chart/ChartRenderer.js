@@ -1,5 +1,6 @@
 // ChartRenderer.js
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
 import ChartToolbar from './ChartToolbar';
 import ChartCanvas from './ChartCanvas';
 import { MultiPaneChart } from '../../../charts/MultiPaneChart';
@@ -11,6 +12,8 @@ import TickerCard from './TickerCard';
 import './ChartLayout.css';
 import ActiveIndicators from './ActiveIndicators';
 import TopMetricsBar from './TopMetricsBar';
+
+const HOVER_FPS_LIMIT_MS = 1000 / 30;
 
 /**
  * @typedef {'candles'|'line'} SeriesKind
@@ -117,6 +120,7 @@ export const TOP_METRICS_KILL_SWITCH = false;
 
 const ChartRenderer = ({
   chartData,
+  chartMeta,
   instrumentMeta = {},
   activeIndicators = [],
   currentInterval,
@@ -126,13 +130,15 @@ const ChartRenderer = ({
   isExpanded,
   onIntervalChange,
   onTimeframeChange,
-  onToggleExpand,
   onCandleTypeChange,
   onOpenSearch,
+  onToggleExpand,
+  dashboardColumn = null,
 }) => {
   const [activeTool, setActiveTool] = useState(TOOL_IDS.SELECT);
   const [hoverSnapshot, setHoverSnapshot] = useState(null);
   const hoverFrameRef = useRef({ frameId: null, payload: null });
+  const lastHoverTsRef = useRef(0);
   const multiPaneContainerRef = useRef(null);
   const [multiPaneTooltip, setMultiPaneTooltip] = useState({
     data: null,
@@ -474,6 +480,16 @@ const ChartRenderer = ({
       store.payload = nextValue ?? null;
       if (store.frameId !== null) return;
 
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastHoverTsRef.current < HOVER_FPS_LIMIT_MS) {
+        store.frameId = requestAnimationFrame(() => {
+          store.frameId = null;
+          scheduleHoverUpdate(store.payload);
+        });
+        return;
+      }
+      lastHoverTsRef.current = now;
+
       store.frameId = requestAnimationFrame(() => {
         const payload = store.payload;
         store.payload = null;
@@ -498,31 +514,40 @@ const ChartRenderer = ({
     [resolvedSymbolId, isExpanded, clearScheduledHover]
   );
 
+  const setBodyOverflow = useCallback((overflow) => {
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = overflow;
+    }
+  }, []);
+
   useEffect(() => {
     if (!isExpanded) {
       return undefined;
     }
 
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    setBodyOverflow('hidden');
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      setBodyOverflow(previousOverflow);
     };
-  }, [isExpanded]);
+  }, [isExpanded, setBodyOverflow]);
+
+  const clearTooltip = useCallback(() => {
+    scheduleHoverUpdate(null);
+    setMultiPaneTooltip({ data: null, position: null, visible: false });
+  }, [scheduleHoverUpdate]);
 
   const handleMultiPaneHover = useCallback(
     (payload) => {
       if (!payload) {
-        scheduleHoverUpdate(null);
-        setMultiPaneTooltip({ data: null, position: null, visible: false });
+        clearTooltip();
         return;
       }
 
       const { candle, prevCandle, point } = payload;
       if (!candle) {
-        scheduleHoverUpdate(null);
-        setMultiPaneTooltip({ data: null, position: null, visible: false });
+        clearTooltip();
         return;
       }
 
@@ -545,7 +570,7 @@ const ChartRenderer = ({
         visible: Boolean(point),
       });
     },
-    [resolvedSymbolId, scheduleHoverUpdate]
+    [resolvedSymbolId, scheduleHoverUpdate, clearTooltip]
   );
 
   return (
@@ -596,6 +621,11 @@ const ChartRenderer = ({
               onOpenSearch={onOpenSearch}
             />
           </div>
+          {isExpanded && chartMeta?.isDownsampled && chartMeta?.sourceInterval && (
+            <div className="chart-resolution-badge">
+              Агрегировано до {chartMeta.sourceInterval} · {chartMeta.points ?? '—'} точек
+            </div>
+          )}
         </div>
 
         {/* Оверлей слева: карточка не участвует в сетке, ничего не толкает */}
@@ -610,6 +640,7 @@ const ChartRenderer = ({
               onActionCompare={handleTickerCompare}
               onActionNews={handleTickerNews}
             />
+            {dashboardColumn}
           </div>
         )}
         {/* полупрозрачный «scrim» под капсулами тулбара */}
@@ -655,14 +686,12 @@ const ChartRenderer = ({
                 !isChartLoading && !chartData?.error && (
                 <div className="chart-placeholder">Нет данных для отображения графика.</div>
               )}
-              {(!isExpanded || !isTopMetricsEnabled) && (
-                <ChartTooltip
-                  data={multiPaneTooltip.data}
-                  isVisible={multiPaneTooltip.visible}
-                  position={multiPaneTooltip.position}
-                  containerRef={multiPaneContainerRef}
-                />
-              )}
+              <ChartTooltip
+                data={multiPaneTooltip.data}
+                isVisible={multiPaneTooltip.visible && (!isExpanded || !isTopMetricsEnabled)}
+                position={multiPaneTooltip.position}
+                containerRef={multiPaneContainerRef}
+              />
             </div>
           ) : (
             <ChartCanvas
@@ -677,6 +706,7 @@ const ChartRenderer = ({
               symbolId={resolvedSymbolId}
               prevClose={dayPrevClose}
               showTooltip={!isExpanded || !isTopMetricsEnabled}
+              mode={isExpanded ? 'expanded' : 'compact'}
             />
           )}
         </ChartShell>
@@ -685,4 +715,29 @@ const ChartRenderer = ({
   );
 };
       
+ChartRenderer.propTypes = {
+  chartData: PropTypes.shape({
+    candles: PropTypes.array,
+    error: PropTypes.string
+  }),
+  chartMeta: PropTypes.shape({
+    isDownsampled: PropTypes.bool,
+    sourceInterval: PropTypes.string,
+    points: PropTypes.number
+  }),
+  instrumentMeta: PropTypes.object,
+  activeIndicators: PropTypes.array,
+  currentInterval: PropTypes.string.isRequired,
+  currentTimeframe: PropTypes.string.isRequired,
+  currentCandleType: PropTypes.string,
+  isChartLoading: PropTypes.bool.isRequired,
+  isExpanded: PropTypes.bool.isRequired,
+  onIntervalChange: PropTypes.func.isRequired,
+  onTimeframeChange: PropTypes.func.isRequired,
+  onCandleTypeChange: PropTypes.func,
+  onOpenSearch: PropTypes.func,
+  onToggleExpand: PropTypes.func.isRequired,
+  dashboardColumn: PropTypes.node
+};
+
 export default ChartRenderer;

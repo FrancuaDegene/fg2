@@ -28,6 +28,8 @@ const Chart = ({
   onSearch,
   currentInterval,
   currentTimeframe,
+  selectedDate,
+  socket,
   onIntervalChange,
   onTimeframeChange,
   isExpanded,         // ++ Принимаем состояние снаружи
@@ -162,6 +164,8 @@ const Chart = ({
       currentInterval={currentInterval}
       currentTimeframe={currentTimeframe}
       currentCandleType={candleType}
+      selectedDate={selectedDate}
+      socket={socket}
       onIntervalChange={handleIntervalChange}
       onTimeframeChange={handleTimeframeChange}
       onCandleTypeChange={handleCandleTypeChange}
@@ -183,6 +187,8 @@ Chart.propTypes = {
   isChartLoading: PropTypes.bool,
   currentInterval: PropTypes.string,
   currentTimeframe: PropTypes.string,
+  selectedDate: PropTypes.string,
+  socket: PropTypes.object,
   onIntervalChange: PropTypes.func,
   onTimeframeChange: PropTypes.func,
   query: PropTypes.string.isRequired,

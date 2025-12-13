@@ -1,4 +1,4 @@
-/* Новая структура с отдельной панелью */
+﻿/* Новая структура с отдельной панелью */
 .chart-container {
   width: 100%;
   height: 700px;
@@ -445,4 +445,15 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.chart-resolution-badge {
+  margin-left: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(19, 23, 34, 0.75);
+  color: #f3f4f6;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
 }

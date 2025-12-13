@@ -11,6 +11,10 @@ const toNumber = (value) => {
   return Number.isFinite(num) ? num : null;
 };
 
+// Флаги, чтобы не спамить консоль одинаковыми ошибками
+let didWarnUpdateError = false;
+let didWarnSetDataError = false;
+
 export function candles(id = 'candles', z = 0, options = {}) {
   const {
     seriesOptions,
@@ -46,7 +50,9 @@ export function candles(id = 'candles', z = 0, options = {}) {
       const price = toNumber(resolveReferencePrice());
       if (price === null) {
         if (referenceLine) {
-          try { series.removePriceLine(referenceLine); } catch (err) {
+          try {
+            series.removePriceLine(referenceLine);
+          } catch (err) {
             console.warn('[candles] remove reference line failed', err);
           }
           referenceLine = null;
@@ -60,7 +66,9 @@ export function candles(id = 'candles', z = 0, options = {}) {
       }
 
       if (referenceLine) {
-        try { series.removePriceLine(referenceLine); } catch (err) {
+        try {
+          series.removePriceLine(referenceLine);
+        } catch (err) {
           console.warn('[candles] remove reference line failed', err);
         }
         referenceLine = null;
@@ -83,18 +91,83 @@ export function candles(id = 'candles', z = 0, options = {}) {
       }
     };
 
+    // Маленький helper для инкрементальных апдейтов
+    const safeUpdateBar = (bar) => {
+      try {
+        series.update(bar);
+      } catch (err) {
+        if (!didWarnUpdateError) {
+          console.warn(
+            '[candles] series.update failed, incremental update skipped (see data & time ordering). Further update errors will be suppressed.',
+            err,
+          );
+          didWarnUpdateError = true;
+        }
+      }
+    };
+
+    const safeSetData = (nextData) => {
+      try {
+        series.setData(nextData);
+      } catch (err) {
+        if (!didWarnSetDataError) {
+          console.warn(
+            '[candles] series.setData failed, data reset skipped. Further setData errors will be suppressed.',
+            err,
+          );
+          didWarnSetDataError = true;
+        }
+      }
+    };
+
     if (Array.isArray(data) && data.length) {
-      series.setData(data);
+      safeSetData(data);
     }
     syncReferenceLine();
 
     return {
       id,
       z,
+      /**
+       * update(next)
+       *
+       * Контракт:
+       *  - next === null/[]        → только реф-линия
+       *  - next = {time,...}       → инкрементальный апдейт одного бара
+       *  - next = [bars], len<=3   → несколько инкрементальных апдейтов
+       *  - next = [bars], len>3    → полный reset через setData
+       */
       update(next = []) {
-        if (Array.isArray(next)) {
-          series.setData(next);
+        // Пустое обновление — только референс-линия
+        if (!next || (Array.isArray(next) && next.length === 0)) {
+          syncReferenceLine();
+          return;
         }
+
+        // Один бар (реалтайм / правка последнего бара)
+        if (!Array.isArray(next) && next.time != null) {
+          safeUpdateBar(next);
+          syncReferenceLine();
+          return;
+        }
+
+        if (Array.isArray(next)) {
+          if (next.length <= 3) {
+            // Небольшой патч (1–3 бара) — инкрементальные апдейты
+            next.forEach((bar) => {
+              if (bar && bar.time != null) {
+                safeUpdateBar(bar);
+              }
+            });
+          } else {
+            // Крупный набор — считаем как полный срез данных
+            safeSetData(next);
+          }
+          syncReferenceLine();
+          return;
+        }
+
+        // Неподдерживаемый формат — просто держим reference line в актуальном состоянии
         syncReferenceLine();
       },
       dispose() {

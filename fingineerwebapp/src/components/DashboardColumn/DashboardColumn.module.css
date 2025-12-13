@@ -1,39 +1,195 @@
+:root {
+  /* локальные токены под колонку; ширину берём из контейнера overlay-left */
+  --dc-gap: 12px;
+  --dc-pad: 0;
+
+  /* карточка – как у паспорта: белая, тонкая рамка, мягкая тень */
+  --dc-card-radius: 12px;
+  --dc-card-bg: #ffffff;
+  --dc-card-border: 1px solid rgba(34, 38, 44, 0.08);
+  --dc-card-shadow: 0 12px 28px rgba(18, 25, 35, 0.12);
+  --dc-card-pad: 16px;
+
+  --dc-header-fs: 12px;
+  --dc-header-lh: 1.2;
+  --dc-header-color: #2b3037;
+
+  --dc-body-fs: 12px;
+  --dc-body-lh: 1.35;
+  --dc-body-color: #2b3037;
+}
+
 .dashboard-column {
-  width: 220px;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 8px;
+  gap: var(--dc-gap);
+  padding: var(--dc-pad);
   box-sizing: border-box;
-  contain: layout paint style; /* изоляция перерисовок */
+  contain: layout paint style;
+  pointer-events: auto;
+  margin-top: 10px;
 }
 
-.widget {
-  border-radius: 12px;
-  border: 1px solid rgba(210, 218, 233, 0.28);
-  background: rgba(34, 38, 44, 0.50);
-  padding: 10px;
+.widget-card {
+  border-radius: var(--dc-card-radius);
+  background: var(--dc-card-bg);
+  border: var(--dc-card-border);
+  box-shadow: var(--dc-card-shadow);
+  padding: var(--dc-card-pad);
+  width: 100%;
 }
 
-.widget__header {
+.widget-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
 }
 
-.widget__title {
-  font-size: 12px;
-  letter-spacing: .3px;
-  opacity: .92;
+.widget-card__title {
+  font-size: var(--dc-header-fs);
+  line-height: var(--dc-header-lh);
+  letter-spacing: 0.3px;
+  color: var(--dc-header-color);
+  font-weight: 600;
+  user-select: none;
 }
 
-.widget__settings {
+.widget-card__gear {
   appearance: none;
-  border: none;
+  border: 0;
   background: transparent;
-  color: #9aa5b1;
+  color: var(--dc-header-color);
+  opacity: 0.7;
   cursor: pointer;
-  padding: 0;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: opacity .15s ease, background .15s ease;
+}
+
+.widget-card__gear:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.widget-card__body {
+  font-size: var(--dc-body-fs);
+  line-height: var(--dc-body-lh);
+  color: var(--dc-body-color);
+}
+
+/* Утилиты */
+.kpi {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--dc-body-fs);
+  line-height: var(--dc-body-lh);
+  color: var(--dc-body-color);
+}
+
+.kpi + .kpi {
+  margin-top: 6px;
+}
+
+.kpi__label {
+  opacity: .8;
+}
+
+.kpi__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.divider {
+  height: 1px;
+  width: 100%;
+  background: rgba(43, 48, 55, 0.08);
+  margin: 8px 0;
+  border-radius: 999px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 11px;
   line-height: 1;
+  letter-spacing: .2px;
+  background: rgba(43, 48, 55, .08);
+  border: 1px solid rgba(43, 48, 55, .12);
+  color: var(--dc-body-color);
+}
+
+.badge--ok {
+  background: rgba(46, 204, 113, .14);
+  border-color: rgba(46, 204, 113, .35);
+  color: #dff7e9;
+}
+
+.badge--warn {
+  background: rgba(241, 196, 15, .14);
+  border-color: rgba(241, 196, 15, .35);
+  color: #fff3cf;
+}
+
+.badge--danger {
+  background: rgba(231, 76, 60, .14);
+  border-color: rgba(231, 76, 60, .35);
+  color: #ffe0de;
+}
+
+.badge--muted {
+  background: rgba(43, 48, 55, .05);
+  border: 1px solid rgba(43, 48, 55, .1);
+  color: rgba(43, 48, 55, 0.7);
+}
+
+.info-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.6px solid currentColor;
+  color: rgba(43, 48, 55, 0.6);
+  opacity: .75;
+  margin-left: 6px;
+  cursor: help;
+}
+
+.info-dot::after {
+  content: "i";
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.info-dot:hover {
+  opacity: 1;
+}
+
+.muted {
+  opacity: .72;
+}
+
+.up {
+  color: #5de39b;
+}
+
+.down {
+  color: #ff8b8b;
+}
+
+:root[data-theme="light"] {
+  --dc-card-bg: #ffffff;
+  --dc-card-border: 1px solid rgba(44, 52, 73, 0.08);
+  --dc-card-shadow: 0 12px 28px rgba(33, 41, 56, 0.08);
+  --dc-header-color: #2b3037;
+  --dc-body-color: #2b3037;
 }
