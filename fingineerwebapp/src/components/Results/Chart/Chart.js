@@ -1,6 +1,9 @@
 import React from 'react'; // Убрали useState, он больше не нужен для этого
 import PropTypes from 'prop-types';
 import ChartContainer from './ChartContainer';
+// import CompactTrendChart from './CompactTrendChart/CompactTrendChart';
+import CompactSparkline from './CompactTrendChart/CompactSparkline';
+import CompactToolbar from './CompactToolbar';
 import './Chart.css';
 import { normalizeExchange } from '../../../utils/normalizeExchange';
 
@@ -28,6 +31,8 @@ const Chart = ({
   onSearch,
   currentInterval,
   currentTimeframe,
+  selectedDate,
+  socket,
   onIntervalChange,
   onTimeframeChange,
   isExpanded,         // ++ Принимаем состояние снаружи
@@ -154,23 +159,98 @@ const Chart = ({
     };
   }, [data, query]);
 
+  // Compact passport (ticker + last + % by selected range)
+  // NOTE: Range-based: first valid close -> last valid close from chartData.candles
+  const compactPassport = React.useMemo(() => {
+    const candles = Array.isArray(chartData?.candles) ? chartData.candles : [];
+    if (candles.length < 2) {
+      return { last: null, pct: null };
+    }
+
+    let first = null;
+    let last = null;
+    for (let i = 0; i < candles.length; i += 1) {
+      const v = pickNumber(candles[i]?.close, candles[i]?.value);
+      if (Number.isFinite(v)) {
+        first = v;
+        break;
+      }
+    }
+    for (let i = candles.length - 1; i >= 0; i -= 1) {
+      const v = pickNumber(candles[i]?.close, candles[i]?.value);
+      if (Number.isFinite(v)) {
+        last = v;
+        break;
+      }
+    }
+
+    if (!Number.isFinite(first) || !Number.isFinite(last) || first === 0) {
+      return { last: Number.isFinite(last) ? last : null, pct: null };
+    }
+    const pct = ((last - first) / first) * 100;
+    return { last, pct };
+  }, [chartData]);
+
+  const [hoverPrice, setHoverPrice] = React.useState(null);
+  const [hoverPct, setHoverPct] = React.useState(null);
+
+  const handleCompactHover = React.useCallback((payload) => {
+    if (!payload) {
+      setHoverPrice(null);
+      setHoverPct(null);
+      return;
+    }
+    const nextPrice = Number.isFinite(payload?.close) ? payload.close : null;
+    const nextPct = Number.isFinite(payload?.pct) ? payload.pct : null;
+    setHoverPrice(nextPrice);
+    setHoverPct(nextPct);
+  }, []);
+
+  const displayLast = Number.isFinite(hoverPrice) ? hoverPrice : compactPassport.last;
+  const displayPct = Number.isFinite(hoverPct) ? hoverPct : compactPassport.pct;
+
   return (
-    <ChartContainer
-      chartData={chartData}
-      instrumentMeta={instrumentMeta}
-      isChartLoading={isChartLoading}
-      currentInterval={currentInterval}
-      currentTimeframe={currentTimeframe}
-      currentCandleType={candleType}
-      onIntervalChange={handleIntervalChange}
-      onTimeframeChange={handleTimeframeChange}
-      onCandleTypeChange={handleCandleTypeChange}
-      query={query}
-      isExpanded={isExpanded} // ++ Передаем пропс, который получили
-      onToggleExpand={handleToggleExpand} // ++ Передаем наш новый обработчик
-      onToggleSearch={onToggleSearch}
-      onSearch={onSearch}
-    />
+    <div style={{ position: 'relative' }}>
+      {isExpanded ? (
+        <ChartContainer
+          chartData={chartData}
+          instrumentMeta={instrumentMeta}
+          isChartLoading={isChartLoading}
+          currentInterval={currentInterval}
+          currentTimeframe={currentTimeframe}
+          currentCandleType={candleType}
+          selectedDate={selectedDate}
+          socket={socket}
+          onIntervalChange={handleIntervalChange}
+          onTimeframeChange={handleTimeframeChange}
+          onCandleTypeChange={handleCandleTypeChange}
+          query={query}
+          isExpanded={isExpanded} // ++ Передаем пропс, который получили
+          onToggleExpand={handleToggleExpand} // ++ Передаем наш новый обработчик
+          onToggleSearch={onToggleSearch}
+          onSearch={onSearch}
+        />
+      ) : (
+        <div className="chart-wrapper">
+          <div className="chart-container">
+            <CompactToolbar
+              currentRange={currentTimeframe}
+              onSelectRange={handleTimeframeChange}
+              onToggleExpand={handleToggleExpand}
+              ticker={query}
+              lastPrice={displayLast}
+              deltaPct={displayPct}
+            />
+            <CompactSparkline
+              chartData={chartData}
+              ticker={query}
+              range={currentTimeframe}
+              onHoverChange={handleCompactHover}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -183,6 +263,8 @@ Chart.propTypes = {
   isChartLoading: PropTypes.bool,
   currentInterval: PropTypes.string,
   currentTimeframe: PropTypes.string,
+  selectedDate: PropTypes.string,
+  socket: PropTypes.object,
   onIntervalChange: PropTypes.func,
   onTimeframeChange: PropTypes.func,
   query: PropTypes.string.isRequired,

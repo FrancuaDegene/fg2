@@ -1,4 +1,4 @@
-/* Новая структура с отдельной панелью */
+﻿/* Новая структура с отдельной панелью */
 .chart-container {
   width: 100%;
   height: 700px;
@@ -133,12 +133,32 @@
   background: transparent !important;
 }
 
+/* Restore compact hover dot/hairline after global reset */
+.chart-container .compact-sparkline-hairline {
+  background: rgba(255, 255, 255, 0.14) !important;
+}
+
+.chart-container .compact-sparkline-dot {
+  background: #4fd1c5 !important;
+}
+
 /* Основные canvas элементы правильно позиционируем */
 .chart-container > div:first-child {
   width: 100% !important;
   height: 100% !important;
   position: relative !important;
   overflow: visible !important;
+}
+
+/* Compact: toolbar must not cover the whole chart area */
+.chart-wrapper:not(.expanded) .chart-container > .tb__section {
+  height: auto !important;
+  flex: 0 0 auto;
+}
+
+.chart-wrapper:not(.expanded) .chart-container > .compact-trend-chart {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* Убираем overflow: hidden, которое мешает выпадающим меню */
@@ -445,4 +465,15 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.chart-resolution-badge {
+  margin-left: 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(19, 23, 34, 0.75);
+  color: #f3f4f6;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  white-space: nowrap;
 }

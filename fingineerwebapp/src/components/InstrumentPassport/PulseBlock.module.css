@@ -21,7 +21,6 @@
 }
 
 .sparklineLine {
-  stroke-dashoffset: 0;
   transition: stroke 0.2s ease-in;
 }
 

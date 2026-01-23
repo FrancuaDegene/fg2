@@ -7,6 +7,7 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.4);
   z-index: 99;
+  pointer-events: none;
   backdrop-filter: blur(3px);
   animation: fadeIn 0.2s ease-out;
 }

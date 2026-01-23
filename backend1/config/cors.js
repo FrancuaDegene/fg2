@@ -4,6 +4,11 @@ const logger = require('../utils/logger');
 
 const allowedOriginsSet = new Set(config.cors.allowedOrigins);
 
+const isLocalDevOrigin = (origin) => {
+  if (!origin) return false;
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+};
+
 const corsMiddleware = cors({
   origin(origin, callback) {
     if (!origin) {
@@ -18,6 +23,11 @@ const corsMiddleware = cors({
       return callback(null, true);
     }
 
+    if (config.isDevelopment && isLocalDevOrigin(origin)) {
+      logger.debug('cors', `Allowing local dev origin ${origin}`);
+      return callback(null, true);
+    }
+
     logger.warn('cors', `Blocked request from untrusted origin: ${origin}`);
     return callback(new Error(`CORS: Origin ${origin} is not allowed`));
   },
@@ -27,4 +37,5 @@ const corsMiddleware = cors({
 module.exports = {
   corsMiddleware,
   allowedOrigins: Array.from(allowedOriginsSet),
+  isLocalDevOrigin,
 };

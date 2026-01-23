@@ -15,6 +15,16 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+.chart-host .tb__section {
+  width: 100%;
+}
+
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+}
 /* Базовая капсула тулбара */
 .chart-toolbar {
   display: flex;
@@ -88,6 +98,15 @@
   display: flex;
   align-items: center;
   gap: var(--tb-slot-gap);
+}
+
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb__slot--right {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+.chart-host[data-expanded='0'] .tb__slot--right {
+  margin-left: auto;
+  justify-content: flex-end;
 }
 .chart-host[data-expanded='1'] .chart-separator {
   display: none !important;

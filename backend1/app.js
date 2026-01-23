@@ -5,12 +5,13 @@ const helmet = require('helmet');
 const { Server } = require('socket.io');
 
 const config = require('./config/env');
-const { corsMiddleware, allowedOrigins } = require('./config/cors');
+const { corsMiddleware, allowedOrigins, isLocalDevOrigin } = require('./config/cors');
 const { readLimiter, chatLimiter } = require('./config/rateLimit');
 const newsRoutes = require('./routes/news');
 const tickerRoutes = require('./routes/ticker');
 const dividendsRoutes = require('./routes/dividends');
 const chatRoutes = require('./routes/chat');
+const candlesV2Routes = require('./routes/candlesV2');
 const candlesSocket = require('./sockets/candlesSocket');
 const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
@@ -36,10 +37,12 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 app.use('/api/news', readLimiter);
 app.use('/api/dividends', readLimiter);
 app.use('/api/ticker', readLimiter);
+app.use('/api/candles-v2', readLimiter);
 app.use('/api/chat', chatLimiter);
 app.use('/api/chat-stream', chatLimiter);
 
 app.use('/api', tickerRoutes);
+app.use('/api', candlesV2Routes);
 app.use('/api', newsRoutes);
 app.use('/api', dividendsRoutes);
 app.use('/api', chatRoutes);
@@ -58,7 +61,12 @@ app.use(errorHandler);
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (config.isDevelopment && isLocalDevOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS: Origin ${origin} is not allowed`));
+    },
     credentials: true,
   },
 });

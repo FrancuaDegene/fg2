@@ -125,10 +125,17 @@
   z-index: 1000;
 }
 
+.tb-btn--range {
+  background: var(--tb-range-bg);
+  border: var(--tb-range-border-width) solid var(--tb-range-border-color);
+  box-shadow: var(--tb-range-shadow), var(--tb-range-inset-shadow);
+  color: var(--tb-range-text);
+}
+
 .icon-btn-with-text:hover,
 .tb-btn--with-text:hover {
   background: #e8ecf0;
-  transform: scale(1.02);
+  transform: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -217,8 +224,9 @@
 /* Кнопка расширения */
 .expand-icon-btn,
 .tb-btn--expand {
-  background: #f7f8fa;
-  border: 1px solid #e6e8ea;
+  background: var(--tb-expand-bg);
+  border: var(--tb-expand-border-width) solid var(--tb-expand-border-color);
+  box-shadow: var(--tb-expand-shadow), var(--tb-expand-inset-shadow);
   border-radius: 4px;
   padding: 6px;
   cursor: pointer;
@@ -228,14 +236,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #434651;
+  color: var(--tb-expand-icon);
 }
 
 .expand-icon-btn:hover,
 .tb-btn--expand:hover {
-  background: #e6e8ea;
-  border-color: #d1d4dc;
+  background: var(--tb-expand-bg-hover);
+  border-color: var(--tb-expand-border-color);
+  box-shadow: var(--tb-expand-shadow-hover), var(--tb-expand-inset-shadow);
   transform: translateY(-1px);
+}
+
+.tb-btn--range:hover {
+  background: var(--tb-range-bg-hover);
+  box-shadow: var(--tb-range-shadow-hover), var(--tb-range-inset-shadow);
+  transform: translateY(-1px);
+}
+
+.tb-btn--range[aria-expanded="true"] {
+  background: var(--tb-range-bg-open);
+  box-shadow: var(--tb-range-shadow), var(--tb-range-inset-shadow);
 }
 
 .expand-icon-btn svg,

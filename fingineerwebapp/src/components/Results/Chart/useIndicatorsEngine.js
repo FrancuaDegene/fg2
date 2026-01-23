@@ -44,8 +44,14 @@ export function useIndicatorsEngine() {
 
 
   const run = useCallback((type, payload, key) => {
-    const k = key ?? JSON.stringify({ type, payload });
     const cache = cacheRef.current;
+    const MAX_CACHE = 25;
+    if (cache.size >= MAX_CACHE) {
+      const firstKey = cache.keys().next().value;
+      if (firstKey !== undefined) cache.delete(firstKey);
+    }
+
+    const k = key ?? JSON.stringify({ type, payload });
     if (cache.has(k)) return Promise.resolve(cache.get(k));
 
     const w = workerRef.current;

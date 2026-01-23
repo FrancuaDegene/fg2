@@ -5,6 +5,31 @@ import { calcSparklinePoints } from '../../utils/calcSparklinePoints';
 const SPARKLINE_WIDTH = 90;
 const SPARKLINE_HEIGHT = 28;
 
+// One-shot memory across unmounts (Expanded <-> Compact).
+const FG_SPARK_SEEN = new Map(); // key -> ts
+const FG_SPARK_SEEN_MAX = 500;
+
+const hashString = (value) => {
+  let h = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    h = ((h << 5) + h) + value.charCodeAt(i);
+    h |= 0;
+  }
+  return h >>> 0;
+};
+
+const markSparkSeen = (key) => {
+  if (!key) return;
+  FG_SPARK_SEEN.set(key, Date.now());
+  if (FG_SPARK_SEEN.size <= FG_SPARK_SEEN_MAX) return;
+  const entries = Array.from(FG_SPARK_SEEN.entries());
+  entries.sort((a, b) => (a[1] || 0) - (b[1] || 0));
+  const removeCount = Math.max(1, Math.floor(FG_SPARK_SEEN_MAX * 0.2));
+  for (let i = 0; i < removeCount; i += 1) {
+    FG_SPARK_SEEN.delete(entries[i][0]);
+  }
+};
+
 export function PulseBlock({ pulseData, ticker }) {
   const rawDelta = pulseData?.deltaPct;
   const numericDelta = typeof rawDelta === 'number' ? rawDelta : Number(rawDelta);
@@ -19,8 +44,26 @@ export function PulseBlock({ pulseData, ticker }) {
     return calcSparklinePoints(closes, SPARKLINE_WIDTH, SPARKLINE_HEIGHT);
   }, [pulseData?.closes]);
 
+  // Стабильная сигнатура формы (НЕ зависит от ссылки массива)
+  const shapeSig = useMemo(() => {
+    return pointsString ? hashString(pointsString) : 0;
+  }, [pointsString]);
+
+  const pointsArr = useMemo(() => {
+    if (!pointsString) return [];
+    return pointsString
+      .trim()
+      .split(/\s+/)
+      .map((pair) => {
+        const [x, y] = pair.split(',').map((n) => Number(n));
+        return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+      })
+      .filter(Boolean);
+  }, [pointsString]);
+
   // polyline dom-ref
   const polyRef = useRef(null);
+  const headRef = useRef(null);
 
   // Управляем фазой анимации
   // 'idle'   — нет линии вообще (placeholder)
@@ -28,6 +71,7 @@ export function PulseBlock({ pulseData, ticker }) {
   // 'anim'   — мы вручную крутим offset -> 0
   // 'done'   — линия полностью показана
   const [phase, setPhase] = useState('idle');
+  const pendingSeenKeyRef = useRef(null);
 
   // Когда меняется тикер:
   // - если нет данных (placeholder) -> phase='idle'
@@ -35,10 +79,22 @@ export function PulseBlock({ pulseData, ticker }) {
   useEffect(() => {
     if (!ticker || pointsString.length === 0) {
       setPhase('idle');
+      pendingSeenKeyRef.current = null;
+      if (headRef.current) headRef.current.style.opacity = '0';
       return;
     }
+    const t = String(ticker || '').trim().toUpperCase() || 'NA';
+    const sig = shapeSig;
+    const seenKey = `${t}|${sig}`;
+    if (FG_SPARK_SEEN.has(seenKey)) {
+      pendingSeenKeyRef.current = null;
+      setPhase('done');
+      if (headRef.current) headRef.current.style.opacity = '0';
+      return;
+    }
+    pendingSeenKeyRef.current = seenKey;
     setPhase('hidden');
-  }, [ticker, pointsString]);
+  }, [ticker, shapeSig]);
 
   // Когда вошли в 'hidden', сразу в следующий frame переходим в 'anim'
   useEffect(() => {
@@ -56,26 +112,76 @@ export function PulseBlock({ pulseData, ticker }) {
     const node = polyRef.current;
     if (!node) return;
 
-    const duration = 1800; // мс
+    // Проверка на prefers-reduced-motion
+    try {
+      if (window?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
+        setPhase('done');
+        const k = pendingSeenKeyRef.current;
+        if (k) markSparkSeen(k);
+        pendingSeenKeyRef.current = null;
+        if (headRef.current) headRef.current.style.opacity = '0';
+        return;
+      }
+    } catch {}
+
+    // Progressive draw (hand-drawn ECG).
+    const N = pointsArr.length;
+    if (N < 2) {
+      setPhase('done');
+      const k = pendingSeenKeyRef.current;
+      if (k) markSparkSeen(k);
+      pendingSeenKeyRef.current = null;
+      if (headRef.current) headRef.current.style.opacity = '0';
+      return;
+    }
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const durationMs = clamp(N * 28, 900, 1800);
     let startTs = null;
     let rafId = null;
+    let prevTs = null;
+    const headElement = headRef.current;
+    const toPointsAttr = (arr) => arr.map(([x, y]) => String(x) + ',' + String(y)).join(' ');
 
-    // начальные стили перед анимацией
-    node.style.strokeDasharray = '1';
-    node.style.strokeDashoffset = '1';
+    node.style.strokeDasharray = '';
+    node.style.strokeDashoffset = '';
+    node.setAttribute('points', toPointsAttr(pointsArr.slice(0, 2)));
+
+    if (headElement) {
+      if (N >= 1) {
+        const [x0, y0] = pointsArr[0];
+        headElement.setAttribute('cx', String(x0));
+        headElement.setAttribute('cy', String(y0));
+      }
+      headElement.style.opacity = '1';
+    }
 
     const step = (ts) => {
+      if (prevTs !== null) {
+        console.log('[FG] raf dt', ts - prevTs); // TEMP
+      }
+      prevTs = ts;
       if (startTs === null) startTs = ts;
-      const progress = Math.min((ts - startTs) / duration, 1); // 0..1
-      const offsetNow = 1 - progress; // идём от 1 к 0
-      node.style.strokeDashoffset = String(offsetNow);
+      const linear = Math.min((ts - startTs) / durationMs, 1);
+      const progress = 1 - Math.pow(1 - linear, 3);
+      const count = Math.max(2, Math.min(N, Math.floor(progress * (N - 1)) + 1));
+      node.setAttribute('points', toPointsAttr(pointsArr.slice(0, count)));
 
-      if (progress < 1) {
+      if (headElement) {
+        const idx = Math.max(0, Math.min(N - 1, count - 1));
+        const [x, y] = pointsArr[idx] || pointsArr[N - 1];
+        headElement.setAttribute('cx', String(x));
+        headElement.setAttribute('cy', String(y));
+      }
+
+      if (linear < 1) {
         rafId = requestAnimationFrame(step);
       } else {
-        // после завершения оставляем нормальный вид и фиксируем фазу done
-        node.style.strokeDasharray = '';
-        node.style.strokeDashoffset = '';
+        node.setAttribute('points', toPointsAttr(pointsArr));
+        if (headElement) headElement.style.opacity = '0';
+        const k = pendingSeenKeyRef.current;
+        if (k) markSparkSeen(k);
+        pendingSeenKeyRef.current = null;
         setPhase('done');
       }
     };
@@ -84,8 +190,10 @@ export function PulseBlock({ pulseData, ticker }) {
 
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
+      pendingSeenKeyRef.current = null;
+      if (headElement) headElement.style.opacity = '0';
     };
-  }, [phase]);
+  }, [phase, pointsString]);
 
   const lineColor =
     safeDelta >= 0
@@ -120,28 +228,24 @@ export function PulseBlock({ pulseData, ticker }) {
               strokeDasharray="4 4"
             />
           ) : (
-            <polyline
-              ref={polyRef}
-              className={styles.sparklineLine}
-              points={pointsString}
-              fill="none"
-              stroke={lineColor}
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              // pathLength="1" даёт нормализацию: strokeDashoffset=1 == "вся линия скрыта"
-              pathLength="1"
-              // КРИТИЧЕСКО: в фазе 'hidden' мы РЕНДЕРИМ скрытую линию уже на первом проходе,
-              // чтобы не было флеша полной линии до старта анимации.
-              style={
-                phase === 'hidden'
-                  ? {
-                      strokeDasharray: '1',
-                      strokeDashoffset: '1',
-                    }
-                  : undefined
-              }
-            />
+            <>
+              <polyline
+                ref={polyRef}
+                className={styles.sparklineLine}
+                points={pointsString}
+                fill="none"
+                stroke={lineColor}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+              <circle
+                ref={headRef}
+                r="1.6"
+                fill={lineColor}
+                opacity="0"
+              />
+            </>
           )}
         </svg>
       </div>

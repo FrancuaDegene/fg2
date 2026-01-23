@@ -24,7 +24,7 @@ const ChartContent = ({
     setCandleType,
     activeIndicators,
   } = useChart();
-  const { activeTicker, instrumentMeta: stateInstrumentMeta, lastCandleData } = useChartState();
+  const { activeTicker, instrumentMeta: stateInstrumentMeta, lastCandleData, chartMeta } = useChartState();
   const enableDashboard = String(process.env.REACT_APP_FEATURE_DASHBOARD) === '1';
 
   console.log('ChartContent rendered with chartData:', chartData);
@@ -67,6 +67,7 @@ const ChartContent = ({
         chartData={chartData}
         instrumentMeta={instrumentMeta}
         activeIndicators={activeIndicators}
+        chartMeta={chartMeta}
         currentInterval={currentInterval}
         currentTimeframe={currentTimeframe}
         currentCandleType={currentCandleType}

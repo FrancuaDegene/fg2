@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
+import { fixIntervalForTimeframe } from '../../../constants';
 
 // Action types
 const actionTypes = {
@@ -11,34 +12,48 @@ const actionTypes = {
   SET_ACTIVE_TICKER: 'SET_ACTIVE_TICKER',
   SET_INSTRUMENT_META: 'SET_INSTRUMENT_META',
   SET_LAST_CANDLE: 'SET_LAST_CANDLE',
+  SET_CHART_META: 'SET_CHART_META',
+  SET_CANVAS_METRICS: 'SET_CANVAS_METRICS',
   TOGGLE_INDICATOR: 'TOGGLE_INDICATOR',
   REMOVE_INDICATOR: 'REMOVE_INDICATOR',
   TOGGLE_VISIBILITY: 'TOGGLE_VISIBILITY',
   UPDATE_INDICATOR: 'UPDATE_INDICATOR',
 };
 
+// safety cap: держим не больше ~60k баров в памяти
+const MAX_BARS_PER_SERIES = 60000;
+
 // Reducer
 function chartReducer(state, action) {
   switch (action.type) {
     case actionTypes.SET_CHART_DATA: {
-      const payload = action.payload || { candles: [], error: null };
-      const prev = state.chartData || { candles: [], error: null };
+      const payload = action.payload || {};
 
-      const payloadLen = Array.isArray(payload.candles) ? payload.candles.length : 0;
-      const prevLen = Array.isArray(prev.candles) ? prev.candles.length : 0;
+      // исходный массив свечей из payload
+      const arr = Array.isArray(payload.candles) ? payload.candles : [];
+      // сохраняем ограничение по количеству баров, как было
+      const capped =
+        arr.length > MAX_BARS_PER_SERIES ? arr.slice(-MAX_BARS_PER_SERIES) : arr;
 
-      const payloadErr = payload.error ?? null;
-      const prevErr = prev.error ?? null;
+      // базовые поля chartData
+      const nextChartData = {
+        // сохраняем существующие поля, чтобы не терять доп. данные из контекста
+        ...(state.chartData || {}),
+        candles: capped,
+        error: payload.error ?? null,
+      };
 
-      // Если данные те же — возвращаем старый state
-      if (payloadLen === prevLen && payloadErr === prevErr) {
-        return state;
+      // 👇 ключевой момент: не выбрасываем loadMoreHistory
+      if (typeof payload.loadMoreHistory === 'function') {
+        nextChartData.loadMoreHistory = payload.loadMoreHistory;
+      } else if ('loadMoreHistory' in payload) {
+        // если явно пришёл null/undefined — тоже пробрасываем
+        nextChartData.loadMoreHistory = payload.loadMoreHistory;
       }
 
       return {
         ...state,
-        chartData: payload,
-        isChartLoading: false,
+        chartData: nextChartData,
       };
     }
 
@@ -49,6 +64,12 @@ function chartReducer(state, action) {
       }
       return { ...state, isChartLoading: loading };
     }
+
+    case actionTypes.SET_CHART_META:
+      return { ...state, chartMeta: { ...state.chartMeta, ...(action.payload || {}) } };
+
+    case actionTypes.SET_CANVAS_METRICS:
+      return { ...state, canvasMetrics: { ...state.canvasMetrics, ...(action.payload || {}) } };
 
     case actionTypes.SET_INTERVAL:
       if (state.currentInterval === action.payload) return state;
@@ -162,6 +183,8 @@ export const ChartProvider = ({ children, initialData }) => {
   const [state, dispatch] = useReducer(chartReducer, {
     chartData: initialData?.chartData || { candles: [], error: null },
     isChartLoading: initialData?.isChartLoading || false,
+    chartMeta: initialData?.chartMeta || { dataResolution: 'auto', sourceInterval: null, isDownsampled: false, points: null },
+    canvasMetrics: initialData?.canvasMetrics || { width: null, dpr: null },
     currentInterval: initialData?.currentInterval || '1m',
     currentTimeframe: initialData?.currentTimeframe || '1d',
     isExpanded: initialData?.isExpanded || false,
@@ -181,13 +204,57 @@ export const ChartProvider = ({ children, initialData }) => {
     dispatch({ type: actionTypes.SET_CHART_LOADING, payload: loading });
   }, []);
 
-  const setInterval = useCallback((interval) => {
-    dispatch({ type: actionTypes.SET_INTERVAL, payload: interval });
+  const setChartMeta = useCallback((chartMeta) => {
+    dispatch({ type: actionTypes.SET_CHART_META, payload: chartMeta });
   }, []);
+
+  const setCanvasMetrics = useCallback((metrics) => {
+    dispatch({ type: actionTypes.SET_CANVAS_METRICS, payload: metrics });
+  }, []);
+
+  const setInterval = useCallback((requested) => {
+    const mode = state.isExpanded ? 'expanded' : 'compact';
+    const { forced, allowed } = fixIntervalForTimeframe({
+      timeframe: state.currentTimeframe,
+      requested,
+      mode,
+    });
+    if (process.env.NODE_ENV !== 'production' && forced !== requested) {
+      // eslint-disable-next-line no-console
+      console.log('[FG][UX][TFGuard]', {
+        tf: state.currentTimeframe,
+        requested,
+        forced,
+        mode,
+        allowed,
+      });
+    }
+    dispatch({ type: actionTypes.SET_INTERVAL, payload: forced });
+  }, [state.isExpanded, state.currentTimeframe]);
 
   const setTimeframe = useCallback((timeframe) => {
     dispatch({ type: actionTypes.SET_TIMEFRAME, payload: timeframe });
-  }, []);
+    // при смене TF — валидируем interval и форсим, если нужно
+    const mode = state.isExpanded ? 'expanded' : 'compact';
+    const { forced, allowed } = fixIntervalForTimeframe({
+      timeframe,
+      requested: state.currentInterval,
+      mode,
+    });
+    if (process.env.NODE_ENV !== 'production' && forced !== state.currentInterval) {
+      // eslint-disable-next-line no-console
+      console.log('[FG][UX][TFGuard]', {
+        tf: timeframe,
+        requested: state.currentInterval,
+        forced,
+        mode,
+        allowed,
+      });
+    }
+    if (forced !== state.currentInterval) {
+      dispatch({ type: actionTypes.SET_INTERVAL, payload: forced });
+    }
+  }, [state.isExpanded, state.currentInterval]);
 
   const setExpanded = useCallback((expanded) => {
     dispatch({ type: actionTypes.SET_EXPANDED, payload: expanded });
@@ -208,6 +275,11 @@ export const ChartProvider = ({ children, initialData }) => {
   const setLastCandleData = useCallback((candle) => {
     dispatch({ type: actionTypes.SET_LAST_CANDLE, payload: candle });
   }, []);
+
+  const effectiveTimeframe = useMemo(() => {
+    // Compact теперь оперирует выбранным диапазоном (currentTimeframe) без автоподстановки из интервала
+    return state.currentTimeframe;
+  }, [state.currentTimeframe]);
 
   const toggleIndicator = useCallback((indicator) => {
     dispatch({ type: actionTypes.TOGGLE_INDICATOR, payload: indicator });
@@ -232,6 +304,8 @@ export const ChartProvider = ({ children, initialData }) => {
       state,
       setChartData,
       setChartLoading,
+      setChartMeta,
+      setCanvasMetrics,
       setInterval,
       setTimeframe,
       setExpanded,
@@ -239,6 +313,7 @@ export const ChartProvider = ({ children, initialData }) => {
       setActiveTicker,
       setInstrumentMeta,
       setLastCandleData,
+      effectiveTimeframe,
       toggleIndicator,
       removeIndicator,
       toggleIndicatorVisibility,
@@ -249,6 +324,8 @@ export const ChartProvider = ({ children, initialData }) => {
       state,
       setChartData,
       setChartLoading,
+      setChartMeta,
+      setCanvasMetrics,
       setInterval,
       setTimeframe,
       setExpanded,
@@ -256,6 +333,7 @@ export const ChartProvider = ({ children, initialData }) => {
       setActiveTicker,
       setInstrumentMeta,
       setLastCandleData,
+      effectiveTimeframe,
       toggleIndicator,
       removeIndicator,
       toggleIndicatorVisibility,

@@ -613,7 +613,7 @@ const ChartRenderer = ({
           </div>
         )}
         {/* полупрозрачный «scrim» под капсулами тулбара */}
-        <div className="toolbar-scrim" aria-hidden="true" />
+        {isExpanded && <div className="toolbar-scrim" aria-hidden="true" />}
 
         {isExpanded && isTopMetricsEnabled && metricsRef.current && (
           <TopMetricsBar {...metricsRef.current} />

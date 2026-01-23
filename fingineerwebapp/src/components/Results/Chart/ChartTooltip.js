@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ChartTooltip.css';
 
-const ChartTooltip = ({ data, isVisible, position, containerRef }) => {
+const ChartTooltip = ({ data, isVisible, position, containerRef, interval }) => {
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const tooltipRef = useRef(null);
 
@@ -30,14 +30,31 @@ const ChartTooltip = ({ data, isVisible, position, containerRef }) => {
 
   if (!isVisible || !data) return null;
 
+  const normalizeInterval = (v) => {
+    if (!v) return '';
+    return String(v).trim().toLowerCase();
+  };
+
+  const isDailyInterval = normalizeInterval(interval) === '1d';
+
   const formatDate = (timestamp) => {
     const date = new Date(timestamp * 1000);
-    return date.toLocaleString('ru-RU', {
-      month: 'short',
-      day: 'numeric',
+
+    // Всегда форматируем в MSK, независимо от браузера/локали
+    const base = {
+      timeZone: 'Europe/Moscow',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    };
+
+    const withTime = {
+      ...base,
       hour: '2-digit',
       minute: '2-digit',
-    });
+    };
+
+    return date.toLocaleString('ru-RU', isDailyInterval ? base : withTime);
   };
 
   const formatPrice = (price) => parseFloat(price).toFixed(2);

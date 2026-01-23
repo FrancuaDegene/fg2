@@ -135,6 +135,7 @@ const ChartToolbar = ({
 
   const intervals = CHART_CONFIG.INTERVALS;
   const timeframes = CHART_CONFIG.TIMEFRAMES;
+  const ranges = CHART_CONFIG.RANGES;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -221,61 +222,94 @@ const ChartToolbar = ({
           </button>
         )}
 
-        <div className="dropdown-container tb-dd" ref={intAnchorRef}>
-          <button
-            className="tb-btn tb-btn--with-text"
-            onClick={toggleInt}
-            aria-expanded={isIntOpen}
-          >
-            <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
-          </button>
+        {isExpanded ? (
+          <>
+            <div className="dropdown-container tb-dd" ref={intAnchorRef}>
+              <button
+                className="tb-btn tb-btn--with-text"
+                onClick={toggleInt}
+                aria-expanded={isIntOpen}
+              >
+                <Timer size={16} /> {intervals.find((int) => int.id === currentInterval)?.id || '1m'}
+              </button>
 
-          {isIntOpen && (
-            <div className="dropdown-menu" ref={intContentRef}>
-              {intervals.map((interval) => (
-                <button
-                  key={interval.id}
-                  className="tb-dd__item"
-                  data-state={currentInterval === interval.id ? 'active' : undefined}
-                  onClick={() => handleIntervalChange(interval.id)}
-                  title={interval.label}
-                >
-                  <span className="tb-dd__label">{interval.label}</span>
-                  {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
-                </button>
-              ))}
+              {isIntOpen && (
+                <div className="dropdown-menu" ref={intContentRef}>
+                  {intervals.map((interval) => (
+                    <button
+                      key={interval.id}
+                      className="tb-dd__item"
+                      data-state={currentInterval === interval.id ? 'active' : undefined}
+                      onClick={() => handleIntervalChange(interval.id)}
+                      title={interval.label}
+                    >
+                      <span className="tb-dd__label">{interval.label}</span>
+                      {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="tb-separator" />
+            <div className="tb-separator" />
 
-        <div className="dropdown-container tb-dd" ref={tfAnchorRef}>
-          <button
-            className="tb-btn tb-btn--with-text"
-            onClick={toggleTf}
-            aria-expanded={isTfOpen}
-          >
-            <BarChart3 size={16} /> {timeframes.find((tf) => tf.id === currentTimeframe)?.id || '1d'}
-          </button>
+            <div className="dropdown-container tb-dd" ref={tfAnchorRef}>
+              <button
+                className="tb-btn tb-btn--with-text"
+                onClick={toggleTf}
+                aria-expanded={isTfOpen}
+              >
+                <BarChart3 size={16} /> {timeframes.find((tf) => tf.id === currentTimeframe)?.id || '1d'}
+              </button>
 
-          {isTfOpen && (
-            <div className="dropdown-menu" ref={tfContentRef}>
-              {timeframes.map((timeframe) => (
-                <button
-                  key={timeframe.id}
-                  className="tb-dd__item"
-                  data-state={currentTimeframe === timeframe.id ? 'active' : undefined}
-                  onClick={() => handleTimeframeChange(timeframe.id)}
-                  title={timeframe.label}
-                >
-                  <span className="tb-dd__label">{timeframe.label}</span>
-                  {currentTimeframe === timeframe.id && <span className="tb-dd__check">✓</span>}
-                </button>
-              ))}
+              {isTfOpen && (
+                <div className="dropdown-menu" ref={tfContentRef}>
+                  {timeframes.map((timeframe) => (
+                    <button
+                      key={timeframe.id}
+                      className="tb-dd__item"
+                      data-state={currentTimeframe === timeframe.id ? 'active' : undefined}
+                      onClick={() => handleTimeframeChange(timeframe.id)}
+                      title={timeframe.label}
+                    >
+                      <span className="tb-dd__label">{timeframe.label}</span>
+                      {currentTimeframe === timeframe.id && <span className="tb-dd__check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="dropdown-container tb-dd" ref={tfAnchorRef}>
+            <button
+              className="tb-btn tb-btn--with-text"
+              onClick={toggleTf}
+              aria-expanded={isTfOpen}
+              type="button"
+            >
+              <BarChart3 size={16} /> {ranges.find((r) => r.id === currentTimeframe)?.label || ranges[0]?.label || '—'}
+            </button>
+
+            {isTfOpen && (
+              <div className="dropdown-menu" ref={tfContentRef}>
+                {ranges.map((range) => (
+                  <button
+                    key={range.id}
+                    className="tb-dd__item"
+                    data-state={currentTimeframe === range.id ? 'active' : undefined}
+                    onClick={() => handleTimeframeChange(range.id)}
+                    title={range.label}
+                    type="button"
+                  >
+                    <span className="tb-dd__label">{range.label}</span>
+                    {currentTimeframe === range.id && <span className="tb-dd__check">✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>{/* /tb__group--navigation */}
 
       <div className="tb-separator" />

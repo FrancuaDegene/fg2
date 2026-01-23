@@ -43,12 +43,14 @@ module.exports = function registerCandlesSocket(io) {
       }
     };
 
-    socket.on('requestChartData', async ({ ticker, timeframe, interval, selectedDate }) => {
+    socket.on('requestChartData', async ({ ticker, timeframe, interval, selectedDate, requestId, silent }) => {
       if (!ticker || !interval || !timeframe || !selectedDate) {
         return socket.emit('error', { message: 'Некорректные параметры запроса графика' });
       }
 
-      clearRefreshTimer();
+      const reqId = requestId || null;
+      const isSilent = silent === true;
+      if (!isSilent) clearRefreshTimer();
 
       const end = new Date(`${selectedDate}T23:59:59+03:00`);
       const start = new Date(end);
@@ -88,10 +90,14 @@ module.exports = function registerCandlesSocket(io) {
         const context = { ticker, interval, from, to, range };
         const candles = await loadCandles(context);
 
-        socket.emit('initialData', { ticker, candles });
-        lastTimestamp = candles.length ? candles[candles.length - 1].time : null;
+        socket.emit('initialData', { ticker, candles, requestId: reqId });
+        if (!isSilent) {
+          lastTimestamp = candles.length ? candles[candles.length - 1].time : null;
+        }
 
         const refreshMs = Math.max(15000, intervalToMs(interval) || 60000);
+        if (isSilent) return;
+
         refreshTimer = setInterval(async () => {
           try {
             const nextCandles = await loadCandles(context);
@@ -103,7 +109,7 @@ module.exports = function registerCandlesSocket(io) {
             }
 
             lastTimestamp = nextLast;
-            socket.emit('updateData', { ticker, candles: nextCandles });
+            socket.emit('updateData', { ticker, candles: nextCandles, requestId: reqId });
           } catch (err) {
             logger.error(`socket ${socket.id}`, 'updateData error', err);
           }
