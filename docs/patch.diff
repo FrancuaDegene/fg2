@@ -1,0 +1,30 @@
+*** Begin Patch
+*** Update File: fingineerwebapp/src/components/Results/Chart/ChartToolbar.js
+@@
+-                {intervals.map((interval) => (
+-                  <button
+-                    key={interval.id}
+-                    className={`dropdown-option ${currentInterval === interval.id ? 'active' : ''}`}
+-                    onClick={() => handleIntervalChange(interval.id)}
+-                    title={interval.label}
+-                  >
+-                    <span className="option-label">{interval.label}</span>
+-                    {currentInterval === interval.id && <span className="option-check">✓</span>}
+-                  </button>
+-                ))}
++                {intervals.map((interval) => {
++                  const isActive = currentInterval === interval.id;
++                  return (
++                    <button
++                      key={interval.id}
++                      className="tb-dd__item"
++                      data-state={isActive ? 'active' : undefined}
++                      onClick={() => handleIntervalChange(interval.id)}
++                      title={interval.label}
++                    >
++                      <span className="tb-dd__label">{interval.label}</span>
++                      {isActive && <span className="tb-dd__check">✓</span>}
++                    </button>
++                  );
++                })}
+*** End Patch

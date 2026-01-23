@@ -20,7 +20,8 @@ const config = {
     NEWS: '/api/news',
     DIVIDENDS: '/api/dividends',
     AI_CHAT: '/api/chat',
-    AI_CHAT_STREAM: '/api/chat-stream', 
+    AI_CHAT_STREAM: '/api/chat-stream',
+    CANDLES_V2: '/api/candles-v2',
   }
 };
 

@@ -1,25 +1,58 @@
-import config from '../config/api';; // путь поправь, если у тебя другой
-export async function askAI(prompt) {
+// src/api/aiService.js
+import config from '../config/api'; // путь поправь, если у тебя другой
+
+// TEMP: установи в false или выставь VITE_DISABLE_AI=0, когда вернёшь AI
+const AI_DISABLED = true;
+
+const isAiDisabled = () => AI_DISABLED || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DISABLE_AI === '1');
+
+/**
+ * Обычный запрос к /api/chat
+ * @param {string} prompt
+ * @param {string} [context] - доп. контекст для модели (по умолчанию пусто)
+ * @param {boolean} [returnUsage=false] - вернуть {answer, usage}, если true
+ * @returns {Promise<string|{answer:string, usage:any}>}
+ */
+export async function askAI(prompt, context = "", returnUsage = false) {
+  if (isAiDisabled()) {
+    const mock = { answer: 'AI временно отключен (quota).', usage: null };
+    return returnUsage ? mock : mock.answer;
+  }
+
   const res = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.AI_CHAT}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ prompt, context }),
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`AI request failed: ${res.status} ${text}`);
   }
-  const data = await res.json();
-  return data.answer;
+  const data = await res.json(); // { answer, usage }
+  return returnUsage
+    ? { answer: data.answer ?? "", usage: data.usage ?? null }
+    : (data.answer ?? "");
 }
 
-// Опционально: стриминг через SSE
+/**
+ * Стрим через SSE к /api/chat-stream
+ * @param {string} prompt
+ * @param {(chunk:string)=>void} onChunk
+ * @param {()=>void} onEnd
+ * @returns {() => void} stop - функция для остановки стрима
+ */
 export function streamAI(prompt, onChunk, onEnd) {
+  if (isAiDisabled()) {
+    const mock = 'AI временно отключен (quota).';
+    if (onChunk) onChunk(mock);
+    if (onEnd) onEnd();
+    return () => {};
+  }
+
   const url = `${config.API_BASE_URL}${config.ENDPOINTS.AI_CHAT_STREAM}?prompt=${encodeURIComponent(prompt)}`;
   const es = new EventSource(url);
-  es.onmessage = (e) => onChunk(e.data);
-  es.addEventListener('end', () => { es.close(); onEnd?.(); });
-  es.onerror = () => { es.close(); onEnd?.(); };
+  es.onmessage = (e) => onChunk && onChunk(e.data);
+  es.addEventListener('end', () => { es.close(); onEnd && onEnd(); });
+  es.onerror = () => { es.close(); onEnd && onEnd(); };
   return () => es.close(); // на случай отмены
 }
-

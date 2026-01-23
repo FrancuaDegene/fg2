@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tooltip from '../../Tooltip/Tooltip';
 import PriceMetrics from './PriceMetrics';
-import { formatPrice, formatPercent } from '../../../utils/formatters';
 import { METRIC_EXPLANATIONS } from '../../../constants';
 import './Price.css';
 

@@ -1,0 +1,250 @@
+/* Контейнеры выпадающих меню */
+.dropdown-container,
+.tb-dd {
+  position: relative;
+  z-index: var(--z-dropdown, 60);
+  flex-shrink: 0;
+}
+
+.chart-toolbar .dropdown-container,
+.chart-toolbar .tb-dd {
+  max-width: none;
+  width: auto;
+}
+
+/* Базовая панель dropdown */
+.dropdown-menu,
+.tb-dd__panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: var(--tb-dropdown-offset);
+  z-index: var(--z-dropdown, 60);
+  width: var(--tb-dropdown-width);
+  min-width: var(--tb-dropdown-min-width);
+  max-width: var(--tb-dropdown-max-width);
+  max-height: var(--tb-dropdown-max-height);
+  padding: var(--tb-dropdown-padding);
+  background: var(--tb-dropdown-bg);
+  border: var(--tb-dropdown-border-width) solid var(--tb-dropdown-border-color);
+  border-radius: var(--tb-dropdown-radius);
+  box-shadow: var(--tb-dropdown-shadow);
+  backdrop-filter: blur(var(--tb-dropdown-blur));
+  -webkit-backdrop-filter: blur(var(--tb-dropdown-blur));
+  overflow: auto;
+  animation: dropdownFadeIn 0.2s ease-out;
+  inline-size: max-content;
+  min-inline-size: 100%;
+  max-inline-size: 36ch;
+}
+
+/* Range-only dropdown: disable blur (calm matte look) */
+.dropdown-menu.tb-dropdown {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.dropdown-menu.debug,
+.tb-dd__panel--debug {
+  outline: 1px dashed rgba(255, 0, 0, 0.4);
+}
+
+/* Пункт dropdown */
+.dropdown-option,
+.tb-dd__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tb-dropdown-item-gap);
+  width: 100%;
+  padding: var(--tb-dropdown-item-padding);
+  border-radius: var(--tb-dropdown-item-radius);
+  font-size: var(--tb-dropdown-item-font-size);
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: transparent;
+  border: none;
+  color: var(--fg-text);
+  cursor: pointer;
+  transition: background var(--tb-transition);
+}
+
+.dropdown-option:hover,
+.tb-dd__item:hover {
+  background: var(--tb-dropdown-item-hover-bg);
+}
+
+.dropdown-option.active,
+.tb-dd__item[data-state="active"],
+.tb-dd__item[aria-selected="true"] {
+  background: var(--tb-dropdown-item-active-bg);
+  color: var(--tb-dropdown-item-active-color);
+}
+
+.dropdown-option .option-label,
+.tb-dd__item .tb-dd__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-option .option-icon,
+.tb-dd__item .tb-dd__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+}
+
+.dropdown-option .option-check,
+.tb-dd__item .tb-dd__check {
+  flex: 0 0 auto;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Индикаторные списки */
+.indicator-option,
+.tb-dd__item--indicator {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  color: #434651;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  margin: 1px 0;
+}
+
+.indicator-option:hover,
+.tb-dd__item--indicator:hover {
+  background: #f7f8fa;
+}
+
+.indicator-option.active,
+.tb-dd__item--indicator[data-state="active"] {
+  background: #2962ff;
+  color: #fff;
+}
+
+/* Календарь */
+.date-picker-dropdown,
+.tb-dd__panel--calendar {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  z-index: var(--z-dropdown, 60);
+  background: #ffffff;
+  border: 1px solid #e6e8ea;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  min-width: 200px;
+  max-width: 240px;
+}
+
+.date-picker-dropdown input[type="date"],
+.tb-dd__panel--calendar input[type="date"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e6e8ea;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.date-today-btn,
+.tb-dd__action--today {
+  width: 100%;
+  background: #2962ff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.date-today-btn:hover,
+.tb-dd__action--today:hover {
+  background: #1e53e5;
+}
+
+/* Scrollbar */
+.dropdown-menu::-webkit-scrollbar,
+.tb-dd__panel::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track,
+.tb-dd__panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb,
+.tb-dd__panel::-webkit-scrollbar-thumb {
+  background: var(--tb-dropdown-scrollbar);
+  border-radius: 8px;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-toolbar,
+  .chart-toolbar * {
+    box-sizing: border-box;
+  }
+
+  .chart-toolbar .dropdown-container,
+  .chart-toolbar .tb-dd,
+  .chart-toolbar .date-picker-container,
+  .chart-toolbar .indicators-container {
+    overflow: visible !important;
+  }
+
+  .dropdown-menu,
+  .tb-dd__panel,
+  .date-picker-dropdown,
+  .indicators-dropdown {
+    position: absolute !important;
+    z-index: var(--z-dropdown, 60) !important;
+    background: #ffffff !important;
+    border: 1px solid #e6e8ea !important;
+    border-radius: 6px !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .chart-wrapper {
+    overflow: visible !important;
+  }
+
+  .dropdown-menu.debug,
+  .tb-dd__panel--debug,
+  .date-picker-dropdown.debug,
+  .indicators-dropdown.debug {
+    background: red !important;
+    opacity: 1 !important;
+    display: block !important;
+  }
+}

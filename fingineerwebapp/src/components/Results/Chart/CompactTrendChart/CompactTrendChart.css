@@ -1,0 +1,150 @@
+.compact-trend-chart {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(19, 23, 34, 0.6);
+  opacity: 1; /* outer shell must always be visible; animation lives on inner chart host */
+}
+
+/* Reveal overlay (ECG-style scanner). Does NOT affect chart mount. */
+.compact-trend-chart__reveal {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2; /* above canvas, below tooltip if tooltip uses higher z */
+  opacity: 0;
+}
+
+.compact-trend-chart__reveal.is-active {
+  opacity: 1;
+  animation: fg-sparkline-reveal 380ms ease-out both;
+}
+
+/* The "shutter" that covers the chart and slides away to the right */
+.compact-trend-chart__reveal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Same as chart background to look like we're revealing the line */
+  background: rgba(19, 23, 34, 0.96);
+  transform: translate3d(0, 0, 0);
+}
+
+/* Optional subtle scan head (thin vertical line) */
+.compact-trend-chart__reveal::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes fg-sparkline-reveal {
+  from {
+    /* Shutter covers everything; scan head starts at left */
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    /* Shutter clipped away to the right */
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compact-trend-chart__reveal.is-active {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+.compact-trend-chart.is-visible {
+  opacity: 1;
+}
+
+.compact-trend-chart.is-hidden {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compact-trend-chart {
+    transition: none;
+  }
+}
+
+.compact-trend-chart__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.compact-sparkline-hairline {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.14) !important;
+  transform: translateX(-0.5px);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.chart-container .compact-sparkline-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  /* A: white core + teal ring (high specificity to beat global background:transparent !important) */
+  background: rgba(255, 255, 255, 0.95) !important; /* core */
+  border: 1.5px solid rgba(79, 209, 197, 0.9) !important; /* ring */
+  box-shadow:
+    0 0 0 2px rgba(8, 12, 20, 0.9),   /* moat */
+    0 0 8px rgba(79, 209, 197, 0.18); /* glow */
+  transform: translate(-50%, -50%) scale(1);
+  transition:
+    transform 100ms ease-out,
+    box-shadow 100ms ease-out;
+  will-change: transform;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.compact-trend-chart:hover .compact-sparkline-dot {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow:
+    0 0 0 4px rgba(8, 12, 20, 0.92),
+    0 0 0 5px rgba(255, 255, 255, 0.75),
+    0 0 16px rgba(79, 209, 197, 0.45);
+}
+
+.compact-sparkline-tip {
+  position: absolute;
+  font-size: 11px;
+  line-height: 1;
+  color: #dffbf7;
+  background: rgba(12, 16, 24, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 4px 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(8px, -14px);
+  z-index: 5;
+}
+
+.compact-sparkline-tip.is-left {
+  transform: translate(calc(-100% - 8px), -14px);
+}

@@ -13,21 +13,31 @@ const useSearch = ({ onSearch, onClear = () => {} }) => {
     const debouncedFetch = useMemo(
         () =>
             debounce(async (value) => {
-                if (value.trim()) {
-                    setIsLoading(true);
-                    try {
-                        const response = await axios.get(
-                            `${config.SUGGESTIONS_API_URL}${config.ENDPOINTS.SUGGESTIONS}/${value}`
-                        );
-                        setSuggestions(response.data.slice(0, 5));
-                    } catch (error) {
-                        console.error('Ошибка получения подсказок:', error);
-                        setSuggestions([]);
-                    } finally {
-                        setIsLoading(false);
-                    }
-                } else {
+                const raw = String(value ?? '');
+                let q = raw.trim();
+                // Guard: не шлём мусорные запросы вида "sb=" или пустые строки
+                if (!q) {
                     setSuggestions([]);
+                    setIsLoading(false);
+                    return;
+                }
+                q = q.replace(/=+$/g, '').trim();
+                if (q.length < 2) {
+                    setSuggestions([]);
+                    setIsLoading(false);
+                    return;
+                }
+
+                setIsLoading(true);
+                try {
+                    const response = await axios.get(
+                        `${config.SUGGESTIONS_API_URL}${config.ENDPOINTS.SUGGESTIONS}/${encodeURIComponent(q)}`
+                    );
+                    setSuggestions((response.data || []).slice(0, 5));
+                } catch (error) {
+                    console.error('Ошибка получения подсказок:', error);
+                    setSuggestions([]);
+                } finally {
                     setIsLoading(false);
                 }
             }, 300),

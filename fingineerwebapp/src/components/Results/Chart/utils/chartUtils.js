@@ -1,5 +1,3 @@
-import { TickMarkType } from 'lightweight-charts';
-
 // --- Вспомогательные функции ---
 
 export const calculateBarSpacing = (interval, timeframe) => {
@@ -283,20 +281,47 @@ export const createSeries = (chart, type) => {
 
 // --- Подготовка данных ---
 export const prepareData = (rawCandles, type) => {
-  // Убедимся, что rawCandles является массивом
   const candlesArray = Array.isArray(rawCandles) ? rawCandles : [];
-  
-  const baseCandles = candlesArray
-    .filter(c => c && c.time) // Фильтруем недействительные свечи
-    .map(c => ({
-      time: Number(c.time),
-      open: Number(c.open),
-      high: Number(c.high),
-      low: Number(c.low),
-      close: Number(c.close),
-      volume: Number(c.volume || 0),
-    }))
+
+  const normalized = candlesArray
+    .filter((c) => c && c.time != null)
+    .map((c) => {
+      let time = Number(c.time);
+      if (!Number.isFinite(time)) return null;
+      if (time > 1e12) time = Math.floor(time / 1000); // миллисекунды → секунды
+
+      const open = Number(c.open);
+      const high = Number(c.high);
+      const low = Number(c.low);
+      const close = Number(c.close);
+      const volume = Number(c.volume ?? 0);
+      if (![open, high, low, close].every(Number.isFinite)) return null;
+
+      return {
+        time,
+        open,
+        high,
+        low,
+        close,
+        volume: Number.isFinite(volume) ? volume : 0,
+      };
+    })
+    .filter(Boolean)
     .sort((a, b) => a.time - b.time);
+
+  const baseCandles = [];
+  for (let i = 0; i < normalized.length; i++) {
+    const current = normalized[i];
+    const prev = baseCandles[baseCandles.length - 1];
+    if (prev && prev.time === current.time) {
+      prev.high = Math.max(prev.high, current.high);
+      prev.low = Math.min(prev.low, current.low);
+      prev.close = current.close;
+      prev.volume += current.volume || 0;
+    } else {
+      baseCandles.push({ ...current });
+    }
+  }
 
   switch (type) {
     case 'line':
@@ -397,3 +422,5 @@ export const prepareData = (rawCandles, type) => {
       return baseCandles;
   }
 };
+
+export const intervalToSeconds = (i) => ({ '1m': 60, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '1d': 86400 }[i] || 60);

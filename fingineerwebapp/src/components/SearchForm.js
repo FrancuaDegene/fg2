@@ -5,6 +5,15 @@ import PropTypes from 'prop-types';
 import config from '../config/api';
 import "./SearchForm.css";
 
+// Guard для подсказок: убираем мусорные символы, не шлём пустое/слишком короткое
+const sanitizeSuggestionsQuery = (value) => {
+    let q = String(value ?? '').trim();
+    if (!q) return '';
+    q = q.replace(/=+$/g, '').trim();
+    q = q.replace(/[^a-zA-Z0-9._-]+/g, '');
+    return q;
+};
+
 const SearchForm = ({ 
     onSearch, 
     onClear = () => {}, 
@@ -18,57 +27,35 @@ const SearchForm = ({
     const [suggestions, setSuggestions] = useState([]);
     const [isActive, setIsActive] = useState(false);
     const searchRef = useRef(null);
+    const inputRef = useRef(null);
+    const getEffectiveQuery = (raw) =>
+        String(raw ?? inputRef.current?.value ?? query ?? '').trim();
 
     const debouncedFetch = useMemo(
         () =>
             debounce(async (value) => {
-                if (value.trim()) {
-                    try {
-                        const response = await axios.get(`${config.SUGGESTIONS_API_URL}${config.ENDPOINTS.SUGGESTIONS}/${value}`);
-                        setSuggestions(response.data.slice(0, 5));
-                    } catch (error) {
-                        setSuggestions([]);
-                    }
-                } else {
+                const qSafe = sanitizeSuggestionsQuery(value);
+                if (qSafe.length < 2) {
+                    setSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(`${config.SUGGESTIONS_API_URL}${config.ENDPOINTS.SUGGESTIONS}/${encodeURIComponent(qSafe)}`);
+                    setSuggestions(response.data.slice(0, 5));
+                } catch (error) {
                     setSuggestions([]);
                 }
             }, 300),
         []
     );
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (searchRef.current && !searchRef.current.contains(event.target)) {
-                setIsActive(false);
-                setSuggestions([]);
-                onBlur();
-            }
-        };
-
-        const handleKeyDown = (event) => {
-            if (event.key === "Escape") {
-                setIsActive(false);
-                setSuggestions([]);
-                onBlur();
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("keydown", handleKeyDown);
-        
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-    }, [onBlur]);
-
-    const handleSearch = () => {
-        if (query.trim()) {
-            setSuggestions([]);
-            onSearch(query);
-            setIsActive(false);
-            onBlur();
-        }
+    const handleSearch = (raw) => {
+        const q = getEffectiveQuery(raw);
+        if (!q) return;
+        setSuggestions([]);
+        onSearch(q);
+        setIsActive(false);
+        onBlur();
     };
 
     const handleClear = () => {
@@ -80,22 +67,23 @@ const SearchForm = ({
     const handleSuggestionClick = (ticker) => {
         setQuery(ticker);
         setSuggestions([]);
-        onSearch(ticker);
-        setIsActive(false);
-        onBlur();
+        handleSearch(ticker);
     };
 
     if (isChartExpanded && isSearchFormHidden) {
         return null;
     }
 
-
     const searchContainerClass = `search-container ${isActive ? "active" : ""} ${isSubmitted ? "submitted" : ""}`;
 
     return (
         <>
             {/* Оверлей только в обычном режиме */}
-            {isActive && !isChartExpanded && <div className="search-overlay" />}
+            {isActive && !isChartExpanded && (
+                <div 
+                    className="search-overlay"
+                />
+            )}
             
             <div
                 ref={searchRef}
@@ -107,16 +95,23 @@ const SearchForm = ({
                             type="text"
                             className="search-bar"
                             value={query}
+                            ref={inputRef}
+                            onMouseDown={() => {
+                                setIsActive(true);
+                            }}
+                            onFocus={() => {
+                                onFocus();
+                            }}
                             onChange={(e) => {
                                 setQuery(e.target.value);
                                 debouncedFetch(e.target.value);
                             }}
-                            onFocus={() => {
-                                setIsActive(true);
-                                onFocus();
-                            }}
                             onBlur={() => onBlur()}
-                            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    handleSearch(e.currentTarget.value);
+                                }
+                            }}
                             placeholder="Введите название компании или тикера"
                             autoFocus={isChartExpanded}
                         />
@@ -130,8 +125,10 @@ const SearchForm = ({
                                     ✖
                                 </button>
                                 <button 
-                                    className="search-btn" 
-                                    onClick={handleSearch}
+                                    className="search-btn"
+                                    onClick={() => {
+                                        handleSearch();
+                                    }}
                                     aria-label="Выполнить поиск"
                                 >
                                     Поиск

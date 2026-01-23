@@ -16,8 +16,6 @@ const ExpandedControls = ({
     onToggleIndicators,
     isExpanded = false,
 }) => {
-    console.log('[ExpandedControls] Рендерится с query:', query);
-
    return (
   <div className="expanded-controls">
     <div className="expanded-controls__search">
@@ -33,6 +31,7 @@ const ExpandedControls = ({
       />
       <IntervalSelector
         currentInterval={currentInterval}
+        currentTimeframe={currentTimeframe}
         onSelectInterval={onSelectInterval}
       />
       {isExpanded && (
@@ -48,8 +47,6 @@ const ExpandedControls = ({
   </div>
 );
 }
-console.log('[ExpandedControls] РЕНДЕР');
-console.log('[ExpandedControls] отрисован');
 
 ExpandedControls.propTypes = {
     query: PropTypes.string,

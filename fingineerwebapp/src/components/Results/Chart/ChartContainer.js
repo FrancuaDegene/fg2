@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { ChartProvider, useChart } from './ChartContext';
 import ChartContent from './ChartContent';
 import './Chart.css';
+import { useCandles } from '../../../store/useCandles';
 import './ChartLayout.css';
 
 // Компонент для обертки графика
@@ -17,10 +18,22 @@ const ChartLayout = ({ children, isExpanded }) => {
   );
 };
 
+const FG_AGG_ENABLED = String(process.env.REACT_APP_FG_AGG_ENABLED || '') === '1';
+
 // Компонент для синхронизации пропсов с контекстом
-const ChartContextSync = ({ isExpanded, chartData, isChartLoading, currentInterval, currentTimeframe, currentCandleType }) => {
+const ChartContextSync = ({
+  isExpanded,
+  chartData,
+  isChartLoading,
+  currentInterval,
+  currentTimeframe,
+  currentCandleType,
+  socket,
+  query,
+  selectedDate,
+}) => {
   const {
-    chartData: ctxChartData,
+    state,
     isChartLoading: ctxIsChartLoading,
     isExpanded: contextIsExpanded,
     setExpanded,
@@ -29,57 +42,94 @@ const ChartContextSync = ({ isExpanded, chartData, isChartLoading, currentInterv
     setInterval,
     setTimeframe,
     setCandleType,
+    setChartMeta,
   } = useChart();
 
-  // Синхронизация expanded
+  const canvasMetrics = state?.canvasMetrics;
+  const shouldUseAgg =
+    !!query &&
+    !!currentInterval &&
+    !!currentTimeframe &&
+    !!selectedDate;
+
+  const agg = useCandles({
+    socket,
+    ticker: query,
+    timeframe: currentTimeframe,
+    interval: currentInterval,
+    selectedDate,
+    width: canvasMetrics?.width,
+    dpr: canvasMetrics?.dpr,
+    // ARCH: Compact должен быть предсказуемым (Range + interval без "магии").
+    // Auto-interval оставляем только для Expanded (рабочий режим).
+    resolution: isExpanded ? 'auto' : 'fixed',
+    strict: !isExpanded,
+    enabled: shouldUseAgg,
+  });
+
   useEffect(() => {
     if (isExpanded !== contextIsExpanded) {
       setExpanded(Boolean(isExpanded));
     }
   }, [isExpanded, contextIsExpanded, setExpanded]);
 
-  // Синхронизация текущего интервала
   useEffect(() => {
     if (typeof setInterval === 'function' && currentInterval !== undefined) {
       setInterval(currentInterval);
     }
   }, [currentInterval, setInterval]);
 
-  // Синхронизация текущего таймфрейма
   useEffect(() => {
     if (typeof setTimeframe === 'function' && currentTimeframe !== undefined) {
       setTimeframe(currentTimeframe);
     }
   }, [currentTimeframe, setTimeframe]);
 
-  // Синхронизация типа свечей
   useEffect(() => {
     if (typeof setCandleType === 'function' && currentCandleType !== undefined) {
       setCandleType(currentCandleType);
     }
   }, [currentCandleType, setCandleType]);
 
-  // Синхронизация chartData
   useEffect(() => {
+    if (shouldUseAgg) {
+      if (Array.isArray(agg.candles)) {
+        const nextRangeKey = String(agg?.rangeKey || chartData?.rangeKey || '');
+        setChartData({
+          candles: agg.candles,
+          error: null,
+          rangeKey: nextRangeKey,
+          loadMoreHistory: agg.loadMoreHistory,
+        });
+      }
+      return;
+    }
     const incoming = chartData || { candles: [], error: null };
     setChartData(incoming);
-  }, [chartData, setChartData]);
+  }, [shouldUseAgg, agg.candles, chartData, setChartData]);
 
-  // ✅ ГЛАВНОЕ ИЗМЕНЕНИЕ: Корректная синхронизация isChartLoading
   useEffect(() => {
-    const incomingLoading = Boolean(isChartLoading);
-    // Если состояние из пропсов отличается от состояния в контексте, обновляем контекст
-    if (incomingLoading !== ctxIsChartLoading) {
-        setChartLoading(incomingLoading);
+    if (shouldUseAgg) {
+      setChartLoading(Boolean(agg.loading));
+      return;
     }
-  }, [isChartLoading, ctxIsChartLoading, setChartLoading]);
+    const incomingLoading = Boolean(isChartLoading);
+    if (incomingLoading !== ctxIsChartLoading) {
+      setChartLoading(incomingLoading);
+    }
+  }, [shouldUseAgg, agg.loading, isChartLoading, ctxIsChartLoading, setChartLoading]);
 
+  useEffect(() => {
+    if (!shouldUseAgg || !agg.meta) return;
+    setChartMeta(agg.meta);
+  }, [shouldUseAgg, agg.meta, setChartMeta]);
 
   return null;
 };
 
 const ChartContainer = ({
   chartData,
+  instrumentMeta,
   isChartLoading,
   currentInterval,
   currentTimeframe,
@@ -88,6 +138,8 @@ const ChartContainer = ({
   onTimeframeChange,
   onCandleTypeChange,
   query,
+  selectedDate,
+  socket,
   isExpanded,
   onToggleExpand,
   onToggleSearch,
@@ -117,12 +169,16 @@ const ChartContainer = ({
         currentInterval={currentInterval}
         currentTimeframe={currentTimeframe}
         currentCandleType={currentCandleType}
+        socket={socket}
+        query={query}
+        selectedDate={selectedDate}
       />
       <ChartLayout isExpanded={isExpanded}>
         <ChartContent
           onIntervalChange={handleIntervalChange}
           onTimeframeChange={handleTimeframeChange}
           onCandleTypeChange={handleCandleTypeChange}
+          instrumentMeta={instrumentMeta}
           onToggleExpand={handleToggleExpand}
           onToggleSearch={onToggleSearch}
           onSearch={handleSearch}

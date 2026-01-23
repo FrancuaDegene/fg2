@@ -1,5 +1,5 @@
 /* ExpandedControls.css */
-
+/*для гита*/
 /* Общие стили для AppBar */
 .s-app-bar {
     position: absolute !important;
@@ -55,10 +55,6 @@
     color: #2a2a2a;
 }
 
-/* Стили для метки текста рядом с иконкой */
-.expanded-controls__label {
-    /* Дополнительные стили, если нужны */
-}
 
 /* Стилизация оверлея панели поиска */
 .search-panel-overlay {

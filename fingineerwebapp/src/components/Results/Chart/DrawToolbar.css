@@ -1,12 +1,14 @@
 :root{
-  --fg-drawtb-btn: 34px;
+  /* размер круглой кнопки тулбара */
+  --fg-drawtb-btn: 30px; /* было 34px */
 }
 
 .drawtb{
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;       /* было 8px */
+  padding: 4px;   /* было 8px */
+  box-sizing: border-box; /* ширина учитывает padding/border */
   border-radius: 10px;
   background: rgba(28,32,44,0.85);
 }
@@ -61,16 +63,16 @@
 .drawtb.drawtb--light{
   background: rgba(248, 250, 255, 0.58);
   border-radius: 18px;
-  padding: 10px;
+  padding: 6px;    /* было 10px */
   box-shadow: 0 10px 20px rgba(28, 32, 48, 0.1);
   border: 1px solid rgba(206, 214, 230, 0.55);
   backdrop-filter: blur(10px);
-  gap: 10px;
+  gap: 8px;        /* было 10px */
 }
 
 .drawtb--light .drawtb__btn{
-  width: 36px;
-  height: 36px;
+  width: var(--fg-drawtb-btn);   /* было 36px */
+  height: var(--fg-drawtb-btn);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(190, 202, 226, 0.6);
@@ -99,9 +101,12 @@
   border-radius: 999px;
 }
 
-/* === STEP 1: remove sticky for rails only in expanded === */
-.chart-stage.with-docks .drawtb--left,
-.chart-stage.with-docks .drawtb--right{
-  position: static !important;   /* без отрыва сверху */
-  top: auto !important;
+/* === Expanded: ставим панель рисовалок в паз (между рельсой и графиком) === */
+.chart-stage.with-docks .dock-left .drawtb--left{
+  position: absolute !important; /* позиционируемся от .chart-host (он relative) */
+  width: var(--drawtb-width);
+  left: calc(var(--anchor-left) - var(--drawtb-margin) - var(--drawtb-width));
+  top: var(--drawtb-top);
+  z-index: 45;                   /* выше рельсы, ниже верхнего тулбара */
+  align-self: auto;
 }

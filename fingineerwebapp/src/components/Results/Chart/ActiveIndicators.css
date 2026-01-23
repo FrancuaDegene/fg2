@@ -1,134 +1,343 @@
-/* ActiveIndicators.css - Простое отображение активных индикаторов */
+/* Legend for active chart indicators */
 
-.indicators-simple-list {
+.indicator-legend {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  z-index: 1000;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 1200;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   pointer-events: none;
 }
 
-.indicator-simple-item {
-  display: flex;
+.indicator-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(210, 216, 230, 0.7);
+  box-shadow: 0 8px 18px rgba(38, 43, 61, 0.14);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+.indicator-chip__marker {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(12, 24, 46, 0.08);
+}
+
+.indicator-chip__meta {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
-  pointer-events: auto;
-}
-
-.indicator-simple-name {
-  font-size: 13px;
+  min-width: 0;
+  font-size: 12px;
   font-weight: 600;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(4px);
-  user-select: none;
+  color: #4a566f;
+  line-height: 1.1;
 }
 
-.indicator-simple-hide,
-.indicator-simple-remove {
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
+.indicator-chip__name {
+  white-space: nowrap;
+}
+
+.indicator-chip__period-btn {
+  background: none;
   border: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 3px;
-  font-size: 10px;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  margin: 0;
   cursor: pointer;
-  display: flex;
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.indicator-chip__period-btn:hover,
+.indicator-chip__period-btn:focus-visible {
+  opacity: 1;
+  text-decoration: underline;
+  outline: none;
+}
+
+.indicator-chip[data-visible="0"] {
+  background: rgba(244, 246, 252, 0.72);
+  border-color: rgba(205, 212, 226, 0.6);
+}
+
+.indicator-chip[data-visible="0"] .indicator-chip__meta,
+.indicator-chip[data-visible="0"] .indicator-chip__marker {
+  opacity: 0.6;
+}
+
+.indicator-chip[data-visible="0"] .indicator-chip__btn {
+  opacity: 0.7;
+}
+
+.indicator-chip[data-visible="0"] .indicator-chip__btn:hover {
+  opacity: 1;
+}
+
+.indicator-chip__btn {
+  appearance: none;
+  border: 1px solid rgba(202, 210, 226, 0.75);
+  background: rgba(235, 240, 255, 0.82);
+  color: #4c5773;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
 }
 
-.indicator-simple-hide:hover {
-  background: rgba(33, 150, 243, 0.8);
+.indicator-chip__btn:hover {
+  background: rgba(142, 155, 217, 0.85);
+  color: #ffffff;
 }
 
-.indicator-simple-remove:hover {
-  background: rgba(244, 67, 54, 0.8);
+.indicator-chip__btn--visibility[data-active="0"] {
+  opacity: 0.65;
 }
 
-/* Expanded light adjustments */
-.chart-card .indicators-simple-list {
-  top: 16px;
-  left: 16px;
+.indicator-chip__btn--remove:hover {
+  background: rgba(236, 130, 120, 0.88);
+  border-color: rgba(236, 130, 120, 0.88);
+}
+
+.indicator-chip__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
   gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(209, 214, 228, 0.85);
+  box-shadow: 0 16px 32px rgba(36, 43, 63, 0.18);
+  pointer-events: auto;
+  z-index: 1500;
+  min-width: 200px;
 }
 
-.chart-card .indicator-simple-item {
+.indicator-chip__popover-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
-  background: rgba(255, 255, 255, 0.78);
-  border-radius: 12px;
-  padding: 6px 10px;
-  border: 1px solid rgba(205, 212, 229, 0.6);
-  box-shadow: 0 10px 22px rgba(30, 36, 52, 0.12);
-  backdrop-filter: blur(12px);
 }
 
-.chart-card .indicator-simple-name {
-  color: #4f5870;
-  text-shadow: none;
+.indicator-chip__popover-label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
   font-weight: 600;
-  background: transparent;
-  padding: 0;
+  color: #5a6381;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.chart-card .indicator-simple-hide,
-.chart-card .indicator-simple-remove {
-  background: rgba(223, 228, 240, 0.85);
-  color: #4c5773;
+.indicator-chip__popover-input {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(198, 205, 222, 0.9);
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #313a53;
+  background: #f8f9fe;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.indicator-chip__popover-input:focus {
+  border-color: #6b7bff;
+  box-shadow: 0 0 0 3px rgba(107, 123, 255, 0.2);
+}
+
+.indicator-chip__popover-apply {
+  border: none;
+  background: #4b67ff;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.indicator-chip__popover-apply:hover {
+  background: #374eea;
+  box-shadow: 0 6px 14px rgba(55, 78, 234, 0.3);
+}
+
+.indicator-chip__popover-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.indicator-chip__preset {
+  border: 1px solid rgba(205, 212, 228, 0.8);
+  background: rgba(240, 244, 255, 0.92);
+  padding: 4px 8px;
   border-radius: 6px;
-  width: 20px;
-  height: 20px;
-  border: 1px solid rgba(205, 213, 228, 0.6);
-  box-shadow: 0 4px 12px rgba(30, 36, 52, 0.1);
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5878;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.chart-card .indicator-simple-hide:hover {
-  background: rgba(134, 150, 214, 0.8);
+.indicator-chip__preset:hover {
+  background: rgba(115, 135, 223, 0.9);
+  color: #fff;
+  border-color: rgba(115, 135, 223, 0.9);
+}
+
+.indicator-chip__btn--toggle[data-active="1"] {
+  background: rgba(101, 159, 255, 0.92);
+  color: #ffffff;
+  border-color: rgba(101, 159, 255, 0.92);
+}
+
+.indicator-chip__btn--toggle[data-active="0"] {
+  opacity: 0.75;
+}
+
+.indicator-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(36, 42, 60, 0.2);
+}
+
+/* Compact palette for базовый (не расширенный) режим */
+.chart-host[data-expanded="0"] .indicator-chip {
+  background: rgba(16, 20, 33, 0.82);
+  border-color: rgba(40, 52, 80, 0.78);
+  box-shadow: 0 6px 16px rgba(4, 6, 18, 0.45);
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__meta {
+  color: #edf2ff;
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__period-btn {
+  color: rgba(199, 207, 233, 0.82);
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__btn {
+  background: rgba(36, 46, 70, 0.9);
+  border-color: rgba(58, 72, 110, 0.9);
+  color: #d4dcff;
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__btn:hover {
+  background: rgba(107, 125, 189, 0.88);
   color: #fff;
 }
 
-.chart-card .indicator-simple-remove:hover {
-  background: rgba(236, 130, 120, 0.82);
-  color: #fff;
+.chart-host[data-expanded="0"] .indicator-chip__popover {
+  background: rgba(16, 20, 33, 0.94);
+  border-color: rgba(58, 71, 105, 0.9);
+  color: #f5f7ff;
 }
 
-/* Темная тема */
+.chart-host[data-expanded="0"] .indicator-chip__popover-label {
+  color: rgba(213, 220, 250, 0.88);
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__popover-input {
+  background: rgba(32, 40, 62, 0.92);
+  border-color: rgba(87, 103, 149, 0.9);
+  color: #f1f3ff;
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__popover-apply {
+  background: rgba(103, 130, 255, 0.92);
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__preset {
+  background: rgba(34, 44, 68, 0.88);
+  border-color: rgba(65, 80, 118, 0.9);
+  color: #d5dcff;
+}
+
+.chart-host[data-expanded="0"] .indicator-chip__preset:hover {
+  background: rgba(114, 134, 210, 0.94);
+  color: #ffffff;
+  border-color: rgba(114, 134, 210, 0.94);
+}
+
 @media (prefers-color-scheme: dark) {
-  .indicator-simple-name {
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.1);
+  .indicator-chip {
+    background: rgba(19, 24, 38, 0.82);
+    border-color: rgba(40, 48, 68, 0.8);
+    box-shadow: 0 12px 26px rgba(5, 7, 16, 0.38);
   }
 
-  .indicator-simple-hide,
-  .indicator-simple-remove {
-    background: rgba(255, 255, 255, 0.2);
+  .indicator-chip__name {
+    color: #e5ebff;
+  }
+
+  .indicator-chip__badge {
+    background: rgba(82, 99, 144, 0.4);
+    color: #dce4ff;
+  }
+
+  .indicator-chip__btn {
+    background: rgba(42, 55, 87, 0.9);
+    border-color: rgba(62, 79, 118, 0.9);
+    color: #d8e0ff;
   }
 }
 
-/* Мобильные устройства */
 @media (max-width: 768px) {
-  .indicators-simple-list {
-    top: 6px;
-    left: 6px;
+  .indicator-legend {
+    top: 10px;
+    left: 10px;
+    gap: 5px;
   }
 
-  .indicator-simple-name {
+  .indicator-chip {
+    padding: 5px 9px;
+    gap: 6px;
+  }
+
+  .indicator-chip__meta {
+    font-size: 11.5px;
+  }
+
+  .indicator-chip__period-btn {
+    font-size: 10px;
+  }
+
+  .indicator-chip__popover {
+    left: auto;
+    right: 0;
+    min-width: 180px;
+  }
+
+  .indicator-chip__btn {
     font-size: 11px;
-  }
-
-  .indicator-simple-hide,
-  .indicator-simple-remove {
-    width: 16px;
-    height: 16px;
-    font-size: 9px;
+    padding: 3px 6px;
   }
 }

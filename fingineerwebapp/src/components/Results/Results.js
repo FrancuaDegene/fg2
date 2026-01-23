@@ -13,6 +13,7 @@ import ExpandedControls from '../ExpandedControls/ExpandedControls';
 import './Results.css';
 
 const Results = ({
+    query,
     data,
     chartData,
     news,
@@ -23,6 +24,7 @@ const Results = ({
     onSelectTimeframe,
     selectedDate,
     onSelectDate,
+    socket,
     isLoading,
     isChartLoading,
     currentInterval,
@@ -33,8 +35,14 @@ const Results = ({
     onToggleSearch,
     onSearch,
 }) => {
+  // debug logs removed (render-noise)
   
     const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const hasQuery = Boolean(query && String(query).trim());
+    const hasCandles = Boolean(chartData?.candles?.length);
+    const hasCompany = Boolean(data);
+    
+    // debug gate log removed
 
     useEffect(() => {
         setIsPanelOpen(false);
@@ -72,20 +80,25 @@ const Results = ({
         }
     };
 
-    if (isLoading) {
+    if (isLoading && !hasQuery) {
         return <LoadingSkeleton />;
     }
 
-    if (!data) {
+    // ✅ FIXED: Если нет query (тикера) → показывать только поиск
+    if (!hasQuery) {
         return null;
     }
 
-    if (data.error) {
+    if (data?.error) {
+        console.log('[FG][Results][earlyReturn][error]', {
+          error: data.error,
+        });
         return <div className="error">{data.error}</div>;
     }
 
-    console.log('Results rendering with chartData:', chartData);
-    console.log('Results rendering with isChartExpanded:', isChartExpanded);
+    // debug render START log removed
+
+    // debug render logs removed (noise)
 
     return (
         <div className="results-container">
@@ -102,25 +115,26 @@ const Results = ({
                                 transition={{ type: "tween", duration: 0.5 }}
                             >
                                 <TickerInfoPanel
-                                    ticker={data.ticker}
+                                    ticker={data?.ticker || ''}
                                     details={{
-                                        sector: data.sector || '—',
-                                        exchange: data.exchange || '—',
-                                        dividendYield: data.dividendYield || '—',
+                                        sector: data.sector || 'вЂ”',
+                                        exchange: data.exchange || 'вЂ”',
+                                        dividendYield: data.dividendYield || 'вЂ”',
                                     }}
                                     onClose={handleClosePanel}
                                 />
                             </motion.div>
                         )}
                     </AnimatePresence>
-                    <Price data={data} ticker={data.ticker} />
+                    <Price data={data} ticker={data?.ticker || ''} />
                 </div>
+            {/* debug chartGate log removed */}
             </div>
 
-            {/* Панель управления только если график расширен и поиск активен */}
+            {/* РџР°РЅРµР»СЊ СѓРїСЂР°РІР»РµРЅРёСЏ С‚РѕР»СЊРєРѕ РµСЃР»Рё РіСЂР°С„РёРє СЂР°СЃС€РёСЂРµРЅ Рё РїРѕРёСЃРє Р°РєС‚РёРІРµРЅ */}
             {isChartExpanded && isSearchVisible && (
             <ExpandedControls
-        query={data.ticker}
+        query={data?.ticker || ''}
         onSearch={handleSearch}
         currentTimeframe={currentTimeframe}
         onSelectTimeframe={handleSelectTimeframe}
@@ -133,11 +147,14 @@ const Results = ({
 )}
 
             <div className="chart-flex-row">
+                {/* debug ABOUT TO RENDER log removed */}
                 <Chart
-                    query={data.ticker}
+                    query={query || data?.ticker || ''}
                     chartData={chartData}
                     data={data}
                     isChartLoading={isChartLoading}
+                    selectedDate={selectedDate}
+                    socket={socket}
                     currentTimeframe={currentTimeframe}
                     onTimeframeChange={handleSelectTimeframe}
                     currentInterval={currentInterval}
@@ -166,6 +183,7 @@ const Results = ({
 };
 
 Results.propTypes = {
+    query: PropTypes.string,
     data: PropTypes.object,
     chartData: PropTypes.object,
     news: PropTypes.array,
@@ -185,6 +203,7 @@ Results.propTypes = {
     onToggleExpand: PropTypes.func.isRequired,
     onToggleSearch: PropTypes.func.isRequired,
     onSearch: PropTypes.func.isRequired,
+    socket: PropTypes.object,
 };
 
 export default Results;
