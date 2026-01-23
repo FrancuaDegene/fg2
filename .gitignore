@@ -63,3 +63,6 @@ fingineerwebapp/playwright-report/
 **/build/
 **/.cache/
 **/*.log
+testsprite_tests/
+fingineerwebapp/e2e/
+fingineerwebapp/playwright.config.js
