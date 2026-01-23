@@ -50,3 +50,16 @@ backend2/cert/
 /ssh -T git@github.com.pub
 fingineerwebapp/passport_*.txt
 docs/passport_*.txt
+# local temp
+tmp.txt
+test-results/
+playwright-report/
+fingineerwebapp/test-results/
+fingineerwebapp/playwright-report/
+
+# deps/build (на всякий)
+**/node_modules/
+**/dist/
+**/build/
+**/.cache/
+**/*.log
