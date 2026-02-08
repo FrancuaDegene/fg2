@@ -1,0 +1,2 @@
+Follow AGENTS.md and CODEX_RULES.md.
+Confirm you loaded both before proceeding.
