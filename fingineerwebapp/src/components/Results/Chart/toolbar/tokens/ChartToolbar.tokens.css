@@ -85,6 +85,18 @@
   --tb-range-icon: rgba(255, 255, 255, 0.72);
   --tb-range-muted-text: rgba(255, 255, 255, 0.6);
   --tb-range-disabled-opacity: 0.5;
+  --tb-glass-bg: linear-gradient(
+    180deg,
+    rgba(32, 36, 42, 0.78) 0%,
+    rgba(24, 28, 34, 0.88) 100%
+  );
+  --tb-glass-border: rgba(255, 255, 255, 0.18);
+  --tb-glass-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --tb-glass-blur: 8px;
+  --tb-glass-saturate: 1.05;
+  --tb-glass-item-active-bg: rgba(255, 255, 255, 0.10);
 
   --tb-expand-size: 36px;
   --tb-expand-radius: 12px;
@@ -98,16 +110,19 @@
   --tb-expand-icon: rgba(255, 255, 255, 0.88);
   --tb-expand-disabled-opacity: 0.5;
 
-  --tb-dropdown-range-bg: #20252e;
+  --tb-dropdown-range-bg: rgba(24, 28, 34, 0.94);
   --tb-dropdown-range-border-color: rgba(255, 255, 255, 0.08);
   --tb-dropdown-range-border-width: 1px;
   --tb-dropdown-range-radius: 14px;
-  --tb-dropdown-range-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  --tb-dropdown-range-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.42),
+    0 2px 10px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --tb-dropdown-range-padding: 6px;
   --tb-dropdown-range-item-radius: 10px;
   --tb-dropdown-range-item-padding: 10px 12px;
-  --tb-dropdown-range-item-hover-bg: rgba(255, 255, 255, 0.06);
-  --tb-dropdown-range-item-active-bg: rgba(255, 255, 255, 0.1);
+  --tb-dropdown-range-item-hover-bg: rgba(255, 255, 255, 0.045);
+  --tb-dropdown-range-item-active-bg: rgba(255, 255, 255, 0.075);
   --tb-dropdown-range-item-color: rgba(255, 255, 255, 0.9);
   --tb-dropdown-range-item-weight-active: 600;
 
