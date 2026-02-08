@@ -13,6 +13,13 @@
   align-items: flex-start;
 }
 
+/* Keep anchor width stable when tb-range switches to position:absolute in open state.
+   Otherwise the container collapses and the expand button shifts left (visual "jump"). */
+.chart-container [data-role="compact-toolbar"] .dropdown-container.tb-dd {
+  width: 64px;
+  min-width: 64px;
+}
+
 .chart-toolbar .dropdown-container,
 .chart-toolbar .tb-dd {
   max-width: none;
@@ -81,6 +88,8 @@
   box-shadow: var(--tb-glass-shadow) !important;
   backdrop-filter: blur(var(--tb-glass-blur)) saturate(var(--tb-glass-saturate));
   -webkit-backdrop-filter: blur(var(--tb-glass-blur)) saturate(var(--tb-glass-saturate));
+  /* keep trigger centered inside fixed-width wrapper */
+  align-items: center;
 }
 
  
@@ -93,6 +102,11 @@
   border-radius: 0;
   position: relative;
   z-index: 1;
+  /* override 56px fixed sizing from controls.css in OPEN state */
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+  justify-content: center;
 }
 
 /* Body: no separate card, participates in wrapper height */

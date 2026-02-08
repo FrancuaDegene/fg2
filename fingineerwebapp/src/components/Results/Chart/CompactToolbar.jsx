@@ -98,6 +98,7 @@ export default function CompactToolbar({
       </div>
       <div className="tb__slot--right" style={{ padding: '8px 10px' }}>
         <div className="dropdown-container tb-dd" ref={anchorRef}>
+          <div className="tb-range" data-state={isOpen ? 'open' : 'closed'}>
           <button
             className={`tb-btn tb-btn--with-text tb-btn--range${isOpen ? ' tb-btn--open' : ''}`}
             onClick={() => {
@@ -131,6 +132,7 @@ export default function CompactToolbar({
               ))}
             </div>
           )}
+          </div>
         </div>
 
         <button

@@ -312,3 +312,80 @@
   background: rgba(40, 44, 52, 0.85);
   color: #f0f3f9;
 }
+
+/* ==============================
+   Compact: keep Range + Expand aligned (no overlap)
+   ============================== */
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb__slot--right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Ensure dropdown anchor keeps its own width and does not push/overlap expand */
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .dropdown-container.tb-dd {
+  flex: 0 0 auto;
+}
+
+/* Expand button must be in normal flow (some old rules may have position:absolute) */
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb-btn--expand {
+  position: static !important;
+  flex: 0 0 auto;
+  margin-left: 0 !important; /* gap handles spacing */
+  width: var(--tb-range-height, 36px);
+  height: var(--tb-range-height, 36px);
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* match the same "material" family as range control */
+  background: var(--tb-control-bg) !important;
+  border: var(--tb-control-border) !important;
+  box-shadow: var(--tb-control-shadow), var(--tb-control-inset-shadow) !important;
+  color: var(--tb-range-text) !important;
+}
+
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb-btn--expand:hover {
+  background: var(--tb-control-bg-hover) !important;
+  box-shadow: var(--tb-range-shadow-hover), var(--tb-control-inset-shadow) !important;
+  transform: translateY(-1px);
+}
+
+/* ==============================
+   Compact: keep Range and Expand as two separate controls (backup parity)
+   ============================== */
+
+/* Range must not stretch (otherwise it looks like a single merged pill). */
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb-btn--with-text.tb-btn--range {
+  width: 56px !important;
+  min-width: 56px !important;
+  max-width: 56px !important;
+  flex: 0 0 56px !important;
+}
+
+/* Expand is its own glass button, not the same material as Range. */
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb-btn--expand {
+  position: relative !important;
+  width: var(--tb-range-height, 36px) !important;
+  height: var(--tb-range-height, 36px) !important;
+  border-radius: 12px !important;
+
+  /* keep the intended spacing from JSX (marginLeft: 8) */
+  margin-left: 8px !important;
+
+  background: var(--tb-glass-bg) !important;
+  border: 1px solid var(--tb-glass-border) !important;
+  box-shadow: var(--tb-glass-shadow) !important;
+  backdrop-filter: blur(var(--tb-glass-blur)) saturate(var(--tb-glass-saturate));
+  -webkit-backdrop-filter: blur(var(--tb-glass-blur)) saturate(var(--tb-glass-saturate));
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.chart-wrapper:not(.expanded) [data-role="compact-toolbar"] .tb-btn--expand:hover {
+  transform: translateY(-1px);
+}
