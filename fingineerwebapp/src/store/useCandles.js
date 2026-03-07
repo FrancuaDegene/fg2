@@ -293,20 +293,7 @@ export function useCandles({
 
     isLoadingMoreRef.current = true;
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[FG][CANDLES_V2_REQ][loadMore]', {
-        ticker,
-        timeframe: tfForRequest,
-        interval: intervalUsed,
-        countBack,
-        to: toSec,
-      });
-    }
-
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[FG][CANDLES_V2_URL][loadMore]', url.toString());
-      }
       const res = await fetch(url.toString(), { cache: 'no-store' });
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
@@ -449,33 +436,6 @@ export function useCandles({
         resolution === 'auto' && !strict ? effectiveInterval || intervalFromContext : intervalFromContext;
       const countBack = resolveCountBackByTimeframe(tfForRequest, intervalUsed, w);
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[FG][PRESET_CHECK]', {
-          tfForRequest,
-          strict,
-          resolution,
-          isPresetRange,
-          usePreset,
-          intervalUsed,
-          selectedDate,
-          countBack,
-        });
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[FG][CANDLES_V2_REQ]', {
-          ticker,
-          timeframe: tfForRequest,
-          selectedDate,
-          userInterval: intervalFromContext,
-          intervalUsed,
-          width: w,
-          dpr: d,
-          resolution,
-          strict,
-        });
-      }
-
       const baseUrl = config.API_BASE_URL || '';
       const path = config.ENDPOINTS?.CANDLES_V2 || '/api/candles-v2';
       const url = new URL(path, baseUrl);
@@ -515,9 +475,6 @@ export function useCandles({
       }
 
       const requestUrl = url.toString();
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[FG][CANDLES_V2_URL]', requestUrl);
-      }
 
       // ---- Cache layer (exact URL key) ----
       const now = Date.now();
@@ -526,9 +483,6 @@ export function useCandles({
       const isFresh = cached && now - (cached.ts || 0) <= ttlMs;
 
       if (isFresh) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.debug('[FG][CANDLES_V2_CACHE] hit', { tf: tfForRequest, ageMs: now - cached.ts });
-        }
         handlePayload({
           ...(cached.payload || {}),
           requestId,
@@ -543,9 +497,6 @@ export function useCandles({
 
       // stale-while-revalidate: show cache now, but still revalidate
       if (cached && !isFresh) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.debug('[FG][CANDLES_V2_CACHE] stale', { tf: tfForRequest, ageMs: now - cached.ts, ttlMs });
-        }
         handlePayload({
           ...(cached.payload || {}),
           requestId,
@@ -559,9 +510,6 @@ export function useCandles({
 
       // inflight dedupe
       if (CANDLES_V2_INFLIGHT.has(requestUrl)) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.debug('[FG][CANDLES_V2_CACHE] inflight', { tf: tfForRequest });
-        }
         CANDLES_V2_INFLIGHT.get(requestUrl)
           .then((payload) => {
             handlePayload({
@@ -575,10 +523,6 @@ export function useCandles({
           })
           .finally(() => setLoading(false));
         return;
-      }
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.debug('[FG][CANDLES_V2_CACHE] miss', { tf: tfForRequest });
       }
 
       const p = fetch(requestUrl, { signal: controller.signal, cache: 'no-store' })

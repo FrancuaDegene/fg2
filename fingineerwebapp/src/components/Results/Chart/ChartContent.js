@@ -27,8 +27,6 @@ const ChartContent = ({
   const { activeTicker, instrumentMeta: stateInstrumentMeta, lastCandleData, chartMeta } = useChartState();
   const enableDashboard = String(process.env.REACT_APP_FEATURE_DASHBOARD) === '1';
 
-  console.log('ChartContent rendered with chartData:', chartData);
-  console.log('ChartContent rendered with isExpanded:', isExpanded);
 
   // Мемоизируем функции-обработчики
   const handleIntervalChange = useCallback((interval) => {

@@ -139,7 +139,6 @@ export function PulseBlock({ pulseData, ticker }) {
     const durationMs = clamp(N * 28, 900, 1800);
     let startTs = null;
     let rafId = null;
-    let prevTs = null;
     const headElement = headRef.current;
     const toPointsAttr = (arr) => arr.map(([x, y]) => String(x) + ',' + String(y)).join(' ');
 
@@ -157,10 +156,6 @@ export function PulseBlock({ pulseData, ticker }) {
     }
 
     const step = (ts) => {
-      if (prevTs !== null) {
-        console.log('[FG] raf dt', ts - prevTs); // TEMP
-      }
-      prevTs = ts;
       if (startTs === null) startTs = ts;
       const linear = Math.min((ts - startTs) / durationMs, 1);
       const progress = 1 - Math.pow(1 - linear, 3);

@@ -23,6 +23,8 @@ export const useLightweightChart = ({
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+    const navOwnerEnabled = String(process.env.REACT_APP_FG_NAV_OWNER || '') === '1';
+    const disableNativeNavigation = isExpanded && navOwnerEnabled;
 
     const layoutOptions = isExpanded
       ? { textColor: 'rgba(148, 153, 161, 0.9)', background: { type: 'solid', color: '#ffffff' } }
@@ -61,15 +63,25 @@ export const useLightweightChart = ({
       grid: gridOptions,
       width: container.clientWidth,
       height: container.clientHeight,
-      handleScale: {
-        mouseWheel: true,
-        pinch: true,
-        axisPressedMouseMove: true,
-        axisDoubleClickReset: true,
-        mouseWheelSensitivity: 0.15,
-      },
+      handleScale: disableNativeNavigation
+        ? {
+            mouseWheel: false,
+            pinch: false,
+            axisPressedMouseMove: false,
+            axisDoubleClickReset: false,
+            mouseWheelSensitivity: 0.15,
+          }
+        : {
+            mouseWheel: true,
+            pinch: true,
+            axisPressedMouseMove: true,
+            axisDoubleClickReset: true,
+            mouseWheelSensitivity: 0.15,
+          },
       // Compact = snapshot: пан разрешён (для просмотра внутри окна), границы фиксируются в useChartData.
-      handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+      handleScroll: disableNativeNavigation
+        ? { mouseWheel: false, pressedMouseMove: false, horzTouchDrag: false, vertTouchDrag: false }
+        : { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       timeScale: {
         timeVisible: true,
         borderVisible: false,
@@ -107,6 +119,98 @@ export const useLightweightChart = ({
     }
 
     const timeScale = chart.timeScale();
+    const vpWriterRestoreFns = [];
+    if (process.env.NODE_ENV !== 'production' && timeScale) {
+      const logThrottleMs = 1000;
+      const lastLogAtByMethod = new Map();
+      const snapshotVp = () => {
+        let logicalRange = null;
+        let timeRange = null;
+        let barSpacing = null;
+        try {
+          logicalRange =
+            typeof timeScale.getVisibleLogicalRange === 'function'
+              ? timeScale.getVisibleLogicalRange()
+              : null;
+        } catch {}
+        try {
+          timeRange =
+            typeof timeScale.getVisibleRange === 'function'
+              ? timeScale.getVisibleRange()
+              : null;
+        } catch {}
+        try {
+          const opts =
+            typeof timeScale.options === 'function'
+              ? timeScale.options()
+              : null;
+          if (opts && Object.prototype.hasOwnProperty.call(opts, 'barSpacing')) {
+            barSpacing = opts.barSpacing;
+          }
+        } catch {}
+        const logicalWidth =
+          logicalRange &&
+          Number.isFinite(logicalRange.from) &&
+          Number.isFinite(logicalRange.to)
+            ? logicalRange.to - logicalRange.from
+            : null;
+        return {
+          logicalRange,
+          timeRange,
+          barSpacing,
+          logicalWidth,
+        };
+      };
+      const wrapVpWriter = (methodName) => {
+        const original = timeScale[methodName];
+        if (typeof original !== 'function') return;
+        const wrapped = (...args) => {
+          const now =
+            typeof performance !== 'undefined' && typeof performance.now === 'function'
+              ? performance.now()
+              : Date.now();
+          const key = methodName;
+          const prev = lastLogAtByMethod.get(key) ?? -Infinity;
+          const shouldLog = now - prev >= logThrottleMs;
+          if (shouldLog) {
+            lastLogAtByMethod.set(key, now);
+          }
+          const pre = shouldLog ? snapshotVp() : null;
+          if (shouldLog) {
+            console.debug(`[FG][VP][PRE] ${methodName}`, { args, ...pre });
+          }
+          const result = original.apply(timeScale, args);
+          if (!shouldLog) {
+            return result;
+          }
+          const post = snapshotVp();
+          console.debug(`[FG][VP][POST] ${methodName}`, { args, ...post });
+          const isAnomaly =
+            (post.logicalWidth != null && post.logicalWidth < 5) ||
+            (post.barSpacing != null && post.barSpacing > 80);
+          if (isAnomaly) {
+            console.debug(`[FG][VP][POST][ANOMALY] ${methodName}`, {
+              args,
+              pre,
+              post,
+            });
+            console.trace(`[FG][VP][POST][ANOMALY][TRACE] ${methodName}`);
+          }
+          return result;
+        };
+        try {
+          timeScale[methodName] = wrapped;
+          vpWriterRestoreFns.push(() => {
+            if (timeScale[methodName] === wrapped) {
+              timeScale[methodName] = original;
+            }
+          });
+        } catch {}
+      };
+      wrapVpWriter('setVisibleLogicalRange');
+      wrapVpWriter('setVisibleRange');
+      wrapVpWriter('applyOptions');
+    }
     const handleRangeChange = () => {
       isZoomingRef.current = true;
       if (zoomIdleTimerRef.current) {
@@ -145,8 +249,11 @@ export const useLightweightChart = ({
         try {
           chart.resize(width, height);
           const ts = chart.timeScale();
-          ts.applyOptions({ rightOffset: 0 });
-          ts.scrollToRealTime();
+          if (disableNativeNavigation) {
+          } else {
+            ts.applyOptions({ rightOffset: 0 });
+            ts.scrollToRealTime();
+          }
         } catch (error) {
           console.warn('Chart resize error:', error);
         } finally {
@@ -211,6 +318,11 @@ export const useLightweightChart = ({
         clearTimeout(zoomIdleTimerRef.current);
         zoomIdleTimerRef.current = null;
       }
+      vpWriterRestoreFns.forEach((restore) => {
+        try {
+          restore();
+        } catch {}
+      });
       try {
         timeScale.unsubscribeVisibleLogicalRangeChange(handleRangeChange);
       } catch {}

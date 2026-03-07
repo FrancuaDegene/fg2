@@ -90,9 +90,13 @@ export const useChartData = ({
   const lastAppliedRangeRef = useRef({ from: null, to: null });
   const snapshotRangeRef = useRef(null);
   const isClampingRef = useRef(false);
+  const skipTinySliceLoggedRef = useRef(new Set());
+  const skipOwnerNavLoggedRef = useRef(new Set());
   const MIN_VISIBLE_FOR_LOAD = 5;
   const MAX_VISIBLE_FOR_LOAD = 120;
   const LEFT_EDGE_THRESHOLD = 5;
+  const resolvedIsExpanded = Boolean(isExpanded);
+  const navOwnerEnabled = String(process.env.REACT_APP_FG_NAV_OWNER || '') === '1';
 
   // При смене тикера/интервала/таймфрейма/типа свечей сбрасываем стрим-refs и виртуализацию.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,21 +132,6 @@ export const useChartData = ({
     const chart = chartInstanceRef.current;
     const series = seriesRef.current;
     if (!chart || !series) return;
-    console.log(
-      '[FG][useChartData] type:',
-      currentCandleType,
-      'sample:',
-      preparedData?.slice(0, 3),
-    );
-
-    console.log('[LWC] data effect', {
-      hasChart: !!chart,
-      hasSeries: !!series,
-      preparedLen: preparedData?.length ?? 0,
-      didInit: didInitViewRef.current,
-      candleType: currentCandleType,
-      symbolId,
-    });
 
     if (!preparedData || preparedData.length === 0) {
       if (virtualRafRef.current) cancelAnimationFrame(virtualRafRef.current);
@@ -203,7 +192,10 @@ export const useChartData = ({
             const ts = chart.timeScale();
             wasAtRightRef.current = ts.scrollPosition?.() === 0;
             if (lastTs > prevTs && wasAtRightRef.current) {
-              ts.scrollToRealTime?.();
+              if (resolvedIsExpanded && navOwnerEnabled) {
+              } else {
+                ts.scrollToRealTime?.();
+              }
             }
           } catch (err) {
             console.warn('[LWC] update failed -> fallback later', err);
@@ -249,18 +241,6 @@ export const useChartData = ({
       Number.isFinite(tfSec) && estimateByTf != null
         ? estimateByTf
         : estimateByWidth;
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[FG][VR][initWindow]', {
-        tf: currentTimeframe,
-        interval: currentInterval,
-        windowSize,
-        estimateByWidth,
-        estimateByTf,
-        maxVirtualViewport,
-        width,
-      });
-    }
 
     const estimate = windowSize;
 
@@ -339,14 +319,6 @@ export const useChartData = ({
             });
           }
         }
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.debug('[FG][VR][PRESET_OVERRIDE]', {
-            currentTimeframe,
-            bars: toIdx - fromIdx + 1,
-            tfSec,
-          });
-        }
       } else {
         // Обычная виртуализация — для non-preset/all/ручного зума
         const baseWindow = estimateByTf ?? estimateByWidth;
@@ -366,21 +338,6 @@ export const useChartData = ({
 
     const fromTime = slice[0]?.time ?? null;
     const toTime = slice[slice.length - 1]?.time ?? null;
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[FG][VR]', {
-        tf: currentTimeframe,
-        interval: currentInterval,
-        total,
-        estimate,
-        fromIdx,
-        toIdx,
-        fromTime,
-        toTime,
-        hasValidVis,
-        width,
-      });
-    }
 
     wasAtRightRef.current = ts.scrollPosition?.() === 0;
 
@@ -412,11 +369,6 @@ export const useChartData = ({
         let fromSec = fromTime != null ? toEpochSec(fromTime) : null;
         let toSec = toTime != null ? toEpochSec(toTime) : null;
         let safeDate = null;
-
-        const resolvedIsExpanded =
-          typeof isExpanded === 'boolean'
-            ? isExpanded
-            : chartContainerRef.current?.closest?.('.chart-host')?.dataset?.expanded === '1';
 
         if (!resolvedIsExpanded && currentTimeframe === '1d') {
           if (typeof selectedDate === 'string' && selectedDate.trim()) {
@@ -456,20 +408,19 @@ export const useChartData = ({
         }
 
         series.setData(sessionSlice);
-
-        console.log('%c[ПОЛНЫЙ 3MTH — ПОБЕДА]', 'color: #ff00ff; background: #000; font-size: 20px; font-weight: bold; padding: 10px;', {
-          'БАРОВ НА ГРАФИКЕ': nextSlice.length,
-          'С': new Date(nextSlice[0].time * 1000).toLocaleDateString('ru-RU'),
-          'ПО': new Date(nextSlice[nextSlice.length-1].time * 1000).toLocaleDateString('ru-RU'),
-          'ТАЙМФРЕЙМ': currentTimeframe,
-          'ИНТЕРВАЛ': currentInterval,
-        });
-
-        console.log('%c[ЧАРТ ОТРИСОВАЛ — ПОЛНЫЙ 3MTH]', 'color: cyan; font-size: 18px; font-weight: bold;', {
-          баров: nextSlice.length,
-          первая_дата: nextSlice[0] ? new Date(nextSlice[0].time * 1000).toLocaleDateString('ru-RU') : '—',
-          последняя_дата: nextSlice[nextSlice.length-1] ? new Date(nextSlice[nextSlice.length-1].time * 1000).toLocaleDateString('ru-RU') : '—',
-        });
+        if (
+          process.env.NODE_ENV !== 'production' &&
+          resolvedIsExpanded &&
+          navOwnerEnabled &&
+          currentTimeframe === '1d'
+        ) {
+          console.debug('[FG][DATA_LEN]', {
+            tag: 'afterSetData',
+            path: 'init',
+            totalPrepared: preparedData?.length,
+            sliceLen: sessionSlice?.length,
+          });
+        }
 
         virtualRangeRef.current = {
           fromIdx,
@@ -479,24 +430,125 @@ export const useChartData = ({
         };
 
         if (!didInitViewRef.current && Number.isFinite(fromSec) && Number.isFinite(toSec) ) {
-          try {
-            ts.setVisibleRange({
-              from: fromSec,
-              to: toSec,
-            });
-          } catch (err) {
-            console.error('[FG][useChartData] setVisibleRange(init) failed', err);
-          }
+          const sliceLen = Array.isArray(sessionSlice) ? sessionSlice.length : 0;
+          const shouldGuardTinyInitSlice =
+            resolvedIsExpanded &&
+            navOwnerEnabled &&
+            currentTimeframe === '1d';
+          const barsExpectedFor1d =
+            Number.isFinite(intervalSec) && intervalSec > 0
+              ? Math.round(86400 / intervalSec)
+              : 0;
+          const minOk =
+            barsExpectedFor1d > 0
+              ? Math.min(50, Math.max(10, Math.floor(barsExpectedFor1d * 0.5)))
+              : 10;
+          const isTinyInitSlice =
+            shouldGuardTinyInitSlice &&
+            sliceLen < minOk;
 
-          if (process.env.NODE_ENV !== 'production') {
-            const visAfter = ts.getVisibleRange?.();
-            console.debug('[FG][VR][visibleRange:init]', {
-              fromSec,
-              toSec,
-              visAfter,
-            });
+          if (isTinyInitSlice) {
+            if (process.env.NODE_ENV !== 'production') {
+              const key = `${symbolId || 'nosymbol'}|${currentTimeframe}|${currentInterval}`;
+              const seen = skipTinySliceLoggedRef.current;
+              if (seen && !seen.has(key)) {
+                seen.add(key);
+                console.debug('[FG][INIT_RANGE][skipTinySlice]', {
+                  sliceLen,
+                  minOk,
+                  barsExpected: barsExpectedFor1d,
+                  intervalSec,
+                  key,
+                });
+              }
+            }
+          } else {
+            const shouldSkipOwnerNavInitRange =
+              resolvedIsExpanded &&
+              navOwnerEnabled &&
+              currentTimeframe === '1d';
+            let initFromSec = fromSec;
+            let initToSec = toSec;
+            if (
+              resolvedIsExpanded &&
+              navOwnerEnabled &&
+              currentTimeframe === '1d' &&
+              currentInterval === '15m' &&
+              Number.isFinite(intervalSec) &&
+              intervalSec > 0
+            ) {
+              const minBarsInInitWindow = 60;
+              const minSpanSec = minBarsInInitWindow * intervalSec;
+              const currentSpanSec = initToSec - initFromSec;
+              if (currentSpanSec < minSpanSec) {
+                initFromSec = initToSec - minSpanSec;
+              }
+            }
+            if (
+              process.env.NODE_ENV !== 'production' &&
+              resolvedIsExpanded &&
+              navOwnerEnabled &&
+              currentTimeframe === '1d'
+            ) {
+              const logicalRangeBefore = ts.getVisibleLogicalRange?.();
+              const logicalWidthBefore =
+                logicalRangeBefore &&
+                Number.isFinite(logicalRangeBefore.from) &&
+                Number.isFinite(logicalRangeBefore.to)
+                  ? logicalRangeBefore.to - logicalRangeBefore.from
+                  : null;
+              const spanSec = initToSec - initFromSec;
+              const barsExpected =
+                Number.isFinite(intervalSec) && intervalSec > 0
+                  ? spanSec / intervalSec
+                  : null;
+              console.debug('[FG][INIT_RANGE][1d]', {
+                fromSec: initFromSec,
+                toSec: initToSec,
+                spanSec,
+                intervalSec,
+                barsExpected,
+                logicalWidthBefore,
+              });
+            }
+            if (shouldSkipOwnerNavInitRange) {
+              if (process.env.NODE_ENV !== 'production') {
+                const key = `${symbolId || 'nosymbol'}|${currentTimeframe}|${currentInterval}`;
+                const seen = skipOwnerNavLoggedRef.current;
+                if (seen && !seen.has(key)) {
+                  seen.add(key);
+                  console.debug('[FG][INIT_RANGE][skipOwnerNav]', { key, sliceLen });
+                }
+              }
+            } else {
+              try {
+                ts.setVisibleRange({
+                  from: initFromSec,
+                  to: initToSec,
+                });
+                if (
+                  process.env.NODE_ENV !== 'production' &&
+                  resolvedIsExpanded &&
+                  navOwnerEnabled &&
+                  currentTimeframe === '1d'
+                ) {
+                  const lr = ts.getVisibleLogicalRange?.();
+                  console.debug('[FG][RANGE_AFTER_INIT]', {
+                    lrWidth:
+                      lr &&
+                      Number.isFinite(lr.from) &&
+                      Number.isFinite(lr.to)
+                        ? lr.to - lr.from
+                        : null,
+                    lr,
+                  });
+                }
+              } catch (err) {
+                console.error('[FG][useChartData] setVisibleRange(init) failed', err);
+              }
+            }
+            didInitViewRef.current = true;
           }
-          didInitViewRef.current = true;
         }
 
         if (
@@ -520,7 +572,7 @@ export const useChartData = ({
           }
         }
 
-        if (!isExpanded && !snapshotRangeRef.current) {
+        if (!resolvedIsExpanded && !snapshotRangeRef.current) {
           const logical = ts.getVisibleLogicalRange?.();
           if (
             logical &&
@@ -555,7 +607,7 @@ export const useChartData = ({
     lastTimeRef,
     maxVirtualViewport,
     indicatorsMaxLookback,
-    isExpanded,
+    resolvedIsExpanded,
     selectedDate,
   ]);
 
@@ -564,12 +616,6 @@ export const useChartData = ({
     const chart = chartInstanceRef.current;
     const series = seriesRef.current;
     if (!chart || !series) return;
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.debug('[FG][VR][hook:init]', {
-        hasLoadMoreHistory: typeof loadMoreHistory === 'function',
-      });
-    }
 
     const ts = chart.timeScale();
 
@@ -650,7 +696,7 @@ export const useChartData = ({
           isNearLeftEdge: typeof leftIndex === 'number' && leftIndex <= LEFT_EDGE_THRESHOLD,
         };
 
-        const hasLoadMoreFn = isExpanded && typeof loadMoreHistory === 'function';
+        const hasLoadMoreFn = resolvedIsExpanded && typeof loadMoreHistory === 'function';
 
         const canLoadMore =
           hasLoadMoreFn &&
@@ -818,11 +864,6 @@ export const useChartData = ({
           }
 
           let sessionSlice = nextSlice;
-          const resolvedIsExpanded =
-            typeof isExpanded === 'boolean'
-              ? isExpanded
-              : chartContainerRef.current?.closest?.('.chart-host')?.dataset?.expanded === '1';
-
           if (!resolvedIsExpanded && currentTimeframe === '1d') {
             const toSec = toEpochSec(nextSlice[nextSlice.length - 1]?.time);
             let safeDate = null;
@@ -853,6 +894,19 @@ export const useChartData = ({
           }
 
           series.setData(sessionSlice);
+          if (
+            process.env.NODE_ENV !== 'production' &&
+            resolvedIsExpanded &&
+            navOwnerEnabled &&
+            currentTimeframe === '1d'
+          ) {
+            console.debug('[FG][DATA_LEN]', {
+              tag: 'afterSetData',
+              path: 'vr',
+              totalPrepared: preparedData?.length,
+              sliceLen: sessionSlice?.length,
+            });
+          }
 
           console.log('%c[ЧАРТ ОТРИСОВАЛ]', 'color: #00ff44; font-size: 16px; font-weight: bold;', {
             баров: sessionSlice.length,
@@ -875,7 +929,12 @@ export const useChartData = ({
             toTime: sessionSlice[sessionSlice.length - 1]?.time ?? null,
           };
 
-          if (wasAtRightRef.current) ts.scrollToRealTime?.();
+          if (wasAtRightRef.current) {
+            if (resolvedIsExpanded && navOwnerEnabled) {
+            } else {
+              ts.scrollToRealTime?.();
+            }
+          }
         } finally {
           isVirtualizingRef.current = false;
         }
@@ -906,7 +965,7 @@ export const useChartData = ({
     virtualRangeRef,
     virtualRafRef,
     wasAtRightRef,
-    isExpanded,
+    resolvedIsExpanded,
     selectedDate,
   ]);
 
@@ -929,7 +988,7 @@ export const useChartData = ({
     };
 
     const handleLogicalRange = (range) => {
-      if (isExpanded) return;
+      if (resolvedIsExpanded) return;
       const clamped = clampRange(range);
       if (!clamped) return;
       if (isClampingRef.current) return;
@@ -946,5 +1005,6 @@ export const useChartData = ({
         ts.unsubscribeVisibleLogicalRangeChange(handleLogicalRange);
       } catch {}
     };
-  }, [chartInstanceRef, isExpanded]);
+  }, [chartInstanceRef, resolvedIsExpanded]);
 };
+

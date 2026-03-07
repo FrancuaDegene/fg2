@@ -15,6 +15,7 @@ import { useChart } from './ChartContext';
 import { useChartHover } from './hooks/useChartHover';
 import { useIndicatorsEngine } from './useIndicatorsEngine';
 import { useLightweightChart } from './hooks/useLightweightChart';
+import { useFGTimeNavigation } from './hooks/useFGTimeNavigation';
 import { useChartData } from './hooks/useChartData';
 import { useChartIndicators } from './hooks/useChartIndicators';
 
@@ -60,12 +61,6 @@ const ChartCanvas = memo(function ChartCanvas({
     
   }
 
-  console.log('[LWC] ChartCanvas render', {
-    symbolId,
-    interval: currentInterval,
-    timeframe: currentTimeframe,
-    candles: Array.isArray(chartData?.candles) ? chartData.candles.length : 0,
-  });
   // DEBUG: выносим данные в window, чтобы смотреть из консоли
   if (typeof window !== 'undefined') {
     const rawCandles = Array.isArray(chartData?.candles) ? chartData.candles : [];
@@ -89,7 +84,6 @@ const ChartCanvas = memo(function ChartCanvas({
           lastIso: new Date(lastTs * 1000).toISOString(),
         };
 
-        console.log('[FG][CANDLES_RANGE]', mode, window.__CANDLES_RANGE__);
       } else {
         window.__CANDLES_RANGE__ = null;
       }
@@ -128,6 +122,7 @@ const ChartCanvas = memo(function ChartCanvas({
   const lastRangeTsRef = useRef(0);
   const isVirtualizingRef = useRef(false);
   const isResizingRef = useRef(false);
+  const navOwnerEnabled = String(process.env.REACT_APP_FG_NAV_OWNER || '') === '1';
 
   const indCacheRef = useRef(new Map());
   const indGenRef   = useRef(0);
@@ -141,7 +136,6 @@ const ChartCanvas = memo(function ChartCanvas({
     if (raw.length === 0) {
       const result = { list: [], byTime: new Map(), baseline: null };
       const t1 = performance.now();
-      console.log('[LWC] normalize 0 bars', (t1 - t0).toFixed(1), 'ms');
       return result;
     }
 
@@ -180,11 +174,6 @@ const ChartCanvas = memo(function ChartCanvas({
           deltaPreview.push(curr - prev);
         }
       }
-      console.debug('[FG][LWC][DEBUG][times]', {
-        interval: currentInterval,
-        times: timesPreview,
-        deltas: deltaPreview,
-      });
     }
 
     const byTime = new Map();
@@ -201,7 +190,6 @@ const ChartCanvas = memo(function ChartCanvas({
 
     const result = { list: sorted, byTime, baseline };
     const t1 = performance.now();
-    console.log('[LWC] normalize', sorted.length, 'bars', (t1 - t0).toFixed(1), 'ms');
 
     return result;
   }, [chartData?.candles]);
@@ -229,6 +217,18 @@ const ChartCanvas = memo(function ChartCanvas({
     zoomIdleTimeout: ZOOM_IDLE_TIMEOUT,
   });
 
+  const navMinBarsInView =
+    isExpanded && navOwnerEnabled && effectiveTimeframe === '1d' ? 120 : 30;
+
+  useFGTimeNavigation({
+    chartInstanceRef,
+    containerRef: chartContainerRef,
+    enabled: Boolean(isExpanded && navOwnerEnabled),
+    debugTag: 'ChartCanvas',
+    minBarsInView: navMinBarsInView,
+    maxBarsInView: 50000,
+  });
+
   // ���?�?�?�?�'�?�?��� �?���?�?�<�: �?�?��ؐ��/�+���?�?�?
   const preparedData = useMemo(() => {
     const rawCandles = chartData?.candles || [];
@@ -240,15 +240,6 @@ const ChartCanvas = memo(function ChartCanvas({
         ? prepareData(rawCandles, currentCandleType)
         : [];
     const t1 = performance.now();
-    console.log(
-      '[LWC] prepareData',
-      Array.isArray(rawCandles) ? rawCandles.length : 0,
-      '=>',
-      Array.isArray(data) ? data.length : 0,
-      'bars',
-      (t1 - t0).toFixed(1),
-      'ms',
-    );
     return data;
   }, [chartData?.candles, currentCandleType]);
 
@@ -258,12 +249,10 @@ const ChartCanvas = memo(function ChartCanvas({
   const _lmType = typeof loadMoreHistory;
   if (process.env.NODE_ENV !== 'production' && _lmTypeRef.current !== _lmType) {
     _lmTypeRef.current = _lmType;
-    // eslint-disable-next-line no-console
-    console.debug('[FG][ChartCanvas] loadMoreHistory', {
-      fromProps: typeof loadMoreHistoryProp,
-      fromData: typeof chartData?.loadMoreHistory,
-      effective: _lmType,
-    });
+  }
+
+  if (process.env.NODE_ENV !== 'production' && isExpanded === undefined) {
+    console.warn('[FG][P0][isExpandedMissing]', new Error().stack);
   }
 
   useChartData({
@@ -274,6 +263,7 @@ const ChartCanvas = memo(function ChartCanvas({
     currentInterval,
     currentTimeframe: effectiveTimeframe || currentTimeframe,
     currentCandleType,
+    isExpanded,
     symbolId,
     fullDataRef,
     virtualRangeRef,
