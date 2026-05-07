@@ -1,0 +1,6 @@
+﻿interface:
+  display_name: "FG Owner Flow Trace"
+  short_description: "Architecture-first owner and authority tracing before patch"
+
+policy:
+  allow_implicit_invocation: false

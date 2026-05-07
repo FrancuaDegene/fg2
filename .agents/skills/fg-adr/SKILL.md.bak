@@ -1,0 +1,198 @@
+﻿---
+name: fg-adr
+description: Use when the task involves a meaningful FG architecture decision (ownership, boundaries, contracts, data flow, Compact vs Expanded split, reliability/performance/flexibility trade-offs). Do not use for trivial changes or small refactors.
+---
+
+# FG ADR
+
+Use this skill to produce a real Architecture Decision Record for FG.
+
+Do not use it for:
+
+- trivial bug fixes
+- cosmetic UI changes
+- local refactors with no ownership or boundary impact
+- one-file cleanup with no contract change
+
+If the task is trivial, refuse ADR mode explicitly:
+
+`This does not justify an ADR. No meaningful architecture decision is present.`
+
+## Decision Gate
+
+Write an ADR only if at least one is true:
+
+- ownership changes or is disputed
+- module boundaries or responsibilities change
+- a contract or data-flow rule changes
+- Compact vs Expanded behavior must diverge or be unified intentionally
+- a reliability, performance, or flexibility trade-off must be chosen
+
+If none are true, stop. Do not fabricate significance.
+
+## FG Rules
+
+- minimal diff over broad refactor
+- no patch without anchor
+- clarity over cleverness
+- state what changes and what stays fixed
+- distinguish owner, reader, mirror, and forbidden writer when relevant
+- preserve accepted FG invariants unless new evidence requires reopening them
+
+## Required Inputs
+
+Before writing the ADR, gather:
+
+- exact file anchors
+- current owner or boundary map
+- target architecture, if already evidenced
+- otherwise derive alternatives first and do not pretend target is already settled
+- current code drift against that target
+- gap to align between target and current code
+- the real decision that must be made now
+- at least one rejected alternative
+- the main trade-off in reliability, performance, and flexibility terms
+
+If anchors are missing, do not write the ADR as final. Return the evidence gap first.
+
+## FG Lens
+
+Evaluate every decision through:
+
+- Reliability: what becomes more deterministic, safer, or less fragile
+- Performance: what becomes cheaper, faster, or more stable at runtime
+- Flexibility: what becomes easier or harder to evolve later
+
+Do not claim all three improve unless evidence proves it.
+
+## Writing Rules
+
+- keep it operational
+- architecture-first, not implementation-first
+- write all narrative sections in Russian by default
+- write all narrative sublabels inside sections in Russian by default
+- use English only for file paths, code identifiers, exact anchors, status values, and exact code terms when needed
+- do not repeat long anchor chains after every claim
+- state the thesis first, then give one compact Evidence line or short anchor group when needed
+- prefer one compact `Evidence:` line per subsection over repeated inline anchor chains
+- do not repeat the same anchor group without new meaning
+- prefer concise paragraphs over exhaustive anchor chains
+- no generic architecture theory
+- no fake certainty
+- no вЂњfuture-proofвЂќ language without a concrete boundary
+- no hidden implementation plan beyond the next validation step
+
+## Output Structure
+
+Use this exact structure:
+
+Use Russian prose and Russian narrative sublabels in every section except `Status`, exact anchors, file paths, and code identifiers.
+
+### 1. Title
+
+Keep it short and manageable.
+
+- one concrete decision, not a topic
+- avoid mechanical enumeration of all candidates
+- prefer a short owner/boundary statement, not a sentence-length title
+
+### 2. Status
+
+Use one:
+
+- Proposed
+- Accepted
+- Rejected
+- Superseded
+
+### 3. Date
+
+Use ISO date: `YYYY-MM-DD`.
+
+### 4. Context
+
+State:
+
+- keep it short and decision-oriented
+- include only the minimum background needed to understand the decision
+- current problem
+- relevant owners and boundaries
+- exact anchors
+- target architecture
+- current code drift
+- gap to align
+- why this is a decision, not just a task
+
+Do not fully restate material that will be explained in `Decision`, `Consequences`, or `Risks / boundaries`.
+If target architecture is not already evidenced, say so briefly instead of presenting it as settled fact.
+
+### 5. Decision
+
+Start with one short canonical decision statement.
+
+If ownership is intentionally split, name it explicitly as:
+
+Модель разделенного владения: ...
+
+Do not phrase a split model as if one candidate won and the others disappeared.
+
+After the canonical statement, always use this exact order:
+
+- кто является каноническим владельцем или какая разделенная модель владения выбрана
+- кто имеет право записи
+- кто не имеет права записи
+- что остается неизменным
+- что остается вне зоны ответственности владельца
+
+### 6. Alternatives considered
+
+List realistic alternatives only.
+
+For each alternative, state:
+
+- what it improves
+- why it was not chosen
+
+### 7. Consequences
+
+State expected consequences in FG terms:
+
+- Reliability
+- Performance
+- Flexibility
+
+Include both gains and costs.
+
+### 8. Risks / boundaries
+
+State:
+
+- what could regress
+- which layers are out of scope
+- which closed decisions must not be reopened
+
+### 9. Next validation step
+
+Give one next validation step only.
+
+It must be narrow, evidence-driven, and tied to the decision.
+
+## ADR Quality Check
+
+Before finalizing, verify:
+
+- the document records a real choice
+- the choice has anchors
+- all narrative text is in Russian unless an explicit exception applies
+- the Title is short and decision-oriented
+- the Decision starts with a short canonical statement
+- if ownership is split, it is named explicitly as `Модель разделенного владения: ...`
+- target architecture, current code drift, and gap to align are separated explicitly
+- `Context` stays shorter than `Decision` when possible
+- avoid repeating the same invariant across multiple sections
+- prefer concise paragraphs over exhaustive anchor chains
+- the ADR can be skimmed quickly by a human reviewer
+- at least one alternative was rejected for a concrete reason
+- trade-offs are explicit
+- trivial work was refused instead of dressed up as architecture
+

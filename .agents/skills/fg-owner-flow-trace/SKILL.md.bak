@@ -1,0 +1,109 @@
+﻿---
+name: fg-owner-flow-trace
+description: Use for FG architecture-first analysis before any patch when the task needs owner, authority, identity, phase, mutation, failure, handoff, boundary, or flow tracing. Use to identify canonical owners, passive readers, forbidden writers, conflict boundaries, next anchors, and patch readiness. Do not use for direct chart runtime debugging, cosmetic edits, trivial local refactors, or pure implementation-only requests with no architecture uncertainty.
+---
+
+# FG Owner Flow Trace
+
+## Purpose
+
+Use this skill to restore architectural truth in FG before any code change.
+
+This skill is for:
+- owner tracing
+- authority and handoff analysis
+- init/runtime split
+- mutation and failure path tracing
+- conflict boundary detection
+- patch-readiness gating
+
+It is not the direct chart-engine debugging skill.
+For chart runtime issues like `barSpacing`, `visibleRange`, pan/zoom instability, hidden resets, or oversized candles, prefer `fg-chart-architect`.
+
+## When to use
+
+Use this skill when:
+- the task touches owner / authority / identity / phase / mutation / failure
+- the task involves handoff boundaries, closed/open frontiers, or accepted contracts
+- a patch is being considered but the canonical owner is not yet proven
+- the task needs a decision-safe anchor before implementation
+- the task spans both architecture memory and live code truth
+
+## When NOT to use
+
+Do not use this skill for:
+- direct chart runtime debugging that belongs to `fg-chart-architect`
+- simple cosmetic edits
+- trivial one-file implementation tasks with no ownership uncertainty
+- backend / infra / deployment work unrelated to FG architecture
+- patch execution itself
+
+## Required routing
+
+1. If the task needs accepted architecture, handoff history, current stop-point, or closed/open frontier:
+   - use `gbrain` first
+   - retrieve only the minimal relevant decision context
+
+2. If the task needs live code truth:
+   - use Serena second
+   - start with `search_for_pattern`, then narrow to symbol
+   - return concrete code-level facts only
+
+3. If both are needed:
+   - use mixed flow:
+     - `gbrain` first
+     - Serena second
+     - only then anchor
+
+4. Do not propose a patch unless owner/conflict evidence is strong enough.
+
+## Required method
+
+1. Identify the primary object or layer first.
+2. Trace explicitly:
+   - owner
+   - authority
+   - identity
+   - phase
+   - mutation
+   - failure
+3. Separate init-time behavior from runtime behavior.
+4. Name canonical owner candidates and passive readers / mirrors.
+5. Identify forbidden writers or unstable multi-writer zones.
+6. Check whether the layer is:
+   - closed
+   - open
+   - provisional
+7. Name the exact conflict or uncertainty.
+8. List the next files / symbols / anchors to inspect before any patch.
+9. Return patch readiness as yes / no.
+
+## Output format
+
+Return:
+
+- Scope
+- Layer / object
+- Owner map
+- Authority chain
+- Identity / phase split
+- Mutation / failure path
+- Conflict or uncertainty
+- Closed vs open status
+- Next anchors
+- Patch readiness: yes/no
+
+## FG-specific constraints
+
+- Explicitly consider reliability, performance, and flexibility.
+- Prefer minimal and reversible changes.
+- One file at a time.
+- Readability over cleverness.
+- Do not reopen closed slices without genuinely new evidence.
+- Prefer authoritative current-state over handoff history.
+- Do not mix current state with timeline/history unless the distinction is explicit.
+
+## Language
+
+Respond in Russian.
+Use English only for file paths, code identifiers, and exact anchors.
