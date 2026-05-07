@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { LineStyle } from 'lightweight-charts';
+import { HistogramSeries, LineSeries, LineStyle } from 'lightweight-charts';
 import { toNumber } from '../utils/chartTimeUtils';
 
 const RSI_SCALE_ID = 'rsi-scale';
@@ -113,7 +113,7 @@ export function useChartIndicators({
       .filter((ind) => ind && ind.visible !== false)
       .map(async (ind) => {
         if (ind.id === 'volume') {
-          const histogram = chart.addHistogramSeries({
+          const histogram = chart.addSeries(HistogramSeries, {
             priceScaleId: 'volume',
             priceFormat: { type: 'volume' },
             lastValueVisible: false,
@@ -197,7 +197,7 @@ export function useChartIndicators({
           : 'rgba(76, 175, 80, 0.9)';
         const color = ind.color || defaultColor;
 
-        const series = chart.addLineSeries({
+        const series = chart.addSeries(LineSeries, {
           color,
           lineWidth: isMa || isEma ? 2.4 : 2,
           priceScaleId: isRsi ? RSI_SCALE_ID : 'right',
@@ -267,5 +267,4 @@ export function useChartIndicators({
     indGenRef,
   ]);
 }
-
 

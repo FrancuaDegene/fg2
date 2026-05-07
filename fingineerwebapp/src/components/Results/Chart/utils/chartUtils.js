@@ -1,5 +1,14 @@
 // --- Вспомогательные функции ---
 
+import {
+  AreaSeries,
+  BarSeries,
+  BaselineSeries,
+  CandlestickSeries,
+  HistogramSeries,
+  LineSeries,
+} from 'lightweight-charts';
+
 export const calculateBarSpacing = (interval, timeframe) => {
   // Примерное количество свечей для разных комбинаций
   const combinations = {
@@ -38,19 +47,19 @@ export const calculateBarSpacing = (interval, timeframe) => {
 const addSeriesCompat = (chart, kind, options) => {
   switch (kind) {
     case 'candlestick':
-      return chart.addCandlestickSeries(options);
+      return chart.addSeries(CandlestickSeries, options);
     case 'bar':
-      return chart.addBarSeries(options);
+      return chart.addSeries(BarSeries, options);
     case 'line':
-      return chart.addLineSeries(options);
+      return chart.addSeries(LineSeries, options);
     case 'area':
-      return chart.addAreaSeries(options);
+      return chart.addSeries(AreaSeries, options);
     case 'baseline':
-      return chart.addBaselineSeries(options);
+      return chart.addSeries(BaselineSeries, options);
     case 'histogram':
-      return chart.addHistogramSeries(options);
+      return chart.addSeries(HistogramSeries, options);
     default:
-      return chart.addCandlestickSeries(options);
+      return chart.addSeries(CandlestickSeries, options);
   }
 };
 

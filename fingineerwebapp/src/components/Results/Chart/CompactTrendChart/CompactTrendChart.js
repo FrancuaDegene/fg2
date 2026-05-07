@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { createChart } from 'lightweight-charts';
+import { AreaSeries, createChart } from 'lightweight-charts';
 import { useChartHover } from '../hooks/useChartHover';
 import ChartTooltip from '../ChartTooltip';
 import { normalizeTimeValue, toTimestampMs } from '../utils/chartTimeUtils';
@@ -13,7 +13,8 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-const addAreaSeriesCompat = (chart, options) => chart.addAreaSeries(options);
+const addAreaSeriesCompat = (chart, options) =>
+  chart.addSeries(AreaSeries, options);
 
 const CompactTrendChart = ({ chartData, ticker, range }) => {
   const REVEAL_MS = 420;

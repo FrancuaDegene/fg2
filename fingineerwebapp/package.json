@@ -6,7 +6,7 @@
     "@skeletonlabs/skeleton-react": "^1.2.3",
     "axios": "^1.7.9",
     "framer-motion": "^12.9.2",
-    "lightweight-charts": "^4.2.3",
+    "lightweight-charts": "5.2.0",
     "lucide-react": "^0.525.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
