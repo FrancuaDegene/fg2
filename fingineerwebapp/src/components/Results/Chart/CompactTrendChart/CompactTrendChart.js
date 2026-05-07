@@ -13,6 +13,8 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
+const addAreaSeriesCompat = (chart, options) => chart.addAreaSeries(options);
+
 const CompactTrendChart = ({ chartData, ticker, range }) => {
   const REVEAL_MS = 420;
   const containerRef = useRef(null);
@@ -207,7 +209,7 @@ const CompactTrendChart = ({ chartData, ticker, range }) => {
       },
     });
 
-    const series = chart.addAreaSeries({
+    const series = addAreaSeriesCompat(chart, {
       lineColor: '#4fd1c5',
       topColor: 'rgba(79, 209, 197, 0.35)',
       bottomColor: 'rgba(79, 209, 197, 0.05)',

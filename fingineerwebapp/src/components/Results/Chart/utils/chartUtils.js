@@ -35,6 +35,25 @@ export const calculateBarSpacing = (interval, timeframe) => {
 };
 
 // --- Создание серий ---
+const addSeriesCompat = (chart, kind, options) => {
+  switch (kind) {
+    case 'candlestick':
+      return chart.addCandlestickSeries(options);
+    case 'bar':
+      return chart.addBarSeries(options);
+    case 'line':
+      return chart.addLineSeries(options);
+    case 'area':
+      return chart.addAreaSeries(options);
+    case 'baseline':
+      return chart.addBaselineSeries(options);
+    case 'histogram':
+      return chart.addHistogramSeries(options);
+    default:
+      return chart.addCandlestickSeries(options);
+  }
+};
+
 export const createSeries = (chart, type) => {
   const colors = {
     upColor: '#26a69a',
@@ -51,7 +70,7 @@ export const createSeries = (chart, type) => {
   switch (type) {
     case 'candlestick':
       // Японские свечи
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         borderVisible: false,
@@ -61,7 +80,7 @@ export const createSeries = (chart, type) => {
 
     case 'hollow_candlestick':
       // Пустые свечи
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: 'transparent',
         downColor: colors.downColor,
         borderUpColor: colors.upColor,
@@ -73,7 +92,7 @@ export const createSeries = (chart, type) => {
 
     case 'bars':
       // Обычные бары
-      return chart.addBarSeries({
+      return addSeriesCompat(chart, 'bar', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         openVisible: true,
@@ -82,7 +101,7 @@ export const createSeries = (chart, type) => {
 
     case 'volume_candles':
       // Свечи объёма (симуляция через обычные свечи)
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         borderVisible: true,
@@ -92,7 +111,7 @@ export const createSeries = (chart, type) => {
 
     case 'line':
       // Обычная линия
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 2,
         crosshairMarkerVisible: true,
@@ -103,7 +122,7 @@ export const createSeries = (chart, type) => {
 
     case 'line_with_markers':
       // Линия с точками
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 2,
         pointMarkersVisible: true,
@@ -115,7 +134,7 @@ export const createSeries = (chart, type) => {
 
     case 'stepped_line':
       // Ступенчатая линия
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 2,
         lineStyle: 0, // сплошная
@@ -125,7 +144,7 @@ export const createSeries = (chart, type) => {
 
     case 'area':
       // Область
-      return chart.addAreaSeries({
+      return addSeriesCompat(chart, 'area', {
         lineColor: colors.lineColor,
         topColor: colors.topFillColor1,
         bottomColor: colors.topFillColor2,
@@ -135,7 +154,7 @@ export const createSeries = (chart, type) => {
 
     case 'area_hlc':
       // Область HLC (симуляция через обычную область)
-      return chart.addAreaSeries({
+      return addSeriesCompat(chart, 'area', {
         lineColor: colors.secondaryColor,
         topColor: 'rgba(255, 107, 53, 0.28)',
         bottomColor: 'rgba(255, 107, 53, 0.05)',
@@ -145,7 +164,7 @@ export const createSeries = (chart, type) => {
 
     case 'baseline':
       // Базовая линия
-      return chart.addBaselineSeries({
+      return addSeriesCompat(chart, 'baseline', {
         baseValue: { type: 'price', price: 0 },
         topLineColor: colors.upColor,
         bottomLineColor: colors.downColor,
@@ -158,14 +177,14 @@ export const createSeries = (chart, type) => {
 
     case 'histogram':
       // Столбцы
-      return chart.addHistogramSeries({
+      return addSeriesCompat(chart, 'histogram', {
         color: colors.lineColor,
         priceFormat: { type: 'volume' },
       });
 
     case 'hi_lo':
       // Мин-Макс (симуляция через бары)
-      return chart.addBarSeries({
+      return addSeriesCompat(chart, 'bar', {
         upColor: colors.neutralColor,
         downColor: colors.neutralColor,
         openVisible: false,
@@ -174,7 +193,7 @@ export const createSeries = (chart, type) => {
 
     case 'heikin_ashi':
       // Heikin Ashi свечи (симуляция через обычные свечи с модифицированными данными)
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: '#00c851',
         downColor: '#ff4444',
         borderVisible: false,
@@ -184,7 +203,7 @@ export const createSeries = (chart, type) => {
 
     case 'renko':
       // Renko (симуляция через бары с фиксированным размером)
-      return chart.addBarSeries({
+      return addSeriesCompat(chart, 'bar', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         openVisible: false,
@@ -193,7 +212,7 @@ export const createSeries = (chart, type) => {
 
     case 'point_figure':
       // Point & Figure (симуляция через линию с маркерами)
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 0,
         pointMarkersVisible: true,
@@ -205,7 +224,7 @@ export const createSeries = (chart, type) => {
 
     case 'range_bars':
       // Range Bars (симуляция через обычные бары)
-      return chart.addBarSeries({
+      return addSeriesCompat(chart, 'bar', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         openVisible: true,
@@ -214,7 +233,7 @@ export const createSeries = (chart, type) => {
 
     case 'kagi':
       // Kagi (симуляция через ступенчатую линию)
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 3,
         crosshairMarkerVisible: true,
@@ -222,7 +241,7 @@ export const createSeries = (chart, type) => {
 
     case 'three_line_break':
       // Three Line Break (симуляция через свечи)
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: 'transparent',
         downColor: 'transparent',
         borderUpColor: colors.upColor,
@@ -233,7 +252,7 @@ export const createSeries = (chart, type) => {
 
     case 'volume_profile':
       // Volume Profile (симуляция через гистограмму)
-      return chart.addHistogramSeries({
+      return addSeriesCompat(chart, 'histogram', {
         color: colors.lineColor,
         priceFormat: { type: 'volume' },
         base: 0,
@@ -241,7 +260,7 @@ export const createSeries = (chart, type) => {
 
     case 'market_profile':
       // Market Profile (симуляция через гистограмму)
-      return chart.addHistogramSeries({
+      return addSeriesCompat(chart, 'histogram', {
         color: '#8e44ad',
         priceFormat: { type: 'volume' },
         base: 0,
@@ -249,7 +268,7 @@ export const createSeries = (chart, type) => {
 
     case 'tick_chart':
       // Tick Chart (симуляция через линию с частыми точками)
-      return chart.addLineSeries({
+      return addSeriesCompat(chart, 'line', {
         color: colors.lineColor,
         lineWidth: 1,
         pointMarkersVisible: true,
@@ -259,7 +278,7 @@ export const createSeries = (chart, type) => {
 
     case 'second_chart':
       // Second Chart (симуляция через свечи с высокой частотой)
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         borderVisible: false,
@@ -269,7 +288,7 @@ export const createSeries = (chart, type) => {
 
     default:
       // По умолчанию - Японские свечи
-      return chart.addCandlestickSeries({
+      return addSeriesCompat(chart, 'candlestick', {
         upColor: colors.upColor,
         downColor: colors.downColor,
         borderVisible: false,
