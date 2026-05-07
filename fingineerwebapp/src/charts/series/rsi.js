@@ -1,3 +1,5 @@
+import { LineSeries } from 'lightweight-charts';
+
 const SCALE_ID = 'rsi';
 const RSI_TOP = 70;
 const RSI_BOTTOM = 30;
@@ -37,7 +39,7 @@ function calcRsi(candles = [], period = 14) {
 
 export function rsi(id = 'rsi', z = 0, period = 14) {
   const builder = (chart, data = []) => {
-    const series = chart.addLineSeries({
+    const series = chart.addSeries(LineSeries, {
       priceScaleId: SCALE_ID,
       color: DEFAULT_COLOR,
       lineWidth: 2,

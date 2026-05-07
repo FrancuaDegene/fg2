@@ -3,7 +3,7 @@
  * @param {string} id
  * @param {number} z
  */
-import { LineStyle } from 'lightweight-charts';
+import { CandlestickSeries, LineStyle } from 'lightweight-charts';
 
 const toNumber = (value) => {
   if (value === null || value === undefined) return null;
@@ -27,7 +27,7 @@ export function candles(id = 'candles', z = 0, options = {}) {
   } = options || {};
 
   const builder = (chart, data = []) => {
-    const series = chart.addCandlestickSeries({
+    const series = chart.addSeries(CandlestickSeries, {
       priceScaleId: 'right',
       ...(seriesOptions || {}),
     });

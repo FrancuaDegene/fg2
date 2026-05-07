@@ -1,3 +1,5 @@
+import { HistogramSeries } from 'lightweight-charts';
+
 const DEFAULT_UP_COLOR = 'rgba(46, 204, 113, 0.85)';
 const DEFAULT_DOWN_COLOR = 'rgba(231, 76, 60, 0.85)';
 const PRICE_SCALE_ID = 'volume';
@@ -9,7 +11,7 @@ const PRICE_SCALE_ID = 'volume';
  */
 export function volume(id = 'volume', z = 0) {
   const builder = (chart, data = []) => {
-    const histogram = chart.addHistogramSeries({
+    const histogram = chart.addSeries(HistogramSeries, {
       priceScaleId: PRICE_SCALE_ID,
       priceFormat: { type: 'volume' },
       lastValueVisible: false,
