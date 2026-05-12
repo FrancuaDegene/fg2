@@ -24,6 +24,8 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:test:rest": "set \"PORT=3100\" && set \"BROWSER=none\" && set \"REACT_APP_FG_AGG_ENABLED=1\" && react-scripts start",
+    "start:test:app": "set \"PORT=3101\" && set \"BROWSER=none\" && set \"REACT_APP_FG_AGG_ENABLED=0\" && react-scripts start",
     "build": "react-scripts build",
     "preview": "npx serve -s build -l 3001",
     "test": "react-scripts test",
