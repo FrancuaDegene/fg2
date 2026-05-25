@@ -1,131 +1,119 @@
 # AGENTS.md
 
-This file defines how AI coding agents (Codex, Copilot, etc.) should reason and operate within the FG codebase.
-It complements README.md (for humans) and strict policy files (for safety boundaries).
+## Role
 
-The goal is predictable, architecture-aware, minimal-risk collaboration.
+Этот файл задает короткую root-ориентацию для AI coding agents в FG.
 
----
+- Подробные правила живут в связанных policy-файлах.
+- Repo evidence, Project Sources и current-state сильнее памяти, tool output и chat context.
+- Этот файл объясняет, как думать и куда смотреть, а не дублирует весь policy layer.
 
-## Project Overview (FG)
+## Project Snapshot
 
-FG is an investment analytics web application with:
-- Compact charts (sparkline-style, quick overview)
-- Expanded charts (deep analysis, pan/zoom, indicators)
+FG - инвестиционная аналитика для MOEX с Compact/Expanded charts, news layer и Telegram/MiniApp интеграцией.
 
-Charts are built on Lightweight Charts (LWC), with known architectural limitations.
-Several design decisions are intentional and **must not be revisited by default**.
+- Domain и chart knowledge живут в `docs/domain/*`.
+- Chart analysis должен учитывать Compact/Expanded роли и accepted boundaries.
+- Intentional decisions не переоткрываются без genuinely new evidence.
 
----
+## Core Thinking Rules
 
-## Core Reasoning Skills (Mandatory)
+- WHY before HOW: сначала цель, ограничения, риски.
+- Не patch from symptom alone.
+- Базовая цепочка: symptom -> layer -> owner -> evidence -> patch.
 
-### 1. Clarification-First Reasoning
-Before proposing any plan, solution, or optimization, the agent must ask clarifying questions
-whenever UX, performance, or architecture may be affected.
+Для серьезных FG decisions используй полную цепочку:
 
-Do **not** assume intent.
-Do **not** skip this step.
+symptom
+-> object/layer
+-> owner
+-> authority
+-> identity
+-> phase
+-> mutation
+-> failure
+-> conflict/boundary
+-> evidence
+-> decision/patch
 
----
+## Source And Authority
 
-### 2. Invariant-Preserving Optimization
-Optimization is allowed **only** if observable behavior remains identical.
+Начинай source routing с `docs/project/state/FG_ACTIVE_SOURCE_PACK.md`.
 
-UX invariants include (but are not limited to):
-- visible ranges
-- pan / zoom behavior
-- auto-follow logic
-- tooltip behavior
-- loadMore / history fetching
-- Compact ↔ Expanded consistency
+- Current-state wins для stop-point и immediate next step.
+- Stable/domain docs задают architecture/product boundaries в своей зоне.
+- Sprint docs дают roadmap/phases/DoD, но не сильнее current-state.
+- Handoffs, `gbrain`, Serena memory, tool output и chat context - supporting only, если policy явно не говорит иначе.
+- `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md` - ChatGPT/session reference only, not Codex project authority.
 
-If behavior might change, stop and ask.
+Детальный authority canon: `docs/project/policy/agent_authority_and_sources.md`.
 
----
+## Routing
 
-### 3. Locality of Change (One-File Discipline)
-Prefer minimal, localized changes.
+- External library/API/framework/SDK truth -> Context7 first.
+- Tool и skill routing -> `docs/project/policy/agent_tool_routing.md`.
+- Subagents - adaptive evidence-lane routing, not power mode.
+- One connected owner-flow -> solo.
+- 2+ genuinely independent evidence lanes -> minimal sufficient subagents.
+- Subagent canon -> `docs/project/policy/agent_subagent_routing.md`.
 
-Rules:
-- One file per patch by default
-- No wide refactors unless explicitly approved
-- No “while we are here” improvements
+## Change Discipline
 
-If more than one file seems required — explain why and wait for confirmation.
+- Minimal localized change.
+- One file per patch by default.
+- No broad refactors without explicit approval.
+- No "while we are here" expansion.
+- Trade-offs must be explicit: what improves, what stays same, what could regress.
+- Runtime/UI/browser claims need observable evidence.
+- `architecture-safe` does not mean `visual-safe`.
 
----
+Execution details live in `docs/project/policy/agent_execution_contract.md`.
 
-### 4. FG Architecture Awareness
-The agent must be aware of and respect the following architectural decisions:
+## Chart Work
 
-- Lightweight Charts has known limitations around pan/zoom and barSpacing.
-- Custom navigation layers (FG Time Navigation Layer) are intentional.
-- Compact charts and Expanded charts serve different UX roles.
-- Not every problem should be solved by toggling LWC options or upgrading libraries.
+Для chart-related задач:
 
-Do not propose alternative architectures unless explicitly asked.
+- Сначала owner/authority/boundary reasoning, потом anchors, потом patch discussion.
+- Не force parity между `compact` и `expanded` без evidence.
+- Не reopen closed chart slices без genuinely new runtime or repo evidence.
 
----
+Chart workflow details: `docs/project/policy/agent_chart_workflow.md`.
 
-### 5. Trade-off Explicitness
-Every proposal must state trade-offs explicitly:
-- What improves
-- What stays the same
-- What could regress
-- Why this option is chosen over others
+## Local Environment Note
 
-Avoid “free improvements” narratives.
+Codex может работать в шумной Windows/PowerShell среде.
 
----
+- Prefer `rg` when available.
+- Если `rg`, PowerShell или Codex shell шумит/ломается, используй safe fallback search/read.
+- Не менять shell profile, ExecutionPolicy, PATH, Codex config, MCP config или tool config без explicit request.
+- Environment noise не является причиной менять repo/config.
 
-### 6. Decision Gating
-Work must follow this sequence strictly:
+## Linked Policies
 
-1. Questions
-2. Plan (with anchors)
-3. Explicit confirmation
-4. Execution (patch)
-
-Skipping steps is not allowed.
-
----
-
-## Chart-Specific Domain Knowledge
-
-Agents working on chart-related code must account for:
-
-- barSpacing sensitivity in low pixel-density regimes
-- visibleLogicalRange side effects
-- rounding artifacts around ~0.5–1.0 px per bar
-- differences between conflated and non-conflated rendering
-- why custom pan logic may be required for strict UX contracts
-
-Compact charts:
-- No pan
-- Native LWC interaction is acceptable
-
-Expanded charts:
-- Pan and zoom are UX-critical
-- Custom control may be required to preserve invariants
-
----
+- `docs/project/policy/agent_authority_and_sources.md` - authority order, source priority, memory conflict rules.
+- `docs/project/policy/agent_refresh_bootstrap.md` - full `REFRESH` / bootstrap contract.
+- `docs/project/policy/agent_tool_routing.md` - MCP, tool и skill routing.
+- `docs/project/policy/agent_subagent_routing.md` - solo/subagents routing и minimal worker-count discipline.
+- `docs/project/policy/agent_chart_workflow.md` - chart-specific workflow и expectations.
+- `docs/project/policy/agent_execution_contract.md` - execution mechanics, patch/execute boundaries, runtime evidence.
 
 ## What This File Is NOT
 
-- Not a place for safety or permission rules (those live elsewhere)
-- Not a substitute for explicit approval
-- Not a license to modify code freely
-
-This file defines **how to think**, not **what you are allowed to do**.
-
----
+- not a permission file;
+- not current-state;
+- not sprint authority;
+- not a substitute for `CODEX_RULES.md`;
+- not a substitute for detailed `docs/project/policy/agent_*.md`;
+- not a license to modify code freely.
 
 ## Final Rule
 
 When in doubt:
-- Ask
-- Explain
-- Wait
+
+- refresh context;
+- verify ownership;
+- check evidence;
+- explain trade-offs;
+- decide or patch only within scope.
 
 Predictability and UX stability are more important than cleverness.
