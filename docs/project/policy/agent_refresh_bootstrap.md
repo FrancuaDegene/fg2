@@ -34,7 +34,6 @@
 Required core sources для serious FG sessions normally include:
 - `AGENTS.md`;
 - `CODEX_RULES.md`;
-- `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`;
 - `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`;
 - `docs/project/state/*`;
 - relevant stable docs в `docs/domain/*`;
@@ -47,6 +46,8 @@ Supporting tool layers могут использоваться только ес
 - `.serena/memories/*`;
 - `docs/qa/playwright/*`.
 
+ChatGPT/session settings are reference-only and are not required Codex core sources.
+
 Они не заменяют required repo sources.
 
 `Context7` не является required core source always,
@@ -58,13 +59,12 @@ Supporting tool layers могут использоваться только ес
 
 1. `AGENTS.md`
 2. `CODEX_RULES.md`
-3. `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`
-4. `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`
-5. `docs/project/state/*`
-6. relevant stable docs в `docs/domain/*`
-7. `docs/project/sprint/*`, когда важен roadmap / phase context
-8. latest relevant handoff only when нужен continuity / closure-chain / frontier narrowing
-9. supporting tool layers only if relevant
+3. `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`
+4. `docs/project/state/*`
+5. relevant stable docs в `docs/domain/*`
+6. `docs/project/sprint/*`, когда важен roadmap / phase context
+7. latest relevant handoff only when нужен continuity / closure-chain / frontier narrowing
+8. supporting tool layers only if relevant
 
 Если активная задача затрагивает external library / API truth, сначала нужно поднять `Context7` evidence до архитектурных или code-level claims.
 

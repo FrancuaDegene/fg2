@@ -19,24 +19,22 @@
 1. `docs/project/state/*`
 2. relevant stable docs в `docs/domain/*`
 3. `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`
-4. `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`
-5. `docs/project/sprint/*`
-6. `.claude/handoffs/*`
-7. `gbrain MCP`
-8. `.serena/memories/*`
-9. chat/session context
+4. `docs/project/sprint/*`
+5. `.claude/handoffs/*`
+6. `gbrain MCP`
+7. `.serena/memories/*`
+8. chat/session context
 
 ### Для architecture / ownership / boundaries
 
 1. stable docs в `docs/domain/*`
 2. `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`
-3. `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`
-4. `docs/project/state/*`
-5. `docs/project/sprint/*`
-6. `.claude/handoffs/*`
-7. `gbrain MCP`
-8. `.serena/memories/*`
-9. chat/session context
+3. `docs/project/state/*`
+4. `docs/project/sprint/*`
+5. `.claude/handoffs/*`
+6. `gbrain MCP`
+7. `.serena/memories/*`
+8. chat/session context
 
 Supporting domain refs:
 - `docs/domain/chart-code-map.md`
@@ -65,7 +63,6 @@ Stable truth для:
 живёт в:
 - stable docs в `docs/domain/*`;
 - `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`;
-- `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`.
 
 Для chart-domain canonical stable truth прежде всего опирается на:
 - `docs/domain/FG_CHART_ARCHITECTURE_MAP.md`;
@@ -128,7 +125,7 @@ Handoff не является authoritative state и не заменяет `curr
 - Если `docs/project/state/*` расходится с `handoff`, `gbrain MCP`, `.serena/memories/*` или chat по immediate next step, `current-state` wins.
 - Если stable docs расходятся с `handoff` или tool memory по architecture / ownership / boundaries, stable docs win.
 - `FG DNA — CANONS...` задаёт product / philosophy / UX boundary и не должен проигрывать helper layers.
-- `FG_ChatGPT_Session_Settings_v6.md` задаёт project/session operating boundary и не должен проигрывать helper layers.
+- `FG_ChatGPT_Session_Settings_v6.md` is ChatGPT/session reference only; it is not project authority and does not override durable repo truth.
 - `handoff`, `gbrain MCP`, `.serena/memories/*` и chat могут помогать интерпретации, но не должны override authoritative repo truth.
 - supporting refs, включая `chart-code-map.md`, lose to stable domain docs при конфликте интерпретации.
 - `docs/project/policy/agent_*.md` — normative agent policy extensions of root contracts; они регулируют поведение агента, но не являются durable project truth.
@@ -151,7 +148,6 @@ Durable project and operating truth:
 - `docs/project/state/*`;
 - stable docs в `docs/domain/*`;
 - `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`;
-- `docs/project/policy/FG_ChatGPT_Session_Settings_v6.md`.
 
 Normative agent policy extensions:
 - `docs/project/policy/agent_*.md`.
