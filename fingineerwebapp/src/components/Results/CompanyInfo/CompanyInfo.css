@@ -1,103 +1,228 @@
-/* Основная карточка */
 .company-card {
-  max-width: 400px;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 25px 30px rgba(0, 0, 0, 0.08);
-  padding: 24px;
-  /*border: 2px solid #000000;*/
-  transition: all 0.3s ease;
-  margin-bottom: 20px;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
-.company-card:hover {
-  box-shadow: 0 25px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+.company-identity-card {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(68px, 88px);
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 20px 22px;
+  border: 1px solid rgba(103, 232, 249, 0.26);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.12), transparent 30%),
+    linear-gradient(145deg, rgba(2, 18, 26, 0.96), rgba(6, 35, 46, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 36px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-/* Шапка с названием и тикером */
-.company-header {
-  display: flex;
-  align-items: baseline;
+.company-identity-card::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  z-index: -1;
+  border-radius: 26px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 48%);
+  pointer-events: none;
+}
+
+.company-identity-card:hover {
+  border-color: rgba(103, 232, 249, 0.34);
+  background:
+    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.15), transparent 32%),
+    linear-gradient(145deg, rgba(3, 22, 31, 0.97), rgba(7, 39, 51, 0.92));
+}
+
+.company-identity-main {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.company-section-label {
+  display: inline-flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 18px;
+  color: #f8fafc;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  min-width: 0;
+}
+
+.company-section-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(226, 232, 240, 0.46);
+  border-radius: 10px;
+  background: rgba(8, 47, 73, 0.26);
+  color: #f8fafc;
+  font-size: 1.15rem;
+}
+
+.company-name-block {
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 18px;
 }
 
 .company-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1a1a1a;
   margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #f8fafc;
+  font-size: clamp(1.65rem, 2vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.055em;
+  text-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
 }
 
-.company-ticker {
-  background: #f0f5ff;
-  color: #2563eb;
-  padding: 4px 12px;
-  border-radius: 10px;
-  font-size: 0.9rem;
+.company-ticker-line {
+  margin-top: 12px;
+  color: #f8fafc;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.92rem, 1.05vw, 1.08rem);
   font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.company-ticker:hover {
-  background: #dbeafe;
+.company-meta.company-identity-meta {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
 }
 
-/* Основное содержимое */
-.company-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.company-identity-meta__item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  color: #f8fafc;
+  font-size: 0.94rem;
 }
 
-.company-description {
-  color: #4d4d4d;
-  line-height: 1.5;
-}
-
-/* Мета-данные (дата/время) */
-.company-meta {
-  display: flex;
-  flex-direction: column; /* теперь в столбик */
-  gap: 12px;
-  border-top: 1px solid #eee;
-  padding-top: 16px;
-}
-
-.meta-item {
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
-  display: flex;
-  justify-content: space-between;
+.company-identity-meta__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  color: #f8fafc;
+  background: rgba(15, 23, 42, 0.16);
+  border: 1px solid rgba(226, 232, 240, 0.28);
   font-size: 0.95rem;
-  color: #333;
 }
 
-.meta-label {
+.company-identity-meta__value {
+  min-width: 0;
+  overflow: hidden;
+  color: #f8fafc;
   font-weight: 500;
-  color: #333;
+  line-height: 1.22;
+  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-  .company-card {
-    padding: 16px;
+.company-identity-logo-slot {
+  display: grid;
+  place-items: center;
+  width: min(100%, 76px);
+  aspect-ratio: 1;
+  min-width: 0;
+  justify-self: center;
+  border: 1px solid rgba(103, 232, 249, 0.24);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 36% 24%, rgba(125, 211, 252, 0.2), transparent 32%),
+    linear-gradient(150deg, rgba(14, 116, 144, 0.24), rgba(6, 32, 42, 0.3));
+  opacity: 0.54;
+}
+
+.company-identity-logo {
+  display: block;
+  max-width: 72%;
+  max-height: 72%;
+  object-fit: contain;
+}
+
+.company-identity-logo-placeholder {
+  display: block;
+  width: 54%;
+  aspect-ratio: 1;
+  border: 1px solid rgba(191, 251, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.08);
+}
+
+@media (max-width: 900px) {
+  .company-identity-card {
+    grid-template-columns: minmax(0, 1fr) minmax(56px, 70px);
+    gap: 12px;
+    padding: 18px 18px;
   }
-  
-  .company-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+
+  .company-identity-logo-slot {
+    width: min(100%, 62px);
+    border-radius: 18px;
   }
-  
-  .company-meta {
-    flex-direction: column;
-    gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .company-identity-card {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .company-section-label {
+    margin-bottom: 18px;
+    font-size: 1.02rem;
+  }
+
+  .company-title {
+    font-size: clamp(1.4rem, 7vw, 1.9rem);
+  }
+
+  .company-ticker-line {
+    font-size: 0.84rem;
+  }
+
+  .company-identity-meta__item {
+    grid-template-columns: 30px minmax(0, 1fr);
+    gap: 12px;
+    font-size: 0.88rem;
+  }
+
+  .company-identity-logo-slot {
+    display: none;
   }
 }
