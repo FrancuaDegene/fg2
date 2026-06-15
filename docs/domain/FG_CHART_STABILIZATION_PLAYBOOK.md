@@ -1,4 +1,4 @@
-﻿# FG_CHART_STABILIZATION_PLAYBOOK.md
+# FG_CHART_STABILIZATION_PLAYBOOK.md
 
 ## Purpose
 
@@ -924,9 +924,9 @@ Context fields categorized into:
 - Current operational truth for existing indicators:
   - `MA` = overlay-only on `ChartCanvas`
   - `EMA` = overlay-only on `ChartCanvas`
-  - `RSI` = dedicated bottom pane only under the exact current `MultiPaneChart` gate; otherwise current supported fallback stays on `ChartCanvas`
-  - `volume` = dedicated bottom pane only under the exact current `MultiPaneChart` gate; otherwise current supported fallback stays on `ChartCanvas`
-  - exact current `MultiPaneChart` gate = `expanded` + exactly one visible indicator + that visible indicator is `rsi` or `volume`
+  - `RSI` = stabilized single lower pane through the accepted native-pane direction
+  - `volume` = stabilized single lower pane through the accepted native-pane direction
+  - broader `MultiPaneChart` / multiple-lower-pane architecture remains a separate later frontier
   - mixed visible sets stay on `ChartCanvas`; there is no forced lower-pane parity in current operational truth
 - This `7.1` closure does not imply:
   - that the current `RSI`-only pane reflow is already the final approved UX
@@ -1130,23 +1130,112 @@ Guardrails:
   `price + optional MA + optional EMA + max one lower pane`.
 - `9.3` completed / closed:
   `MA/EMA` cache-key fix confirmed by runtime QA.
-- next:
-  `9.4 — RSI / Volume single lower-pane stabilization`.
-- patch readiness for `9.4`: no.
+- `9.4` completed / closed:
+  `RSI / Volume single lower-pane stabilization`.
+- `9.5` completed / closed: first-pass indicator-combination rules confirmed without product code changes.
+- `9.6` completed / closed:
+  menu/render visual honesty confirmed by runtime evidence only; verdict `READY TO CLOSE 9.6 — NO CODE CHANGE`.
+- `9.7` completed / closed:
+  final runtime QA confirmed the accepted first-pass indicator experience; verdict `READY TO CLOSE 9.7 — NO CODE CHANGE`.
+- `9.1–9.7` completed / closed.
+- `FG Chart Architecture Stabilization Sprint` fully administratively closed:
+  `Task 1–5`, `Phase 6`, `Phase 7`, `Phase 8`, and internal `9.1–9.7`.
+- sprint closure artifacts and archive reorganization are complete.
+- next live work:
+  bootstrap / activate the next sprint from its own authoritative Project Sources and current-state.
 
-### 9.4 entry rule
 
-- Start with read-only anchor and/or bounded runtime evidence.
-- Do not patch first.
-- Check:
-  `RSI` only
-  `Volume` only
-  `RSI -> Volume`
-  `Volume -> RSI`
-  no stale pane
-  no empty lower block
-  no console errors
-  price chart remains readable
+### Phase 9.4 closure summary
+
+- `Volume` native lower-pane parity PASS.
+- `RSI` native lower-pane slice completed.
+- missing `RSI` line blocker fixed through series-bound scale access: `series.priceScale().applyOptions(...)`.
+- parity PASS on `[3000]`, `[3101]`, and `[3100]` clean rerun.
+- first `[3100]` blank-state was rejected as a non-reproducible browser-use / viewport / unstable UI-state artifact after clean rerun PASS.
+- post-`9.4` bounded lower-pane visual refinement accepted: divider discoverability, central `•••` grip, hover affordance, and balanced soft enter.
+- This is not a new architecture phase and does not close the broader `MultiPaneChart` / multiple-lower-pane frontier.
+
+### LWC 5.2 migration guardrail
+
+Current status:
+
+- `lightweight-charts@5.2.0` mechanical migration is completed locally.
+- This closes renderer API compatibility only.
+- This did not close `Phase 9.4` by itself; `9.4` was later closed by the bounded RSI/Volume native lower-pane slice and runtime QA.
+- This did not prove lower-pane visual correctness by itself; later `[3000]`, `[3101]`, and `[3100]` clean rerun evidence closed the slice.
+- This enabled the later native lower-pane direction; it was not itself the product stabilization.
+
+Core distinction:
+
+- dependency / API migration != mechanical renderer compatibility != product / visual correctness.
+
+External library rule:
+
+- Context7 first for any LWC behavior claim.
+
+Accepted API surface:
+
+- `chart.addSeries(LineSeries, options)`
+- `chart.addSeries(HistogramSeries, options)`
+- `chart.addSeries(CandlestickSeries, options)`
+- `chart.addSeries(AreaSeries, options)`
+- `chart.addSeries(BarSeries, options)`
+- `chart.addSeries(BaselineSeries, options)`
+
+Future native-pane candidates only:
+
+- `chart.addSeries(SeriesDefinition, options, paneIndex)`
+- `series.moveToPane(index)`
+- `chart.panes()`
+- `chart.removePane(index)`
+
+LWC migration safety rules:
+
+- confirm exact `5.2.0`;
+- confirm no old real v4 factories remain;
+- confirm protected files were not reverted;
+- do not mix old pre-LWC WIP restore with dependency migration commits;
+- do not treat build pass as visual safety.
+
+`Phase 9.4` closure evidence:
+
+- `[3000]`: `RSI only`, visible red RSI line, visible `30 / 70`, `Volume only`, `RSI <-> Volume`, console errors `0`.
+- `[3101]`: baseline, `RSI only`, `RSI off`, `Volume only`, `RSI -> Volume`, `Volume -> RSI`; stale lower pane `no`; empty lower block `no`; console errors `0`.
+- `[3100] clean rerun`: baseline, `Baseline -> RSI only`, `RSI off`, `Volume -> RSI` all PASS.
+- The earlier `[3100]` blank-state is not accepted as an FG defect because it did not reproduce after the clean rerun.
+### Phase 9.5 closure summary
+- `Phase 9.5 — indicator-combination rules` = completed / closed.
+- final closure verdict: `READY TO CLOSE 9.5 — NO CODE CHANGE`.
+- existing UI/state/render behavior already satisfies the accepted `9.2` visual contract without product code changes.
+- `[3000]` runtime contract pass confirmed the full accepted first-pass combination matrix with console errors `0`.
+- `[3101]` browse use locator instability was treated as tooling noise, not an FG product defect; fallback MCP checks closed the evidence gap.
+- final narrow Chrome DevTools visual confirmation proved the lower pane is visibly present where required and overlays remain honest.
+- deferred remain unchanged: `RSI + Volume`, `MA + EMA + RSI + Volume`, multiple lower-pane indicators, new indicators, broad `MultiPaneChart` redesign.
+
+### Phase 9.7 closure summary
+
+- `Phase 9.7 — Runtime QA` = completed / closed.
+- final closure verdict: `READY TO CLOSE 9.7 — NO CODE CHANGE`.
+- all required environments covered: `[3000]`, `[3100]`, `[3101]`.
+- `[3100]`: `20/20 automated runtime checks PASS`.
+- `[3101]`: `20/20 automated runtime checks PASS`.
+- no product-level indicator mismatch reproduced.
+- critical console errors: `[3000] = 0`, `[3100] = 0`, `[3101] = 0`.
+- closure was verification-only; no product code change was needed.
+
+Do not reopen:
+
+- `9.1` indicator flow proof;
+- `9.2` visual contract;
+- `9.3` `MA/EMA` cache-key stabilization;
+- `9.4` `RSI / Volume` single lower-pane stabilization;
+- `9.5` first-pass indicator-combination closure;
+- `9.6` visual honesty closure;
+- `9.7` runtime QA closure;
+- LWC 5.2 mechanical migration;
+- active `ChartCanvas` base-series migration;
+- active overlay indicator migration;
+- mechanical `MultiPaneChart` builder migration.
 
 ### Pre-patch narrowing rule
 

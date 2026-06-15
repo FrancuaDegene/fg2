@@ -23,6 +23,94 @@ It is not responsible for ad-hoc runtime ownership rewrites outside defined boun
 - Provides chart/timeScale APIs used by FG layers.
 - Should not be treated as the product-behavior owner.
 
+## LWC 5.2 Mechanical Migration Ledger
+
+Status: `lightweight-charts` mechanical migration to exact `5.2.0` is completed locally.
+
+Why the migration happened:
+
+- `Phase 9.4` `RSI` / `Volume` lower-pane stabilization reached a renderer boundary.
+- Old v4 direct factory API was still present in chart-facing creation seams.
+- Blind patching `Pane.jsx`, `ChartSyncController`, or range lifecycle before renderer API cleanup was unsafe.
+- Future native panes required removing the old LWC v4 API surface first.
+
+Package change:
+
+- `fingineerwebapp/package.json`: `"lightweight-charts": "^4.2.3"` -> `"lightweight-charts": "5.2.0"`.
+- `fingineerwebapp/package-lock.json` resolves `lightweight-charts` to `5.2.0`.
+
+New API baseline:
+
+- old: `chart.addLineSeries(options)`, `chart.addHistogramSeries(options)`, `chart.addCandlestickSeries(options)`.
+- new: `chart.addSeries(LineSeries, options)`, `chart.addSeries(HistogramSeries, options)`, `chart.addSeries(CandlestickSeries, options)`.
+
+Files changed and purpose:
+
+- `fingineerwebapp/src/components/Results/Chart/utils/chartUtils.js`: `addSeriesCompat` now uses `chart.addSeries(...)`; this is the main `ChartCanvas` base-series creation seam.
+- `fingineerwebapp/src/components/Results/Chart/CompactTrendChart/CompactTrendChart.js`: `addAreaSeriesCompat` uses `chart.addSeries(AreaSeries, options)`; build-only compatibility because the active compact path uses `CompactSparkline` SVG.
+- `fingineerwebapp/src/components/Results/Chart/hooks/useChartIndicators.js`: `MA` / `EMA` / `RSI` line series use `LineSeries`; `Volume` uses `HistogramSeries`; indicator logic / cache / cleanup did not change as part of this migration.
+- `fingineerwebapp/src/charts/series/candles.js`: `CandlestickSeries` for `MultiPaneChart` price pane builder.
+- `fingineerwebapp/src/charts/series/rsi.js`: `LineSeries` for `MultiPaneChart` `RSI` builder.
+- `fingineerwebapp/src/charts/series/volume.js`: `HistogramSeries` for `MultiPaneChart` `Volume` builder.
+
+Verification recorded for the mechanical migration:
+
+- `npm run build` passed.
+- `[3000]` app opens.
+- `[3000]` `SBER` selection works.
+- Expanded `ChartCanvas` base chart renders.
+- `MA` only passed.
+- `EMA` only passed.
+- `MA + EMA` passed.
+- `[3000]` `RSI` only / `Volume` only lower-pane mechanical API smoke passed.
+- `[3101]` `RSI` only / `Volume` only lower-pane mechanical API parity passed.
+- no app console errors in verified paths.
+
+Inventory:
+
+- no real direct v4 `chart.add*Series(...)` calls remain.
+- helper names like `addAreaSeriesCompat` are not v4 API calls if they use `chart.addSeries(...)` internally.
+
+Protected migration files:
+
+- `fingineerwebapp/package.json`
+- `fingineerwebapp/package-lock.json`
+- `fingineerwebapp/src/components/Results/Chart/utils/chartUtils.js`
+- `fingineerwebapp/src/components/Results/Chart/CompactTrendChart/CompactTrendChart.js`
+- `fingineerwebapp/src/components/Results/Chart/hooks/useChartIndicators.js`
+- `fingineerwebapp/src/charts/series/candles.js`
+- `fingineerwebapp/src/charts/series/rsi.js`
+- `fingineerwebapp/src/charts/series/volume.js`
+
+These files must not be overwritten by old stash / WIP restores without an explicit migration-aware decision.
+
+Out of scope:
+
+- `Phase 9.4` visual correctness at the time of the mechanical migration.
+- `RSI` / `Volume` range lifecycle ownership at the time of the mechanical migration.
+- `MultiPaneChart` visual parity.
+- product native-pane stabilization.
+- mixed lower-pane behavior.
+
+Post-migration accepted update:
+
+- `Phase 9.4` is now completed / closed for `RSI` / `Volume` single lower-pane stabilization.
+- `RSI` and `Volume` single lower-pane scenarios now use the accepted native lower-pane direction on the current runtime path.
+- The missing `RSI` curve blocker was fixed by applying RSI scale configuration through series-bound scale access: `series.priceScale().applyOptions(...)`.
+- This closes the single lower-pane RSI/Volume stabilization slice only; `Phase 9.5` later closed the accepted first-pass mixed-combination contract without engine code changes, and `Phase 9.6` later verified menu/render visual honesty without product code changes. Broader `MultiPaneChart` parity and multiple lower-pane indicators still remain deferred.
+
+Regression checklist:
+
+- confirm `lightweight-charts` exact `5.2.0`;
+- confirm protected files were not reverted;
+- confirm no direct v4 `chart.add*Series(...)` calls;
+- build;
+- `[3000]` base chart, `MA` / `EMA`, `RSI`, `Volume`;
+- `[3000]` `RSI only`, `Volume only`, and `RSI <-> Volume` single lower-pane smoke;
+- `[3101]` accepted parity: baseline, `RSI only`, `RSI off`, `Volume only`, `RSI -> Volume`, `Volume -> RSI`;
+- `[3100]` clean rerun parity: baseline, `Baseline -> RSI only`, `RSI off`, `Volume -> RSI`;
+- console errors `0`.
+
 ### FG Data Pipeline (`useChartData`)
 - Owns init-time data application (`series.setData`) and virtual slicing.
 - Computes timeframe/interval windowing and session-aware slices.
@@ -140,6 +228,21 @@ Intent:
 - `9.1` completed with code + runtime evidence.
 - `9.2` accepted visual contract:
   `price + optional MA + optional EMA + max one lower pane`.
+- `9.4` completed / closed:
+  `RSI` / `Volume` single lower-pane stabilization through the accepted native-pane direction.
+- `9.5` completed / closed:
+  accepted first-pass mixed-combination contract without engine code changes.
+- `9.6` completed / closed:
+  menu state and rendered indicator state remain visually consistent; verdict `READY TO CLOSE 9.6 — NO CODE CHANGE`.
+- `9.7` completed / closed:
+  full runtime QA finished across `[3000]`, `[3100]`, `[3101]` with verdict `READY TO CLOSE 9.7 — NO CODE CHANGE`.
+- current first-pass indicator runtime experience is fully runtime-verified.
+- `9.7` was a verification closure only; engine ownership, renderer contract, and architecture boundaries did not change.
+- `FG Chart Architecture Stabilization Sprint` fully administratively closed:
+  `Task 1–5`, `Phase 6`, `Phase 7`, `Phase 8`, and internal `9.1–9.7`.
+- sprint closure artifacts and archive reorganization are complete.
+- next live work:
+  bootstrap / activate the next sprint from its own authoritative Project Sources and current-state.
 - first-pass allowed combinations:
   `MA`, `EMA`, `MA + EMA`, `RSI`, `Volume`, `MA + RSI`, `EMA + RSI`, `MA + Volume`, `EMA + Volume`, `MA + EMA + RSI`, `MA + EMA + Volume`.
 - deferred combinations:
@@ -148,17 +251,17 @@ Intent:
   enabling indicators must not change the price chart into a different chart.
 - `MA` = только overlay в `ChartCanvas`.
 - `EMA` = только overlay в `ChartCanvas`.
-- `RSI` = отдельный bottom pane только под exact current `MultiPaneChart` gate; иначе текущий fallback остаётся в `ChartCanvas`.
-- `Volume` = отдельный bottom pane только под exact current `MultiPaneChart` gate; иначе текущий fallback остаётся в `ChartCanvas`.
-- exact current gate:
-  - `isExpanded`
-  - ровно один видимый индикатор
-  - этот видимый индикатор = `rsi` или `volume`
-- mixed visible sets остаются в `ChartCanvas`; forced lower-pane parity в current operational truth нет.
+- `RSI` = stabilized single lower pane on the accepted native lower-pane path; `params.period` and level visibility remain required semantic truth.
+- `Volume` = stabilized single lower pane on the accepted native lower-pane path.
+- single lower-pane RSI/Volume path is now stabilized through the accepted native-pane direction.
+- accepted first-pass mixed combinations were later closed by `9.5` runtime evidence without engine code changes; forced multiple-lower-pane parity is still not implied.
 - Это не означает:
   - что final approved UX уже принят
   - что mixed sets уже parity-complete
   - что full `MultiPaneChart` parity уже достигнут
+
+- post-`9.4` lower-pane UX refinement is accepted as visual-only:
+  divider discoverability, central `•••` grip, hover affordance, and calm `RSI` / `Volume` soft enter are accepted without changing engine ownership.
 
 ### Engine cache-key rule for `MA / EMA`
 - calculation cache key for `MA/EMA` must distinguish the concrete candle dataset
@@ -175,13 +278,11 @@ Intent:
   - reads `currentInterval`
   - reads `currentTimeframe`
   - reads `currentCandleType`
-- current `multi-pane` is the reduced gated branch:
-  - reads the current gated indicator identity/visibility
-  - applies fixed pane builders for `RSI` or `volume`
-  - does not yet prove the same richer payload contract as `single-pane`
+- current accepted single lower-pane `RSI` / `Volume` path is stabilized through the native-pane direction.
+- retained `multi-pane` / historical `MultiPaneChart` concerns remain broader parity frontiers, not the active accepted path for the closed `9.4` single lower-pane slice.
 
-### Minimum shared renderer contract for current gated scope
-- required now:
+### Minimum shared renderer contract for current lower-pane scope
+- required for the closed `9.4` single lower-pane scope:
   - shared semantic truth for `activation / identity / visibility` of the current gated indicator
   - for `RSI`: semantic parity for `params.period`
   - for `RSI`: semantic parity for level-visibility behavior
@@ -192,7 +293,7 @@ Intent:
   - broader payload/cache symmetry
 - acceptable branch-specific for now:
   - branch-specific visual implementation details
-  - fixed pane layout mechanics under the exact current gate
+  - native-pane layout mechanics for the accepted single lower-pane slice
 - excluded from this bounded parity slice:
   - mixed visible sets
   - `compact`

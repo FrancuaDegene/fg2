@@ -102,8 +102,46 @@ FG Chart Engine уже имеет узнаваемую многослойную 
 - accepted chart failure contract теперь различает `empty`, `stale` и request-error states; confirmed selection должен соответствовать графику, который реально находится на экране;
 - shared visual consumer / presentation layer для accepted owner-state remains separate frontier;
 - `Phase 7` зафиксировала current `MultiPaneChart` truth для текущей ветки и current indicator display; retained `MultiPaneChart` frontier теперь сужен до narrow parity tail, а не до branch-wide unknown.
-- future indicator architecture / expansion were already boundedly framed and classified in the closed indicator architecture model; they are not part of the retained `MultiPaneChart` frontier, and the current immediate continuation now sits in `Phase 9`.
+- future indicator architecture / expansion were already boundedly framed and classified in the closed indicator architecture model; `Phase 9.4` is closed for single lower-pane RSI/Volume stabilization, `Phase 9.5` is closed for the accepted first-pass combination contract, `Phase 9.6` is closed for visual honesty verification, and `Phase 9.7` is closed for end-to-end runtime QA across `[3000]`, `[3100]`, `[3101]`.
+- `Phase 9` indicator stabilization has no remaining open internal slice; `9.7` did not change ownership or architecture boundaries and finalized runtime confirmation of the accepted first-pass indicator flow.
+- `FG Chart Architecture Stabilization Sprint` is fully administratively closed; it covered `Task 1–5`, `Phase 6`, `Phase 7`, `Phase 8`, and internal Phase 9 indicator stabilization sequence `9.1–9.7`.
+- sprint closure artifacts and archive reorganization are complete; no architecture ownership boundary changed because of this archival closure.
+- next live work must begin from the next sprint's own current-state / Project Sources.
 - broader authority-chain unification остаётся отдельным frontier.
+
+## LWC 5.2 Renderer Baseline / Migration Boundary
+
+`lightweight-charts` is now pinned to exact `5.2.0` as the current FG renderer baseline.
+
+This is an accepted mechanical migration baseline, not a visual redesign.
+
+Why the migration was required:
+
+- `Phase 9.4` hit renderer-boundary / API-debt risk while investigating `RSI` / `Volume` lower-pane behavior.
+- `RSI` / `Volume` lower-pane work needed a clean separation between renderer API migration and product / visual correctness.
+- LWC v5 enables future native-pane architecture analysis, but does not implement that architecture by itself.
+
+LWC remains renderer infrastructure. It is not the product-behavior owner.
+
+No ownership changed:
+
+- `App` authority is unchanged.
+- `ChartContext` ownership of `activeIndicators` is unchanged.
+- `ChartCanvas` remains the primary richer single-pane branch.
+- `MultiPaneChart` remains the existing reduced gated branch.
+- `useChartData` remains the init / render owner.
+- `useFGTimeNavigation` remains the runtime navigation owner.
+
+The accepted single lower-pane `RSI` / `Volume` path now uses the native-pane direction; broader native-pane architecture remains a later frontier.
+
+`Phase 9.4` is completed / closed for `RSI` / `Volume` single lower-pane stabilization.
+
+Mechanical migration by itself did not mean:
+
+- lower-pane UX was accepted;
+- broader native-pane architecture is complete;
+- broad `MultiPaneChart` parity is complete;
+- broader `MultiPaneChart` / multiple-lower-pane architecture is closed.
 
 ## Core Principles
 
@@ -405,17 +443,21 @@ Runtime pan/zoom, logical range policy после init.
 - `9.1` completed: `indicator menu -> ChartContext.activeIndicators -> render branch -> observable visual effect` was proven by code anchor and runtime evidence on `3100/3101`
 - `9.2` accepted visual contract: `price + optional MA + optional EMA + max one lower pane`
 - `9.3` completed: `MA/EMA` overlay stabilization closed after cache-key fix in `useChartIndicators.js`
-- next safe entry: `9.4 — RSI / Volume single lower-pane stabilization`
-- patch readiness for `9.4`: no
-- renderer contract split between single-pane and multi-pane systems
+- `9.4` completed / closed: `RSI` / `Volume` single lower-pane stabilization through the accepted native-pane direction
+- `9.5` completed / closed: first-pass indicator-combination rules confirmed without product code changes
+- `9.6` completed / closed: runtime evidence confirmed current indicator UI/render visual honesty; no engine ownership or architecture boundary changed
+- `9.7` completed / closed: end-to-end runtime QA covered `[3000]`, `[3100]`, `[3101]`; no engine ownership or architecture boundary changed
+- Phase 9 indicator stabilization sequence has no remaining open internal slice
+- `FG Chart Architecture Stabilization Sprint` fully administratively closed: `Task 1–5`, `Phase 6`, `Phase 7`, `Phase 8`, and internal `9.1–9.7`
+- sprint closure artifacts and archive reorganization are complete; next live work must begin from the next sprint's own current-state / Project Sources
 - current operational visual contract for existing indicators:
   - `MA` = overlay-only on `ChartCanvas`
   - `EMA` = overlay-only on `ChartCanvas`
-  - `RSI` = dedicated bottom pane only under the exact current `MultiPaneChart` gate; otherwise current supported fallback stays on `ChartCanvas`
-  - `volume` = dedicated bottom pane only under the exact current `MultiPaneChart` gate; otherwise current supported fallback stays on `ChartCanvas`
-  - exact current `MultiPaneChart` gate = `expanded` + exactly one visible indicator + that visible indicator is `rsi` or `volume`
+  - `RSI` = stabilized single lower pane through the accepted native-pane direction
+  - `volume` = stabilized single lower pane through the accepted native-pane direction
+  - broader `MultiPaneChart` / multiple-lower-pane architecture remains a separate later frontier
   - mixed visible sets still stay on `ChartCanvas` in current code reality; this is not the same thing as the accepted `9.2` product target
-  - accepted `9.2` product target already allows `overlay + max one lower pane`; implementation/runtime stabilization for these mixed combinations remains staged through `9.4/9.5`
+  - accepted `9.2` product target plus closed `9.5` runtime evidence now confirm the first-pass `overlay + max one lower pane` contract for allowed combinations; deferred remain `RSI + Volume`, `MA + EMA + RSI + Volume`, multiple lower panes, new indicators, and broad `MultiPaneChart` redesign
 - current expanded indicator domain splits into:
   - default `single-pane` path as the richer primary indicator-render branch
   - narrow gated `multi-pane` path as the reduced branch-specific indicator-render branch
@@ -836,6 +878,8 @@ Legacy path всё ещё влияет на восприятие и может �
 - `9.1` closure proved that current menu items are not dead UI and that observable indicator effects exist on runtime paths
 
 ### safe with guardrails
+- `9.4` accepted runtime truth: single lower-pane `RSI` / `Volume` scenarios are stabilized through the accepted native-pane direction
+- post-`9.4` lower-pane UX refinement is accepted as visual-only: divider discoverability, central `•••` grip, hover affordance, and balanced soft enter
 - current operational visual contract for the existing supported set
 - accepted `9.2` visual contract as product target: `price + optional MA + optional EMA + max one lower pane`
 - mixed runtime co-location of `activation / visibility / params / settings`
@@ -846,7 +890,7 @@ Legacy path всё ещё влияет на восприятие и может �
 - split renderer contract between `single-pane` and `multi-pane`
 - cross-branch mode divergence for the same indicator domain
 - exact current `MultiPaneChart` parity cell for the same ownership / authority / init-runtime model
-- staged stabilization of accepted `overlay + one lower pane` behavior through `9.4/9.5`, not via owner-model reopening
+- `9.4` closed single lower-pane RSI/Volume stabilization; `9.5` later closed the first-pass indicator-combination rules without owner-model reopening
 
 ### minimum shared renderer contract for current gated scope
 - required now:
@@ -860,7 +904,7 @@ Legacy path всё ещё влияет на восприятие и может �
   - broader payload/cache symmetry
 - acceptable branch-specific for now:
   - branch-specific visual implementation details
-  - fixed pane layout mechanics under the exact current gate
+  - native-pane layout mechanics for the accepted single lower-pane slice
 - excluded from this minimum parity cell:
   - mixed visible sets
   - `compact`
@@ -902,8 +946,8 @@ Legacy path всё ещё влияет на восприятие и может �
   - unchanged by the `ChartCanvas` stale-init fix
 - `ChartRenderer`
   - branch-entry router only
-  - routes to `MultiPaneChart` only for exact currently supported single-bottom visible sets (`volume` only or `rsi` only)
-  - keeps mixed visible sets on `ChartCanvas` until broader multi-pane parity exists
+  - single lower-pane `RSI` / `Volume` now follows the accepted native-pane runtime path
+  - keeps unsupported multi-lower combinations and broader deferred cases outside the accepted first-pass `9.5` contract
 - `effectiveTimeframe`
   - derived alias only
   - should not be treated as a separate stabilization domain
@@ -914,7 +958,7 @@ Legacy path всё ещё влияет на восприятие и может �
   - `Stage 2 / Slice 1` (`ChartContext` timeframe/interval demotion)
   - accepted active-path `currentCandleType` runtime-owner / persistence-holder slice
 - still open:
-  - exact current `MultiPaneChart` parity cell for the same ownership / authority / init-runtime model; this bounded frontier does not equal the whole closed `Phase 8`
+  - broader `MultiPaneChart` / multiple-lower-pane architecture remains a separate later frontier; `9.4` closure does not close it
   - broader upstream architecture / authority-chain unification above the accepted `ChartContainer` transform/handoff boundary; current `App.js` bridge is still a bridge, not the final end-state
   - `Shared Visual Consumer / Failure Presentation Pass`: accepted owner-state exists in `App`, but no proven shared live visual consumer layer below `App` is currently established for `confirmedSelection`, `requestedSelection`, `hasValidSnapshot`, `requestKind`, `requestStatus`, `dataStatus`, `failureScope`, `failureMessage`
 - not in this retained frontier:
