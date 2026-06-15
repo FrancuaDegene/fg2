@@ -4,6 +4,7 @@ const config = {
   SOCKET_URL: process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001',
   API_BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:3001',
   SUGGESTIONS_API_URL: process.env.REACT_APP_SUGGESTIONS_URL || 'http://localhost',
+  INSTRUMENTS_API_URL: process.env.REACT_APP_INSTRUMENTS_API_URL || process.env.REACT_APP_SUGGESTIONS_URL || 'http://localhost:3002',
   
   // Socket.IO настройки
   SOCKET_OPTIONS: {
@@ -17,6 +18,7 @@ const config = {
   ENDPOINTS: {
     TICKER: '/api/ticker',
     SUGGESTIONS: '/api/suggestions',
+    INSTRUMENTS_BROWSE: '/api/instruments/browse',
     NEWS: '/api/news',
     DIVIDENDS: '/api/dividends',
     AI_CHAT: '/api/chat',

@@ -87,12 +87,44 @@ export const TF_INTERVAL_MATRIX = {
 };
 
 const ORDERED_INTERVALS = ['1m', '5m', '15m', '1h', '4h', '1d'];
+const COUNTBACK_BASE_BY_TIMEFRAME = {
+  '1d':   { '1m': 400,   '5m': 100,   '15m': 50,   '1h': 24,   '4h': 12,   '1d': 1 },
+  '1mth': { '1m': 6000,  '5m': 1500,  '15m': 600,  '1h': 300,  '4h': 150,  '1d': 20 },
+  '3mth': { '1m': 18000, '5m': 4500,  '15m': 1800, '1h': 900,  '4h': 450,  '1d': 60 },
+  '6mth': { '1m': 36000, '5m': 9000,  '15m': 3600, '1h': 1800, '4h': 900,  '1d': 120 },
+  '1y':   { '1m': 72000, '5m': 18000, '15m': 7200, '1h': 3600, '4h': 1800, '1d': 250 },
+};
+const DEFAULT_COUNTBACK_BY_INTERVAL = {
+  '1m': 400,
+  '5m': 500,
+  '15m': 500,
+  '1h': 500,
+  '4h': 400,
+  '1d': 250,
+};
+const COUNTBACK_PIXELS_PER_BAR = 3;
+const MIN_COUNTBACK = 10;
+const MAX_COUNTBACK = 5000;
+const INTERVAL_SEC = {
+  '1m': 60,
+  '5m': 300,
+  '15m': 900,
+  '1h': 3600,
+  '4h': 14400,
+  '1d': 86400,
+};
+
+export function getAllowedIntervalsForTimeframe({ timeframe, mode }) {
+  const resolvedMode = mode === 'expanded' ? 'expanded' : 'compact';
+  const resolvedTimeframe = String(timeframe || '');
+  return TF_INTERVAL_MATRIX?.[resolvedMode]?.[resolvedTimeframe] || ORDERED_INTERVALS;
+}
 
 export function fixIntervalForTimeframe({ timeframe, requested, mode }) {
   const m = mode === 'expanded' ? 'expanded' : 'compact';
   const tf = String(timeframe || '');
   const req = String(requested || '');
-  const allowed = TF_INTERVAL_MATRIX?.[m]?.[tf] || ORDERED_INTERVALS;
+  const allowed = getAllowedIntervalsForTimeframe({ timeframe: tf, mode: m });
   if (allowed.includes(req)) return { forced: req, allowed };
 
   // nearest by ORDERED_INTERVALS index (fallback to first allowed)
@@ -109,4 +141,49 @@ export function fixIntervalForTimeframe({ timeframe, requested, mode }) {
     }
   }
   return { forced: best, allowed };
+}
+
+export function resolveCountBackByTimeframe(timeframe, interval, width) {
+  const tfKey = String(timeframe || '');
+  const normalizedInterval = ORDERED_INTERVALS.includes(interval) ? interval : '1m';
+  const base = COUNTBACK_BASE_BY_TIMEFRAME?.[tfKey]?.[normalizedInterval];
+  const safeBase = Number.isFinite(base)
+    ? base
+    : (DEFAULT_COUNTBACK_BY_INTERVAL[normalizedInterval] ?? 500);
+
+  const numericWidth = Number(width) || 0;
+  const maxVisible =
+    numericWidth > 0 ? Math.floor(numericWidth / COUNTBACK_PIXELS_PER_BAR) : null;
+  const widthDriven =
+    Number.isFinite(maxVisible) && maxVisible > 0 ? maxVisible * 2 : null;
+
+  let result = safeBase;
+  if (Number.isFinite(widthDriven)) {
+    result = Math.max(result, widthDriven);
+  }
+
+  let barsExpected = null;
+  if (tfKey === '1d') {
+    const sec = INTERVAL_SEC[normalizedInterval];
+    if (Number.isFinite(sec) && sec > 0) {
+      barsExpected = Math.ceil(86400 / sec);
+      result = Math.min(result, barsExpected);
+    }
+  }
+
+  result = Math.max(MIN_COUNTBACK, Math.min(MAX_COUNTBACK, result));
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.debug('[FG][CB]', {
+      tf: tfKey,
+      interval: normalizedInterval,
+      width: numericWidth,
+      base,
+      maxVisible,
+      barsExpected,
+      result,
+    });
+  }
+
+  return result;
 }

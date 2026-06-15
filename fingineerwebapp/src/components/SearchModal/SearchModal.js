@@ -3,27 +3,30 @@ import PropTypes from 'prop-types';
 import useSearch from '../../hooks/useSearch';
 import './SearchModal.css';
 import Overlay from '../Overlay/Overlay';
+import SearchSuggestionItem from '../SearchSuggestionItem/SearchSuggestionItem';
 
 const SearchModal = ({ isOpen, onClose, onSearch }) => {
     const searchInputRef = useRef(null);
-    
+
     const {
         query,
         suggestions,
         isLoading,
+        error,
         handleQueryChange,
         handleSearch,
         handleClear,
         handleSuggestionClick,
-    } = useSearch({ 
+    } = useSearch({
         onSearch: (searchQuery) => {
             onSearch(searchQuery);
             onClose();
         },
-        onClear: () => {} 
+        onClear: () => {}
     });
 
-    // Обработка клавиш
+    const trimmedQuery = query.trim();
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'Escape') {
@@ -36,8 +39,7 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
             document.body.style.overflow = 'hidden';
-            
-            // Фокус на поле ввода при открытии
+
             setTimeout(() => {
                 if (searchInputRef.current) {
                     searchInputRef.current.focus();
@@ -61,10 +63,9 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
             variant="modal"
             onBackdropClick={onClose}
         >
-            {/* Заголовок модального окна */}
             <div className="search-modal-header">
                 <h3 className="search-modal-title">Поиск инструмента</h3>
-                <button 
+                <button
                     className="search-modal-close"
                     onClick={onClose}
                     aria-label="Закрыть"
@@ -73,7 +74,6 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
                 </button>
             </div>
 
-            {/* Поле поиска */}
             <div className="search-modal-body">
                 <div className="search-input-container">
                     <input
@@ -85,10 +85,10 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
                         placeholder="Введите название компании или тикера..."
                         autoComplete="off"
                     />
-                    
+
                     {query && (
                         <div className="search-input-actions">
-                            <button 
+                            <button
                                 className="search-clear-btn"
                                 onClick={handleClear}
                                 aria-label="Очистить"
@@ -99,33 +99,41 @@ const SearchModal = ({ isOpen, onClose, onSearch }) => {
                     )}
                 </div>
 
-                {/* Индикатор загрузки */}
                 {isLoading && (
                     <div className="search-loading">
-                        Поиск...
+                        Ищем инструменты…
                     </div>
                 )}
 
-                {/* Список подсказок */}
+                {!isLoading && error && (
+                    <div className="search-error">
+                        {error}
+                    </div>
+                )}
+
                 {!isLoading && suggestions.length > 0 && (
-                    <div className="search-suggestions">
-                        {suggestions.map((item) => (
-                            <div
-                                key={item.ticker}
-                                className="search-suggestion-item"
-                                onClick={() => handleSuggestionClick(item.ticker)}
-                            >
-                                <div className="suggestion-ticker">{item.ticker}</div>
-                                <div className="suggestion-name">{item.company_name}</div>
+                    <div className="search-results-panel">
+                        <div className="search-suggestions">
+                            {suggestions.map((item) => (
+                                <SearchSuggestionItem
+                                    key={item.ticker}
+                                    item={item}
+                                    className="search-suggestion-item"
+                                    onSelect={handleSuggestionClick}
+                                />
+                            ))}
+                        </div>
+                        {trimmedQuery.length >= 2 && (
+                            <div className="search-suggestions-footer" aria-hidden="true">
+                                <span>Показать все результаты для "{trimmedQuery}"</span>
                             </div>
-                        ))}
+                        )}
                     </div>
                 )}
 
-                {/* Сообщение когда нет результатов */}
-                {!isLoading && query.length > 2 && suggestions.length === 0 && (
+                {!isLoading && !error && query.length > 2 && suggestions.length === 0 && (
                     <div className="search-no-results">
-                        Ничего не найдено для "{query}"
+                        Ничего не найдено
                     </div>
                 )}
             </div>
