@@ -252,6 +252,77 @@
   color: #d1d4dc !important;
 }
 
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"] {
+  position: relative !important;
+  background: rgba(120, 128, 142, 0.28) !important;
+}
+
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"]::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  z-index: 50;
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: rgba(126, 134, 147, 0.42);
+  pointer-events: none;
+  transition:
+    background-color 140ms ease,
+    opacity 140ms ease;
+}
+
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"]::after {
+  content: '\2022\2022\2022';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 51;
+  transform: translate(-50%, calc(-50% + 0.5px));
+  color: rgba(62, 70, 84, 0.78);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 2px;
+  pointer-events: none;
+  transition:
+    color 140ms ease,
+    opacity 140ms ease;
+}
+
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"]:hover {
+  background: rgba(95, 105, 122, 0.42) !important;
+}
+
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"]:hover::before {
+  background: rgba(92, 101, 116, 0.58);
+}
+
+.chart-stage .tv-lightweight-charts table tr td[colspan="3"]:hover::after {
+  color: rgba(31, 39, 53, 0.9);
+}
+
+@supports selector(tr:has(> td)) {
+  .chart-stage .tv-lightweight-charts table tr:has(> td[colspan="3"]) + tr > td {
+    animation: lowerPaneSoftEnter 180ms ease-out both;
+    transform-origin: top center;
+  }
+}
+
+@keyframes lowerPaneSoftEnter {
+  from {
+    opacity: 0.55;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .chart-container .tv-lightweight-charts .crosshair-label {
   background: rgba(17, 24, 39, 0.9) !important;
   color: #d1d4dc !important;
