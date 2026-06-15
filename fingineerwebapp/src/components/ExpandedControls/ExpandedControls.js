@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SearchForm from '../SearchForm';
-import TimeframeSelector from '../TimeframeSelector/TimeframeSelector';
-import IntervalSelector from '../IntervalSelector/IntervalSelector';
 import './ExpandedControls.css';
 
 const ExpandedControls = ({
@@ -25,15 +23,6 @@ const ExpandedControls = ({
       />
     </div>
     <div className="expanded-controls__selectors">
-      <TimeframeSelector
-        currentTimeframe={currentTimeframe}
-        onSelectTimeframe={onSelectTimeframe}
-      />
-      <IntervalSelector
-        currentInterval={currentInterval}
-        currentTimeframe={currentTimeframe}
-        onSelectInterval={onSelectInterval}
-      />
       {isExpanded && (
   <button className="expanded-controls__btn" title="Календарь" onClick={onToggleCalendar}>
     📅
