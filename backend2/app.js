@@ -7,6 +7,7 @@ const config = require('./config/env');
 const { corsMiddleware, allowedOrigins } = require('./config/cors');
 const { readLimiter } = require('./config/rateLimit');
 const suggestionsRoutes = require('./routes/suggestions');
+const instrumentsRoutes = require('./routes/instruments');
 const tickerRoutes = require('./routes/ticker');
 const newsRoutes = require('./routes/news');
 const dividendsRoutes = require('./routes/dividends');
@@ -33,6 +34,7 @@ app.use('/bootstrap', express.static(path.join(__dirname, 'node_modules/bootstra
 
 app.use('/api', readLimiter);
 app.use('/api', suggestionsRoutes);
+app.use('/api', instrumentsRoutes);
 app.use('/api', tickerRoutes);
 app.use('/api', newsRoutes);
 app.use('/api', dividendsRoutes);
