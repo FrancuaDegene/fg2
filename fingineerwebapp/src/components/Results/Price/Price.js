@@ -8,7 +8,6 @@ const Price = ({ data }) => {
   // Используем реальные данные вместо моков
   const currentData = data || {};
   
-  const [showMore, setShowMore] = useState(false);
   const [selectedMetricKey, setSelectedMetricKey] = useState(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const [showTimeout, setShowTimeout] = useState(null);
@@ -38,6 +37,16 @@ const Price = ({ data }) => {
     if (aliases[key]) {
       for (const alias of aliases[key]) {
         if (currentData && currentData[alias] !== undefined) return currentData[alias];
+      }
+    }
+    return undefined;
+  };
+
+  const getFirstValue = (...keys) => {
+    for (const key of keys) {
+      const value = currentData?.[key];
+      if (value !== undefined && value !== null && value !== '') {
+        return value;
       }
     }
     return undefined;
@@ -89,28 +98,27 @@ const Price = ({ data }) => {
     }
   };
 
+  const mainMetric = { label: "Цена", value: getValue('close'), key: "closingPrice" };
+  const changeValue = getFirstValue('changePercent', 'dayChangePct', 'priceChangePercent', 'changePct', 'change');
   const metrics = [
-    { label: "Цена закрытия", value: getValue('close'), key: "closingPrice" },
-    { label: "Цена открытия", value: getValue('open'), key: "openingPrice" },
-    { label: "Минимальная цена", value: getValue('low'), key: "minPrice" },
-    { label: "Максимальная цена", value: getValue('high'), key: "maxPrice" },
-    ...(showMore ? [
-      { label: "P/E", value: getValue('peRatio'), key: "peRatio" },
-      { label: "P/B", value: getValue('pbRatio'), key: "pbRatio" },
-      { label: "P/S", value: getValue('psRatio'), key: "psRatio" },
-      { label: "EV/EBITDA", value: getValue('evEbitda'), key: "evEbitda" },
-      { label: "Чистый долг", value: getValue('netDebt'), key: "netDebt" },
-      { label: "Рыночная капитализация", value: getValue('marketCap'), key: "marketCap" },
-    ] : []),
+    { label: "Откр.", value: getValue('open'), key: "openingPrice" },
+    { label: "Макс.", value: getValue('high'), key: "maxPrice" },
+    { label: "Мин.", value: getValue('low'), key: "minPrice" },
+    { label: "Закр.", value: getValue('close'), key: "closingPrice" },
   ];
+
+  const volumeValue = getFirstValue('volume', 'dayVolume');
+  if (volumeValue !== undefined) {
+    metrics.push({ label: "Объём", value: volumeValue, key: "volume" });
+  }
 
   return (
     <div className="price-block">
       <PriceMetrics
+        mainMetric={mainMetric}
+        changeMetric={changeValue !== undefined ? { label: "Изменение", value: changeValue, key: "change" } : null}
         metrics={metrics}
         selectedMetricKey={selectedMetricKey}
-        showMore={showMore}
-        toggleShowMore={() => setShowMore(prev => !prev)}
         onMouseEnterInfoButton={handleMouseEnterTooltip}
         onMouseLeaveInfoButton={handleMouseLeaveTooltip}
         onMouseMoveInfoButton={handleMouseMove}

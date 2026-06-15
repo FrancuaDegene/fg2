@@ -3,17 +3,27 @@ import PriceItem from './PriceItem';
 import './Price.css';
 
 const PriceMetrics = ({
+  mainMetric,
+  changeMetric,
   metrics,
   selectedMetricKey,
-  showMore,
-  toggleShowMore,
   onMouseEnterInfoButton,
   onMouseLeaveInfoButton,
   onMouseMoveInfoButton
 }) => {
   return (
     <div className="company-content">
-      <div className="company-meta">
+      <div className="price-snapshot">
+        <div className="price-snapshot__label">{mainMetric?.label || 'Цена'}</div>
+        <div className="price-snapshot__value">{mainMetric?.value ?? '—'}</div>
+        {changeMetric && (
+          <div className="price-snapshot__change">
+            {changeMetric.value}
+          </div>
+        )}
+      </div>
+
+      <div className="company-meta price-details-grid">
         {metrics.map(metric => (
           <PriceItem
             key={metric.key}
@@ -27,13 +37,6 @@ const PriceMetrics = ({
           />
         ))}
       </div>
-      <button
-        className="toggle-metrics-button"
-        onClick={toggleShowMore}
-        type="button"
-      >
-        {showMore ? "Скрыть" : "Показать ещё"}
-      </button>
     </div>
   );
 };
