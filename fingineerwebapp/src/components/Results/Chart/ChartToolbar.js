@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 
-// Сторонние библиотеки
 import {
   Search,
   Timer,
@@ -12,17 +11,13 @@ import {
   Maximize,
 } from 'lucide-react';
 
-// Константы
-import { CHART_CONFIG } from '../../../constants';
+import { CHART_CONFIG, getAllowedIntervalsForTimeframe } from '../../../constants';
 
-// Компоненты проекта
 import useDropdown from '../../Primitives/useDropdown';
 import { useChart } from './ChartContext';
 
-// Стили
 import './toolbar/index.css';
 
-/* --- Мини-иконки под виды графика (16x16, наследуют currentColor) --- */
 const IconCandles = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path d="M4 3v10M12 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -70,7 +65,6 @@ const IconHistogram = () => (
   </svg>
 );
 
-/* --- Метаданные видов графика: имя + иконка --- */
 const CANDLE_TYPE_META = {
   candlestick:        { title: 'Японские свечи',   icon: <IconCandles /> },
   hollow_candlestick: { title: 'Пустые свечи',     icon: <IconHollowCandles /> },
@@ -78,20 +72,16 @@ const CANDLE_TYPE_META = {
   line:               { title: 'Линия',            icon: <IconLine /> },
   area:               { title: 'Область',          icon: <IconArea /> },
   baseline:           { title: 'Базовая линия',    icon: <IconBaseline /> },
-  // histogram: оставлен только для исторической совместимости. При активном мультипанельном графике объём включается через индикаторы.
   histogram:          { title: 'Гистограмма',      icon: <IconHistogram /> },
 };
 
-/* Список для рендера меню (value + title) */
 const candleTypes = Object.entries(CANDLE_TYPE_META).map(([value, v]) => ({
   value,
   title: v.title,
 }));
 
-/* Утилиты: получить иконку/название по value */
 const iconForType = (type) => CANDLE_TYPE_META[type]?.icon ?? <IconLine />;
 const titleForType = (type) => CANDLE_TYPE_META[type]?.title ?? 'График';
-
 
 const ChartToolbar = ({
   currentInterval,
@@ -104,10 +94,8 @@ const ChartToolbar = ({
   onOpenSearch,
   isExpanded = false,
 }) => {
-  // из контекста: список активных индикаторов и переключатель
   const { activeIndicators = [], toggleIndicator } = useChart();
 
-  // локальные состояния выпадашек
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isIndicatorOpen, setIsIndicatorOpen] = useState(false);
   const [isCandleTypeOpen, setIsCandleTypeOpen] = useState(false);
@@ -128,7 +116,6 @@ const ChartToolbar = ({
     contentRef: intContentRef,
   } = useDropdown(false);
 
-  // рефы для закрытия по клику вне
   const candleTypeRef = useRef(null);
   const calendarRef = useRef(null);
   const indicatorRef = useRef(null);
@@ -136,6 +123,10 @@ const ChartToolbar = ({
   const intervals = CHART_CONFIG.INTERVALS;
   const timeframes = CHART_CONFIG.TIMEFRAMES;
   const ranges = CHART_CONFIG.RANGES;
+  const expandedAllowedIntervals = getAllowedIntervalsForTimeframe({
+    timeframe: currentTimeframe,
+    mode: 'expanded',
+  });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -158,12 +149,9 @@ const ChartToolbar = ({
     };
   }, []);
 
-  // если выходим из fullscreen — закрыть календарь
   useEffect(() => {
     if (!isExpanded) setIsCalendarOpen(false);
   }, [isExpanded]);
-
- 
 
   const indicators = [
     { id: 'ma', label: 'Moving Average (MA)', color: '#2962ff', params: { period: 20 } },
@@ -213,7 +201,6 @@ const ChartToolbar = ({
       className={`chart-toolbar ${isExpanded ? 'expanded' : 'normal'}`}
       data-expanded={isExpanded ? '1' : undefined}
     >
-      {/* ====== NAVIGATION ====== */}
       <div className="tb__group tb__group--navigation">
         {isExpanded && (
           <button className="tb-btn tb-btn--icon" onClick={handleSearchClick} aria-label="Поиск">
@@ -235,18 +222,27 @@ const ChartToolbar = ({
 
               {isIntOpen && (
                 <div className="dropdown-menu" ref={intContentRef}>
-                  {intervals.map((interval) => (
-                    <button
-                      key={interval.id}
-                      className="tb-dd__item"
-                      data-state={currentInterval === interval.id ? 'active' : undefined}
-                      onClick={() => handleIntervalChange(interval.id)}
-                      title={interval.label}
-                    >
-                      <span className="tb-dd__label">{interval.label}</span>
-                      {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
-                    </button>
-                  ))}
+                  {intervals.map((interval) => {
+                    const isAllowed = expandedAllowedIntervals.includes(interval.id);
+                    return (
+                      <button
+                        key={interval.id}
+                        className="tb-dd__item"
+                        data-state={currentInterval === interval.id ? 'active' : undefined}
+                        aria-disabled={!isAllowed}
+                        disabled={!isAllowed}
+                        onClick={() => {
+                          if (!isAllowed) return;
+                          handleIntervalChange(interval.id);
+                        }}
+                        title={isAllowed ? interval.label : `${interval.label} недоступен для ${currentTimeframe}`}
+                        style={!isAllowed ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+                      >
+                        <span className="tb-dd__label">{interval.label}</span>
+                        {currentInterval === interval.id && <span className="tb-dd__check">✓</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -310,14 +306,12 @@ const ChartToolbar = ({
             )}
           </div>
         )}
-      </div>{/* /tb__group--navigation */}
+      </div>
 
       <div className="tb-separator" />
 
-      {/* ====== VIEW ====== */}
       <div className="tb__group tb__group--view">
         <div className="dropdown-container tb-dd" ref={candleTypeRef}>
-          {/* было icon-btn-with-text */}
           <button
             className="tb-btn tb-btn--icon"
             onClick={() => setIsCandleTypeOpen(!isCandleTypeOpen)}
@@ -330,7 +324,7 @@ const ChartToolbar = ({
           </button>
 
           {isCandleTypeOpen && (
-            <div className="dropdown-menu" ref={tfContentRef /* лучше завести отдельный candleMenuRef */}>
+            <div className="dropdown-menu" ref={tfContentRef}>
               {candleTypes.map((type) => {
                 const active = currentCandleType === type.value;
                 return (
@@ -356,7 +350,6 @@ const ChartToolbar = ({
 
       <div className="tb-separator" />
 
-      {/* ====== ANALYSIS ====== */}
       <div className="tb__group tb__group--analysis">
         {isExpanded && (
           <div className="dropdown-container tb-dd" ref={calendarRef}>
@@ -419,7 +412,6 @@ const ChartToolbar = ({
 
       <div className="tb-separator" />
 
-      {/* ====== SERVICE ====== */}
       <div className="tb__group tb__group--service" style={{ marginLeft: 'auto' }}>
         <button className="tb-btn tb-btn--icon" aria-label="Скриншот">
           <Camera size={18} />
@@ -436,8 +428,6 @@ const ChartToolbar = ({
       </div>
     </div>
   );
-
-
 };
 
 const areEqual = (prevProps, nextProps) =>
@@ -452,20 +442,3 @@ const areEqual = (prevProps, nextProps) =>
   prevProps.onOpenSearch === nextProps.onOpenSearch;
 
 export default memo(ChartToolbar, areEqual);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
