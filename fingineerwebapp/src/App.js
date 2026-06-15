@@ -30,11 +30,106 @@ const socket = io(config.SOCKET_URL, config.SOCKET_OPTIONS);
 const FG_AGG_ENABLED = String(process.env.REACT_APP_FG_AGG_ENABLED || '') === '1';
 const FG_DEBUG = typeof window !== 'undefined' && window.__FG_DEBUG === true;
 
+const EMPTY_CHART_OWNERSHIP_STATE = Object.freeze({
+    confirmedSelection: null,
+    requestedSelection: null,
+    hasValidSnapshot: false,
+    requestKind: 'none',
+    requestStatus: 'idle',
+    dataStatus: 'not_ready',
+    failureScope: 'none',
+    failureMessage: null,
+});
+
+const createEmptyChartOwnershipState = () => ({
+    ...EMPTY_CHART_OWNERSHIP_STATE,
+});
+
+const buildSelectionSnapshot = (ticker, timeframe, interval, selectedDate) => {
+    const tickerKey = String(ticker || '').trim().toUpperCase();
+    const timeframeKey = String(timeframe || '').trim();
+    const intervalKey = String(interval || '').trim();
+    const selectedDateKey = String(selectedDate || '').trim();
+
+    if (!tickerKey || !timeframeKey || !intervalKey || !selectedDateKey) {
+        return null;
+    }
+
+    return {
+        ticker: tickerKey,
+        timeframe: timeframeKey,
+        interval: intervalKey,
+        selectedDate: selectedDateKey,
+        rangeKey: `${tickerKey}|${timeframeKey}`,
+    };
+};
+
+const isSameSelection = (left, right) => {
+    if (!left || !right) return false;
+    return (
+        left.ticker === right.ticker &&
+        left.timeframe === right.timeframe &&
+        left.interval === right.interval &&
+        left.selectedDate === right.selectedDate
+    );
+};
+
+const resolveRequestKind = (prevState, nextSelection) => {
+    if (!nextSelection) return 'none';
+    if (!prevState?.confirmedSelection) return 'initial_load';
+    return isSameSelection(prevState.confirmedSelection, nextSelection)
+        ? 'background_refresh'
+        : 'selection_change';
+};
+
+const beginOwnershipRequest = (prevState, nextSelection) => {
+    if (!nextSelection) return prevState;
+    const requestKind = resolveRequestKind(prevState, nextSelection);
+    return {
+        ...prevState,
+        requestedSelection: nextSelection,
+        requestKind,
+        requestStatus: 'pending',
+        dataStatus: prevState.hasValidSnapshot ? 'stale_snapshot' : 'not_ready',
+        failureScope: 'none',
+        failureMessage: null,
+    };
+};
+
+const promoteConfirmedSelection = (prevState, nextSelection, options = {}) => {
+    if (!nextSelection) return prevState;
+    const hasCandles = options.hasCandles === true;
+    return {
+        ...prevState,
+        confirmedSelection: nextSelection,
+        requestedSelection: nextSelection,
+        hasValidSnapshot: hasCandles,
+        requestKind: 'none',
+        requestStatus: 'idle',
+        dataStatus: hasCandles ? 'ready' : 'empty_confirmed',
+        failureScope: 'none',
+        failureMessage: null,
+    };
+};
+
+const failOwnershipRequest = (prevState, message) => ({
+    ...prevState,
+    requestStatus: 'failed',
+    dataStatus: prevState.hasValidSnapshot ? 'stale_snapshot' : 'not_ready',
+    failureScope:
+        prevState.requestKind && prevState.requestKind !== 'none'
+            ? prevState.requestKind
+            : 'initial_load',
+    failureMessage: message || null,
+});
+
 function App() {
+    const sourceAuthority = FG_AGG_ENABLED ? 'rest' : 'app';
     // Состояния для управления данными и UI
     const [query, setQuery] = useState('');
     const [data, setData] = useState(null);
     const [chartData, setChartData] = useState({ candles: [], error: null, rangeKey: '' });
+    const [chartOwnershipState, setChartOwnershipState] = useState(createEmptyChartOwnershipState);
     const [news, setNews] = useState([]);
     const [dividends, setDividends] = useState([]);
     const [isLoading, setIsLoading] = useState(false); // Для общей загрузки данных
@@ -118,6 +213,34 @@ function App() {
     const pendingByRequestIdRef = useRef(new Map()); // requestId -> { key, rangeKey, silent }
     const lastRequestKeyRef = useRef('');
     const lastRangeKeyRef = useRef('');
+    const isChartExpandedRef = useRef(false);
+    const chartOwnershipStateRef = useRef(chartOwnershipState);
+
+    useEffect(() => {
+        isChartExpandedRef.current = isChartExpanded;
+    }, [isChartExpanded]);
+
+    useEffect(() => {
+        chartOwnershipStateRef.current = chartOwnershipState;
+    }, [chartOwnershipState]);
+
+    const resetChartOwnershipState = useCallback(() => {
+        setChartOwnershipState(createEmptyChartOwnershipState());
+    }, []);
+
+    const beginChartOwnershipRequest = useCallback((selection) => {
+        if (!selection) return;
+        setChartOwnershipState((prev) => beginOwnershipRequest(prev, selection));
+    }, []);
+
+    const commitChartOwnershipSelection = useCallback((selection, options = {}) => {
+        if (!selection) return;
+        setChartOwnershipState((prev) => promoteConfirmedSelection(prev, selection, options));
+    }, []);
+
+    const failChartOwnershipRequest = useCallback((message) => {
+        setChartOwnershipState((prev) => failOwnershipRequest(prev, message));
+    }, []);
 
     const getTtlMsForTimeframe = useCallback((tf) => {
         switch (String(tf || '').toLowerCase()) {
@@ -148,9 +271,16 @@ function App() {
     const emitChartDataRequest = useCallback(
         (ticker, currenttimeframe, currentDate, currentInterval, opts = {}) => {
             const silent = opts?.silent === true;
-            if (FG_AGG_ENABLED) return;
+            // Keep compact sparkline on the existing App/socket chartData path.
+            // Expanded REST authority remains in ChartContainer/useCandles.
+            if (FG_AGG_ENABLED && isChartExpanded) return;
+            if (!String(currentDate || '').trim()) {
+                if (FG_DEBUG) console.log('[FG][App][chartRequest] skip:missing-selectedDate', { ticker, currenttimeframe, currentInterval });
+                return;
+            }
             const key = buildChartKey(ticker, currenttimeframe, currentDate, currentInterval);
             const rangeKey = buildRangeKey(ticker, currenttimeframe);
+            const selection = buildSelectionSnapshot(ticker, currenttimeframe, currentInterval, currentDate);
             const now = Date.now();
             const cached = chartDataCacheRef.current.get(key);
             const inflight = inflightRef.current.get(key);
@@ -161,8 +291,15 @@ function App() {
                 if (!silent) {
                     setChartData({ candles: cached.candles, error: null, rangeKey: cached.rangeKey || rangeKey });
                     setIsChartLoading(false);
+                    commitChartOwnershipSelection(selection, {
+                        hasCandles: Array.isArray(cached.candles) && cached.candles.length > 0,
+                    });
                 }
                 return;
+            }
+
+            if (!silent) {
+                beginChartOwnershipRequest(selection);
             }
 
             if (!silent && hasCache) {
@@ -196,7 +333,7 @@ function App() {
             }
             if (FG_DEBUG) console.log('[FG][App][cache] emit', { key });
             const requestId = Date.now();
-            pendingByRequestIdRef.current.set(requestId, { key, rangeKey, silent });
+            pendingByRequestIdRef.current.set(requestId, { key, rangeKey, silent, selection });
             socket.emit('requestChartData', {
                 ticker,
                 timeframe: currenttimeframe,
@@ -206,7 +343,14 @@ function App() {
                 silent,
             });
         },
-        [buildChartKey, buildRangeKey, getTtlMsForTimeframe]
+        [
+            beginChartOwnershipRequest,
+            buildChartKey,
+            buildRangeKey,
+            commitChartOwnershipSelection,
+            getTtlMsForTimeframe,
+            isChartExpanded,
+        ]
     );
 
     // Функция для получения ОСНОВНОЙ информации о тикере (без данных графика)
@@ -216,6 +360,7 @@ function App() {
         setNews([]);
         setDividends([]);
         setChartData({ candles: [], error: null, rangeKey: '' }); // Сбрасываем старые данные графика
+        resetChartOwnershipState();
 
         try {
             if (FG_DEBUG) {
@@ -267,7 +412,7 @@ function App() {
         } finally {
             setIsLoading(false); // Завершаем общую загрузку
         }
-    }, []); // Убираем все зависимости, эта функция должна быть стабильной
+    }, [resetChartOwnershipState]); // Убираем все зависимости, эта функция должна быть стабильной
 
     // Эффект для вызова fetchTickerInfo ТОЛЬКО при изменении 'query'
     useEffect(() => {
@@ -285,8 +430,8 @@ function App() {
 
     // ✅ ГЛАВНОЕ ИЗМЕНЕНИЕ: Отдельный эффект для запроса данных графика
     useEffect(() => {
-        if (FG_AGG_ENABLED) {
-            if (FG_DEBUG) console.log('[FG][App][chartRequestEffect] skip:agg', { query, timeframe, selectedDate, interval });
+        if (FG_AGG_ENABLED && isChartExpanded) {
+            if (FG_DEBUG) console.log('[FG][App][chartRequestEffect] skip:agg-expanded', { query, timeframe, selectedDate, interval });
             return;
         }
         // Запрашиваем данные, только если есть тикер (query) и сокет подключен
@@ -306,21 +451,13 @@ function App() {
 
     // Эффект для управления подключениями и событиями Socket.IO
     useEffect(() => {
-        if (FG_AGG_ENABLED) {
-            socket.on('connect', () => setSocketConnected(true));
-            socket.on('disconnect', () => setSocketConnected(false));
-            return () => {
-                socket.off('connect');
-                socket.off('disconnect');
-            };
-        }
         const handleConnect = () => {
             if (FG_DEBUG) console.log('[SOCKET] Подключено к Socket.IO');
             setSocketConnected(true);
             // Catch-up: if query was set before socket connected, chartRequestEffect could have skipped.
-            // We emit here to guarantee first load after connect (when FG_AGG_ENABLED is off).
+            // Keep the compact bridge alive in REST mode, but never reopen Expanded ownership.
             try {
-                if (!FG_AGG_ENABLED && query) {
+                if ((!FG_AGG_ENABLED || !isChartExpandedRef.current) && query) {
                     const tfForSocket = normalizeTimeframeForSocket(timeframe);
                     if (FG_DEBUG) console.log('[FG][App][connectEmit]', { query, timeframe, tfForSocket, selectedDate, interval });
                     emitChartDataRequest(query, tfForSocket, selectedDate, interval);
@@ -350,10 +487,17 @@ function App() {
             const key = meta?.key || lastRequestKeyRef.current;
             const rk = meta?.rangeKey || lastRangeKeyRef.current || '';
             const silent = meta?.silent === true;
+            const selection =
+                meta?.selection ||
+                chartOwnershipStateRef.current.requestedSelection ||
+                chartOwnershipStateRef.current.confirmedSelection;
             if (hasCandles) {
                 if (FG_DEBUG) console.warn('[FG][App][setChartData][initialData][before]', { prevLen: null, nextLen: nextCandlesLen });
                 if (!silent) {
                     setChartData({ candles: payload.candles, error: null, rangeKey: rk });
+                    commitChartOwnershipSelection(selection, {
+                        hasCandles: payload.candles.length > 0,
+                    });
                 }
                 if (key) {
                     const inflight = inflightRef.current.get(key);
@@ -375,8 +519,9 @@ function App() {
                             prevLen: Array.isArray(prev?.candles) ? prev.candles.length : null,
                             nextLen: nextCandlesLen,
                         });
-                        return { ...prev, candles: [], error: null, rangeKey: '' };
+                        return { ...prev, candles: [], error: null, rangeKey: rk };
                     });
+                    commitChartOwnershipSelection(selection, { hasCandles: false });
                 }
                 if (key) inflightRef.current.delete(key);
             }
@@ -390,13 +535,20 @@ function App() {
             const key = meta?.key || lastRequestKeyRef.current;
             const rk = meta?.rangeKey || lastRangeKeyRef.current || '';
             const silent = meta?.silent === true;
+            const selection = meta?.selection || null;
             if (payload && Array.isArray(payload.candles)) {
                 if (!silent) {
                     setChartData(prevData => ({
                         ...prevData,
                         candles: payload.candles,
+                        error: null,
                         rangeKey: rk,
                     }));
+                    if (selection) {
+                        commitChartOwnershipSelection(selection, {
+                            hasCandles: payload.candles.length > 0,
+                        });
+                    }
                 }
                 if (key) {
                     const cached = chartDataCacheRef.current.get(key);
@@ -415,13 +567,21 @@ function App() {
 
         const handleError = (error) => {
             console.log('[SOCKET] Received error:', error);
-            setChartData({ candles: [], error: error.message || 'Ошибка загрузки данных графика.', rangeKey: '' });
+            const nextMessage = error.message || 'Ошибка загрузки данных графика.';
+            const hasValidSnapshot = Boolean(chartOwnershipStateRef.current?.hasValidSnapshot);
+            setChartData((prev) => (
+                hasValidSnapshot
+                    ? { ...prev, error: nextMessage }
+                    : { candles: [], error: nextMessage, rangeKey: '' }
+            ));
+            failChartOwnershipRequest(nextMessage);
             setIsChartLoading(false); // Завершаем загрузку графика
             const key = lastRequestKeyRef.current;
             if (key) {
                 inflightRef.current.delete(key);
                 console.log('[FG][App][cache] error', { key });
             }
+            pendingByRequestIdRef.current.clear();
         };
 
         socket.on('connect', handleConnect);
@@ -444,7 +604,7 @@ function App() {
             socket.off('updateData', handleUpdateData);
             socket.off('error', handleError);
         };
-    }, []); // Этот useEffect настраивает слушатели один раз
+    }, [commitChartOwnershipSelection, failChartOwnershipRequest]); // Этот useEffect настраивает слушатели один раз
 
     // Prefetch heavy compact ranges so 6m/1y feel instant on click
     useEffect(() => {
@@ -460,6 +620,50 @@ function App() {
         emitChartDataRequest(query, tfForY, selectedDate, interval, { silent: true });
     }, [query, socketConnected, selectedDate, interval, isChartExpanded, emitChartDataRequest]);
 
+    const handleRestOwnershipSignal = useCallback((event) => {
+        const phase = String(event?.phase || '').trim();
+        if (!phase) return;
+
+        if (phase === 'reset') {
+            resetChartOwnershipState();
+            return;
+        }
+
+        const selection = buildSelectionSnapshot(
+            event?.selection?.ticker,
+            event?.selection?.timeframe,
+            event?.selection?.interval,
+            event?.selection?.selectedDate
+        );
+
+        if (!selection) return;
+
+        if (phase === 'pending') {
+            beginChartOwnershipRequest(selection);
+            return;
+        }
+
+        if (phase === 'commit') {
+            commitChartOwnershipSelection(selection, {
+                hasCandles: event?.hasCandles === true,
+            });
+            return;
+        }
+
+        if (phase === 'failure') {
+            setChartOwnershipState((prev) => {
+                const nextState = isSameSelection(prev.requestedSelection, selection)
+                    ? prev
+                    : beginOwnershipRequest(prev, selection);
+                return failOwnershipRequest(nextState, event?.error || null);
+            });
+        }
+    }, [
+        beginChartOwnershipRequest,
+        commitChartOwnershipSelection,
+        resetChartOwnershipState,
+    ]);
+
     return (
         <div className="App">
             <Header />
@@ -471,6 +675,7 @@ function App() {
                             setQuery('');
                             setData(null);
                             setChartData({ candles: [], error: null, rangeKey: '' });
+                            resetChartOwnershipState();
                             setNews([]);
                             setDividends([]);
                             setSelectedDate('');
@@ -485,6 +690,7 @@ function App() {
             ) : (
                 <>
                 <Results
+                    sourceAuthority={sourceAuthority}
                     query={query}
                     data={data}
                     socket={socket}
@@ -502,6 +708,7 @@ function App() {
                     currentInterval={interval}
                     onSelectInterval={handleSelectInterval}
                     isChartExpanded={isChartExpanded}
+                    onRestOwnershipSignal={handleRestOwnershipSignal}
                     isSearchVisible={isSearchVisible}
                     onToggleExpand={(expanded) => {
                         setIsChartExpanded(expanded);

@@ -59,11 +59,65 @@ function filterValidBars(list, candleType, contextLabel) {
   return safe;
 }
 
+function clearCrosshairSafely(chart) {
+  if (!chart || typeof chart.clearCrosshairPosition !== 'function') return;
+  try {
+    chart.clearCrosshairPosition();
+  } catch {}
+}
+
+function summarizeSeriesData(data) {
+  const list = Array.isArray(data) ? data : [];
+  const times = list.map((bar) => bar?.time);
+  const numericTimes = times
+    .map((time) => (typeof time === 'object' ? Number(time?.timestamp) : Number(time)))
+    .filter(Number.isFinite);
+  let duplicateTimeCount = 0;
+  const seen = new Set();
+  numericTimes.forEach((time) => {
+    if (seen.has(time)) duplicateTimeCount += 1;
+    seen.add(time);
+  });
+
+  return {
+    length: list.length,
+    firstTime: times[0] ?? null,
+    lastTime: times[times.length - 1] ?? null,
+    firstTimeType: times[0] === null || times[0] === undefined ? null : typeof times[0],
+    lastTimeType: times[times.length - 1] === null || times[times.length - 1] === undefined
+      ? null
+      : typeof times[times.length - 1],
+    hasMsTime: numericTimes.some((time) => time > 1e12),
+    isSorted: numericTimes.every((time, index) => index === 0 || numericTimes[index - 1] <= time),
+    duplicateTimeCount,
+    sampleFirst3Times: times.slice(0, 3),
+    sampleLast3Times: times.slice(-3),
+  };
+}
+
+function writeDataPathDiagnostic(path, data, context = {}) {
+  if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+
+  try {
+    const entry = {
+      path,
+      ...summarizeSeriesData(data),
+      ...context,
+      ts: Date.now(),
+    };
+    window.__FG_94_DATA_PATH_DIAG__ = {
+      ...(window.__FG_94_DATA_PATH_DIAG__ || {}),
+      [path]: entry,
+    };
+  } catch {}
+}
+
 export const useChartData = ({
   chartInstanceRef,
   chartContainerRef,
   seriesRef,
   preparedData,
+  payloadVersion,
   loadMoreHistory,
   currentInterval,
   currentTimeframe,
@@ -74,6 +128,7 @@ export const useChartData = ({
   virtualRafRef,
   wasAtRightRef,
   didInitViewRef,
+  activePriceSliceRef,
   lastTimeRef,
   lastRangeTsRef,
   isVirtualizingRef,
@@ -90,13 +145,60 @@ export const useChartData = ({
   const lastAppliedRangeRef = useRef({ from: null, to: null });
   const snapshotRangeRef = useRef(null);
   const isClampingRef = useRef(false);
+  const lastPreparedDataRef = useRef(null);
+  const lastSelectionKeyRef = useRef(null);
+  const selectionVersionRef = useRef(0);
+  const staleInitPassIdRef = useRef(0);
+  const lastDeferredInitTraceRef = useRef(null);
   const skipTinySliceLoggedRef = useRef(new Set());
   const skipOwnerNavLoggedRef = useRef(new Set());
   const MIN_VISIBLE_FOR_LOAD = 5;
   const MAX_VISIBLE_FOR_LOAD = 120;
   const LEFT_EDGE_THRESHOLD = 5;
+  const COLLAPSED_LOGICAL_WIDTH = 2;
   const resolvedIsExpanded = Boolean(isExpanded);
   const navOwnerEnabled = String(process.env.REACT_APP_FG_NAV_OWNER || '') === '1';
+  const staleInitTraceEnabled =
+    process.env.NODE_ENV !== 'production' &&
+    (
+      String(process.env.VITE_FG_DEBUG_PANEL || '') === '1' ||
+      String(process.env.REACT_APP_FG_DEBUG_PANEL || '') === '1'
+    );
+
+  const getPreparedTraceMeta = (list) => {
+    if (!Array.isArray(list) || list.length === 0) {
+      return {
+        preparedLen: 0,
+        firstTime: null,
+        lastTime: null,
+      };
+    }
+
+    return {
+      preparedLen: list.length,
+      firstTime: toNumber(list[0]?.time),
+      lastTime: toNumber(list[list.length - 1]?.time),
+    };
+  };
+
+  const pushStaleInitTrace = (payload) => {
+    if (!staleInitTraceEnabled || typeof window === 'undefined') return;
+
+    try {
+      const nextEntry = {
+        ts: Date.now(),
+        ...payload,
+      };
+      const prev = Array.isArray(window.__FG_STALE_INIT_TRACE__)
+        ? window.__FG_STALE_INIT_TRACE__
+        : [];
+      const next = prev.length >= 120
+        ? [...prev.slice(prev.length - 119), nextEntry]
+        : [...prev, nextEntry];
+      window.__FG_STALE_INIT_TRACE__ = next;
+      console.debug('[FG][STALE_INIT_TRACE]', nextEntry);
+    } catch {}
+  };
 
   // При смене тикера/интервала/таймфрейма/типа свечей сбрасываем стрим-refs и виртуализацию.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -133,9 +235,58 @@ export const useChartData = ({
     const series = seriesRef.current;
     if (!chart || !series) return;
 
+    const selectionKey = `${symbolId || 'nosymbol'}|${currentTimeframe}|${currentInterval}|${currentCandleType}`;
+    const selectionChanged = lastSelectionKeyRef.current !== selectionKey;
+    const preparedDataUnchanged = lastPreparedDataRef.current === preparedData;
+    const isStaleSelectionPass = selectionChanged && preparedDataUnchanged;
+    if (selectionChanged) {
+      selectionVersionRef.current += 1;
+    }
+    if (selectionVersionRef.current === 0) {
+      selectionVersionRef.current = 1;
+    }
+    const selectionVersion = selectionVersionRef.current;
+    const passId = staleInitPassIdRef.current + 1;
+    staleInitPassIdRef.current = passId;
+    const didInitViewBefore = Boolean(didInitViewRef.current);
+    const preparedTraceMeta = getPreparedTraceMeta(preparedData);
+    lastSelectionKeyRef.current = selectionKey;
+    lastPreparedDataRef.current = preparedData;
+    if (
+      lastDeferredInitTraceRef.current &&
+      lastDeferredInitTraceRef.current.selectionVersion !== selectionVersion
+    ) {
+      lastDeferredInitTraceRef.current = null;
+    }
+    const activePendingInitToken =
+      lastDeferredInitTraceRef.current &&
+      lastDeferredInitTraceRef.current.selectionVersion === selectionVersion
+        ? lastDeferredInitTraceRef.current
+        : null;
+
+    pushStaleInitTrace({
+      event: 'passStart',
+      passId,
+      selectionKey,
+      selectionVersion,
+      payloadVersion,
+      selectionChanged,
+      preparedDataUnchanged,
+      preparedLen: preparedTraceMeta.preparedLen,
+      firstTime: preparedTraceMeta.firstTime,
+      lastTime: preparedTraceMeta.lastTime,
+      didInitViewBefore,
+      didInitViewAfter: didInitViewBefore,
+      deferTaken: false,
+      completionKind: null,
+      rangeAction: null,
+    });
+
     if (!preparedData || preparedData.length === 0) {
       if (virtualRafRef.current) cancelAnimationFrame(virtualRafRef.current);
       try {
+        clearCrosshairSafely(chartInstanceRef.current);
+        if (activePriceSliceRef) activePriceSliceRef.current = [];
         series.setData([]);
       } catch {}
 
@@ -179,7 +330,7 @@ export const useChartData = ({
         const intervalSec = secMap[currentInterval] || 60;
         const contiguous = lastTs - prevTs <= intervalSec * 2;
 
-        if (contiguous) {
+        if (contiguous && !activePendingInitToken) {
           try {
             if (
               typeof window !== 'undefined' &&
@@ -188,6 +339,18 @@ export const useChartData = ({
               window.__FG_LWC_STATS__.fastUpdate += 1;
             }
             series.update(lastBar);
+            if (activePriceSliceRef) {
+              const currentSlice = Array.isArray(activePriceSliceRef.current)
+                ? activePriceSliceRef.current
+                : [];
+              const lastIndex = currentSlice.length - 1;
+              const lastSliceTime = lastIndex >= 0
+                ? toEpochSec(currentSlice[lastIndex]?.time)
+                : null;
+              activePriceSliceRef.current = lastSliceTime === lastTs
+                ? [...currentSlice.slice(0, lastIndex), lastBar]
+                : [...currentSlice, lastBar];
+            }
             lastTimeRef.current = lastTs;
             const ts = chart.timeScale();
             wasAtRightRef.current = ts.scrollPosition?.() === 0;
@@ -355,6 +518,8 @@ export const useChartData = ({
             '[FG][useChartData] Init produced empty slice, setData([])',
           );
           try {
+            clearCrosshairSafely(chartInstanceRef.current);
+            if (activePriceSliceRef) activePriceSliceRef.current = [];
             series.setData([]);
           } catch {}
           virtualRangeRef.current = {
@@ -407,7 +572,70 @@ export const useChartData = ({
           });
         }
 
+        writeDataPathDiagnostic('ChartCanvas', sessionSlice, {
+          currentInterval,
+          currentTimeframe,
+          currentCandleType,
+        });
+        if (activePriceSliceRef) activePriceSliceRef.current = sessionSlice;
         series.setData(sessionSlice);
+        if (
+          resolvedIsExpanded &&
+          navOwnerEnabled &&
+          currentTimeframe === '1d' &&
+          sessionSlice.length > 0
+        ) {
+          const applySafetyHeal = (logicalRange) => {
+            const logicalWidth = logicalRange.to - logicalRange.from;
+            if (
+              Number.isFinite(logicalWidth) &&
+              logicalWidth > COLLAPSED_LOGICAL_WIDTH
+            ) {
+              return;
+            }
+
+            // TEMP SAFETY HEAL: post-setData collapse recovery for owner-nav 1d init path; not a general runtime navigation writer.
+            const rightEdge = sessionSlice.length - 1;
+            const targetWidth = Math.max(
+              COLLAPSED_LOGICAL_WIDTH,
+              sessionSlice.length,
+            );
+            const healed = {
+              from: rightEdge - targetWidth,
+              to: rightEdge,
+            };
+            if (!Number.isFinite(healed.from) || !Number.isFinite(healed.to) || healed.to <= healed.from) return;
+
+            ts.setVisibleLogicalRange(healed);
+          };
+
+          try {
+            const immediateLogical = ts.getVisibleLogicalRange?.();
+            const immediateReadable =
+              immediateLogical &&
+              Number.isFinite(immediateLogical.from) &&
+              Number.isFinite(immediateLogical.to);
+
+            if (immediateReadable) {
+              applySafetyHeal(immediateLogical);
+            } else {
+              // Fallback only when logical range is not readable immediately after setData.
+              requestAnimationFrame(() => {
+                try {
+                  const deferredLogical = ts.getVisibleLogicalRange?.();
+                  const deferredReadable =
+                    deferredLogical &&
+                    Number.isFinite(deferredLogical.from) &&
+                    Number.isFinite(deferredLogical.to);
+                  if (!deferredReadable) return;
+
+                  applySafetyHeal(deferredLogical);
+                } catch {}
+              });
+            }
+          } catch {}
+        }
+
         if (
           process.env.NODE_ENV !== 'production' &&
           resolvedIsExpanded &&
@@ -469,6 +697,21 @@ export const useChartData = ({
               currentTimeframe === '1d';
             let initFromSec = fromSec;
             let initToSec = toSec;
+            const shouldDeferStaleInitOwnership =
+              isStaleSelectionPass &&
+              resolvedIsExpanded &&
+              navOwnerEnabled &&
+              currentTimeframe !== '1d' &&
+              Number.isFinite(tfSec) &&
+              tfSec > 0;
+            const pendingInitToken = activePendingInitToken;
+            const hasFreshPayloadForPendingInit =
+              Boolean(
+                pendingInitToken &&
+                payloadVersion > pendingInitToken.payloadVersion
+              );
+            const shouldBlockPendingInitCompletion =
+              Boolean(pendingInitToken) && !hasFreshPayloadForPendingInit;
             if (
               resolvedIsExpanded &&
               navOwnerEnabled &&
@@ -511,7 +754,71 @@ export const useChartData = ({
                 logicalWidthBefore,
               });
             }
-            if (shouldSkipOwnerNavInitRange) {
+            if (shouldDeferStaleInitOwnership) {
+              lastDeferredInitTraceRef.current = {
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+              };
+              pushStaleInitTrace({
+                event: 'defer',
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+                selectionChanged,
+                preparedDataUnchanged,
+                preparedLen: preparedTraceMeta.preparedLen,
+                firstTime: preparedTraceMeta.firstTime,
+                lastTime: preparedTraceMeta.lastTime,
+                didInitViewBefore,
+                didInitViewAfter: didInitViewBefore,
+                deferTaken: true,
+                completionKind: null,
+                rangeAction: 'defer',
+              });
+              if (process.env.NODE_ENV !== 'production') {
+                console.debug('[FG][INIT_RANGE][deferStaleSelectionPass]', {
+                  key: selectionKey,
+                  currentTimeframe,
+                  currentInterval,
+                  preparedLen: Array.isArray(preparedData) ? preparedData.length : null,
+                  sliceLen,
+                  fromSec: initFromSec,
+                  toSec: initToSec,
+                });
+              }
+            } else if (shouldBlockPendingInitCompletion) {
+              if (process.env.NODE_ENV !== 'production') {
+                console.debug('[FG][INIT_RANGE][awaitFreshPayload]', {
+                  key: selectionKey,
+                  selectionVersion,
+                  payloadVersion,
+                  deferredPayloadVersion: pendingInitToken?.payloadVersion ?? null,
+                });
+              }
+            } else if (shouldSkipOwnerNavInitRange) {
+              const completionKind = pendingInitToken
+                ? 'after_fresh_payload'
+                : 'initial_nonstale';
+              pushStaleInitTrace({
+                event: 'beforeInitComplete',
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+                selectionChanged,
+                preparedDataUnchanged,
+                preparedLen: preparedTraceMeta.preparedLen,
+                firstTime: preparedTraceMeta.firstTime,
+                lastTime: preparedTraceMeta.lastTime,
+                didInitViewBefore,
+                didInitViewAfter: didInitViewBefore,
+                deferTaken: false,
+                completionKind,
+                rangeAction: 'skipOwnerNavInitRange',
+              });
               if (process.env.NODE_ENV !== 'production') {
                 const key = `${symbolId || 'nosymbol'}|${currentTimeframe}|${currentInterval}`;
                 const seen = skipOwnerNavLoggedRef.current;
@@ -520,7 +827,48 @@ export const useChartData = ({
                   console.debug('[FG][INIT_RANGE][skipOwnerNav]', { key, sliceLen });
                 }
               }
+              didInitViewRef.current = true;
+              pushStaleInitTrace({
+                event: 'afterInitComplete',
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+                selectionChanged,
+                preparedDataUnchanged,
+                preparedLen: preparedTraceMeta.preparedLen,
+                firstTime: preparedTraceMeta.firstTime,
+                lastTime: preparedTraceMeta.lastTime,
+                didInitViewBefore,
+                didInitViewAfter: true,
+                deferTaken: false,
+                completionKind,
+                rangeAction: 'skipOwnerNavInitRange',
+              });
+              if (pendingInitToken) {
+                lastDeferredInitTraceRef.current = null;
+              }
             } else {
+              const completionKind = pendingInitToken
+                ? 'after_fresh_payload'
+                : 'initial_nonstale';
+              pushStaleInitTrace({
+                event: 'beforeInitComplete',
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+                selectionChanged,
+                preparedDataUnchanged,
+                preparedLen: preparedTraceMeta.preparedLen,
+                firstTime: preparedTraceMeta.firstTime,
+                lastTime: preparedTraceMeta.lastTime,
+                didInitViewBefore,
+                didInitViewAfter: didInitViewBefore,
+                deferTaken: false,
+                completionKind,
+                rangeAction: 'setVisibleRange(init)',
+              });
               try {
                 ts.setVisibleRange({
                   from: initFromSec,
@@ -546,8 +894,28 @@ export const useChartData = ({
               } catch (err) {
                 console.error('[FG][useChartData] setVisibleRange(init) failed', err);
               }
+              didInitViewRef.current = true;
+              pushStaleInitTrace({
+                event: 'afterInitComplete',
+                passId,
+                selectionKey,
+                selectionVersion,
+                payloadVersion,
+                selectionChanged,
+                preparedDataUnchanged,
+                preparedLen: preparedTraceMeta.preparedLen,
+                firstTime: preparedTraceMeta.firstTime,
+                lastTime: preparedTraceMeta.lastTime,
+                didInitViewBefore,
+                didInitViewAfter: true,
+                deferTaken: false,
+                completionKind,
+                rangeAction: 'setVisibleRange(init)',
+              });
+              if (pendingInitToken) {
+                lastDeferredInitTraceRef.current = null;
+              }
             }
-            didInitViewRef.current = true;
           }
         }
 
@@ -592,6 +960,7 @@ export const useChartData = ({
     lastTimeRef.current = lastTs;
   }, [
     preparedData,
+    payloadVersion,
     currentCandleType,
     currentTimeframe,
     symbolId,
@@ -604,6 +973,7 @@ export const useChartData = ({
     virtualRafRef,
     wasAtRightRef,
     didInitViewRef,
+    activePriceSliceRef,
     lastTimeRef,
     maxVirtualViewport,
     indicatorsMaxLookback,
@@ -843,6 +1213,8 @@ export const useChartData = ({
               '[FG][useChartData] Virtualization produced empty slice, setData([])',
             );
             try {
+              clearCrosshairSafely(chartInstanceRef.current);
+              if (activePriceSliceRef) activePriceSliceRef.current = [];
               series.setData([]);
             } catch {}
             virtualRangeRef.current = {
@@ -893,6 +1265,7 @@ export const useChartData = ({
             );
           }
 
+          if (activePriceSliceRef) activePriceSliceRef.current = sessionSlice;
           series.setData(sessionSlice);
           if (
             process.env.NODE_ENV !== 'production' &&
@@ -965,6 +1338,7 @@ export const useChartData = ({
     virtualRangeRef,
     virtualRafRef,
     wasAtRightRef,
+    activePriceSliceRef,
     resolvedIsExpanded,
     selectedDate,
   ]);
@@ -1007,4 +1381,3 @@ export const useChartData = ({
     };
   }, [chartInstanceRef, resolvedIsExpanded]);
 };
-

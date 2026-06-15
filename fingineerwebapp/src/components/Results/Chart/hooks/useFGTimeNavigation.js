@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const DEFAULT_MIN_BARS_IN_VIEW = 10;
 const DEFAULT_MAX_BARS_IN_VIEW = 50000;
@@ -18,7 +18,11 @@ export const useFGTimeNavigation = ({
   debugTag,
   minBarsInView,
   maxBarsInView,
+  modeKey,
+  autoFitOnModeChange,
 }) => {
+  const lastModeKeyRef = useRef(null);
+
   useEffect(() => {
     if (enabled !== true) return undefined;
 
@@ -63,6 +67,7 @@ export const useFGTimeNavigation = ({
     let pendingX = null;
     let rafId = 0;
     let normalizePostInitRafId = 0;
+    let modeChangeHealRafId = 0;
 
     const normalizeInitialRange = () => {
       const ts = readTimeScale();
@@ -208,7 +213,98 @@ export const useFGTimeNavigation = ({
       };
 
       if (!isFiniteRange(nextRange)) return;
+      const EPS = 0.001;
+      const targetWidth = nextWidth;
+      const safeCenter = Number.isFinite(anchor)
+        ? anchor
+        : (currentRange.from + currentRange.to) / 2;
+
+      const applyHeal = () => {
+        const half = resolvedMinBarsInView / 2;
+        const healRange = {
+          from: safeCenter - half,
+          to: safeCenter + half,
+        };
+        if (!isFiniteRange(healRange)) return null;
+        ts.setVisibleLogicalRange(healRange);
+        const afterHeal = ts.getVisibleLogicalRange();
+        return isFiniteRange(afterHeal) ? afterHeal : healRange;
+      };
+
       ts.setVisibleLogicalRange(nextRange);
+      const appliedRange = ts.getVisibleLogicalRange();
+      if (!isFiniteRange(appliedRange)) return;
+
+      const requestedWidth = nextRange.to - nextRange.from;
+      const appliedWidth = appliedRange.to - appliedRange.from;
+      let finalRange = appliedRange;
+      let reason = null;
+
+      // Heal only on hard collapse below minBarsInView.
+      if (appliedWidth < resolvedMinBarsInView) {
+        const healed = applyHeal();
+        if (healed) {
+          finalRange = healed;
+          reason = 'heal';
+        }
+      } else {
+        const hitLeftEdge = appliedRange.from > nextRange.from + EPS;
+        const hitRightEdge = appliedRange.to < nextRange.to - EPS;
+        const needsShift = appliedWidth < targetWidth || hitLeftEdge || hitRightEdge;
+
+        if (needsShift) {
+          let shiftedRange = null;
+          const leftDelta = hitLeftEdge ? appliedRange.from - nextRange.from : 0;
+          const rightDelta = hitRightEdge ? nextRange.to - appliedRange.to : 0;
+
+          if (hitLeftEdge && (!hitRightEdge || leftDelta >= rightDelta)) {
+            shiftedRange = {
+              from: appliedRange.from,
+              to: appliedRange.from + targetWidth,
+            };
+            reason = 'shift-left';
+          } else if (hitRightEdge) {
+            shiftedRange = {
+              from: appliedRange.to - targetWidth,
+              to: appliedRange.to,
+            };
+            reason = 'shift-right';
+          }
+
+          if (shiftedRange && isFiniteRange(shiftedRange)) {
+            ts.setVisibleLogicalRange(shiftedRange);
+            const afterShift = ts.getVisibleLogicalRange();
+            finalRange = isFiniteRange(afterShift) ? afterShift : shiftedRange;
+
+            // Heal only if post-shift still below minBarsInView.
+            const finalWidthAfterShift =
+              isFiniteRange(finalRange) ? finalRange.to - finalRange.from : 0;
+            if (finalWidthAfterShift < resolvedMinBarsInView) {
+              const healed = applyHeal();
+              if (healed) {
+                finalRange = healed;
+                reason = 'heal';
+              }
+            }
+          }
+        }
+      }
+
+      if (process.env.NODE_ENV !== 'production' && reason) {
+        const finalWidth =
+          isFiniteRange(finalRange) ? finalRange.to - finalRange.from : null;
+        console.debug('[FG][NAV][WHEEL_FIX]', {
+          reason,
+          anchor,
+          factor,
+          requestedRange: nextRange,
+          requestedWidth,
+          appliedRange,
+          appliedWidth,
+          finalRange,
+          finalWidth,
+        });
+      }
     };
 
     container.addEventListener('pointerdown', onPointerDown);
@@ -217,6 +313,50 @@ export const useFGTimeNavigation = ({
     container.addEventListener('pointercancel', stopDragging);
     container.addEventListener('lostpointercapture', stopDragging);
     container.addEventListener('wheel', onWheel, { passive: false });
+
+    const hasPrevMode = lastModeKeyRef.current != null;
+    const modeChanged = Boolean(modeKey) && lastModeKeyRef.current !== modeKey;
+
+    // first mount: remember modeKey only (do not touch range/fit)
+    if (modeKey && !hasPrevMode) {
+      lastModeKeyRef.current = modeKey;
+    } else if (modeChanged) {
+      lastModeKeyRef.current = modeKey;
+      const ts = readTimeScale();
+      if (hasTimeScaleApi(ts)) {
+        if (autoFitOnModeChange && typeof ts.fitContent === 'function') {
+          try {
+            ts.fitContent();
+          } catch (err) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.debug('[FG][NAV] fitContent failed', { debugTag, modeKey, err });
+            }
+          }
+        }
+
+        // do not call normalizeInitialRange twice; common call below handles it
+        modeChangeHealRafId = requestAnimationFrame(() => {
+          modeChangeHealRafId = 0;
+          const ts2 = readTimeScale();
+          if (!hasTimeScaleApi(ts2)) return;
+          const currentRange = ts2.getVisibleLogicalRange?.();
+          if (!isFiniteRange(currentRange)) return;
+
+          const width = currentRange.to - currentRange.from;
+          if (!Number.isFinite(width) || width >= resolvedMinBarsInView) return;
+
+          ts2.setVisibleLogicalRange({
+            from: currentRange.to - resolvedMinBarsInView,
+            to: currentRange.to,
+          });
+
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug('[FG][NAV] healOnModeChange', { debugTag, modeKey });
+          }
+        });
+      }
+    }
+
     normalizeInitialRange();
     normalizePostInitRafId = requestAnimationFrame(() => {
       normalizePostInitRafId = 0;
@@ -261,6 +401,10 @@ export const useFGTimeNavigation = ({
         cancelAnimationFrame(normalizePostInitRafId);
         normalizePostInitRafId = 0;
       }
+      if (modeChangeHealRafId) {
+        cancelAnimationFrame(modeChangeHealRafId);
+        modeChangeHealRafId = 0;
+      }
 
       dragging = false;
       dragStartRange = null;
@@ -278,5 +422,5 @@ export const useFGTimeNavigation = ({
         console.debug('[FG][NAV] detached', { debugTag });
       }
     };
-  }, [chartInstanceRef, containerRef, enabled, debugTag, minBarsInView, maxBarsInView]);
+  }, [chartInstanceRef, containerRef, enabled, debugTag, minBarsInView, maxBarsInView, modeKey, autoFitOnModeChange]);
 };

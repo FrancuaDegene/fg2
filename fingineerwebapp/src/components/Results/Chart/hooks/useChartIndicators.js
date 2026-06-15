@@ -48,6 +48,43 @@ const alignIndicatorSeriesToCandles = (seriesData, candles) => {
   return aligned;
 };
 
+const writeVolumeDataPathDiagnostic = (sourceName, rows) => {
+  if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+  const list = Array.isArray(rows) ? rows : [];
+  try {
+    window.__FG_94_DATA_PATH_DIAG__ = {
+      ...(window.__FG_94_DATA_PATH_DIAG__ || {}),
+      VolumeNativePane: {
+        sourceName,
+        length: list.length,
+        firstTime: list[0]?.time ?? null,
+        lastTime: list[list.length - 1]?.time ?? null,
+      },
+    };
+  } catch {}
+};
+
+const applyNativeLowerPaneStretch = (chart) => {
+  try {
+    const panes =
+      typeof chart?.panes === 'function'
+        ? chart.panes()
+        : null;
+    if (!Array.isArray(panes)) return;
+
+    const pricePane = panes[0];
+    const lowerPane = panes[1];
+    if (!pricePane || !lowerPane) return;
+
+    try {
+      pricePane?.setStretchFactor?.(4);
+    } catch {}
+    try {
+      lowerPane?.setStretchFactor?.(1.2);
+    } catch {}
+  } catch {}
+};
+
 export function useChartIndicators({
   chartInstanceRef,
   seriesRef,
@@ -58,6 +95,7 @@ export function useChartIndicators({
   currentInterval,
   currentTimeframe,
   indicatorsSeriesRef,
+  activePriceSliceRef,
   indCacheRef,
   indGenRef,
   sma,
@@ -119,26 +157,34 @@ export function useChartIndicators({
             lastValueVisible: false,
             priceLineVisible: false,
             base: 0,
-          });
+          }, 1);
           indicatorsSeriesRef.current[ind.id] = histogram;
+          applyNativeLowerPaneStretch(chart);
 
           try {
-            chart.priceScale('right').applyOptions({
-              scaleMargins: { top: 0, bottom: 0.22 },
-            });
             chart.priceScale('volume').applyOptions({
-              scaleMargins: { top: 0.78, bottom: 0 },
               borderVisible: false,
               textColor: 'rgba(154, 160, 166, 0.55)',
             });
           } catch {}
 
-          const mapped = safeIndicatorSource.map((candle) => {
-            const open = toNumber(candle.open) ?? 0;
-            const close = toNumber(candle.close) ?? 0;
+          const activePriceSlice = Array.isArray(activePriceSliceRef?.current)
+            ? activePriceSliceRef.current.filter((candle) => candle && candle.time != null)
+            : [];
+          const volumeSource = activePriceSlice.length > 0
+            ? activePriceSlice
+            : safeIndicatorSource;
+          const volumeSourceName = activePriceSlice.length > 0
+            ? 'activePriceSliceRef'
+            : 'indicatorSource';
+          writeVolumeDataPathDiagnostic(volumeSourceName, volumeSource);
+
+          const mapped = volumeSource.map((candle) => {
+            const open = toNumber(candle.open) ?? toNumber(candle.value) ?? 0;
+            const close = toNumber(candle.close) ?? toNumber(candle.value) ?? open;
             return {
               time: candle.time,
-              value: toNumber(candle.volume) ?? 0,
+              value: toNumber(candle.volume) ?? toNumber(candle.value) ?? 0,
               color: close >= open ? '#26a69a' : '#ef5350',
             };
           });
@@ -197,20 +243,27 @@ export function useChartIndicators({
           : 'rgba(76, 175, 80, 0.9)';
         const color = ind.color || defaultColor;
 
-        const series = chart.addSeries(LineSeries, {
+        const seriesOptions = {
           color,
           lineWidth: isMa || isEma ? 2.4 : 2,
           priceScaleId: isRsi ? RSI_SCALE_ID : 'right',
           lastValueVisible: !isRsi,
           priceLineVisible: !isRsi,
-        });
+        };
+        const series = isRsi
+          ? chart.addSeries(LineSeries, seriesOptions, 1)
+          : chart.addSeries(LineSeries, seriesOptions);
         indicatorsSeriesRef.current[ind.id] = series;
 
         if (isRsi) {
-          chart.priceScale(RSI_SCALE_ID).applyOptions({
-            scaleMargins: { top: 0.72, bottom: 0.02 },
-            borderVisible: false,
-          });
+          applyNativeLowerPaneStretch(chart);
+          const rsiScale = series.priceScale?.();
+          try {
+            rsiScale?.applyOptions({
+              scaleMargins: { top: 0.1, bottom: 0.1 },
+              borderVisible: false,
+            });
+          } catch {}
           series.applyOptions({
             priceFormat: {
               type: 'custom',
@@ -263,8 +316,8 @@ export function useChartIndicators({
     sma, ema, rsi,
     chartInstanceRef,
     indicatorsSeriesRef,
+    activePriceSliceRef,
     indCacheRef,
     indGenRef,
   ]);
 }
-

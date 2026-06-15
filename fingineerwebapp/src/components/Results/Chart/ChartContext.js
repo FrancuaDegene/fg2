@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
-import { fixIntervalForTimeframe } from '../../../constants';
 
 // Action types
 const actionTypes = {
@@ -35,25 +34,21 @@ function chartReducer(state, action) {
       const capped =
         arr.length > MAX_BARS_PER_SERIES ? arr.slice(-MAX_BARS_PER_SERIES) : arr;
 
-      // базовые поля chartData
-      const nextChartData = {
-        // сохраняем существующие поля, чтобы не терять доп. данные из контекста
-        ...(state.chartData || {}),
-        candles: capped,
-        error: payload.error ?? null,
-      };
-
-      // 👇 ключевой момент: не выбрасываем loadMoreHistory
-      if (typeof payload.loadMoreHistory === 'function') {
-        nextChartData.loadMoreHistory = payload.loadMoreHistory;
-      } else if ('loadMoreHistory' in payload) {
-        // если явно пришёл null/undefined — тоже пробрасываем
-        nextChartData.loadMoreHistory = payload.loadMoreHistory;
-      }
-
       return {
         ...state,
-        chartData: nextChartData,
+        chartData: {
+          candles: capped,
+          error: payload.error ?? null,
+          rangeKey:
+            typeof payload.rangeKey === 'string'
+              ? payload.rangeKey
+              : payload.rangeKey == null
+                ? ''
+                : String(payload.rangeKey),
+          loadMoreHistory: Object.prototype.hasOwnProperty.call(payload, 'loadMoreHistory')
+            ? payload.loadMoreHistory
+            : undefined,
+        },
       };
     }
 
@@ -65,8 +60,25 @@ function chartReducer(state, action) {
       return { ...state, isChartLoading: loading };
     }
 
-    case actionTypes.SET_CHART_META:
-      return { ...state, chartMeta: { ...state.chartMeta, ...(action.payload || {}) } };
+    case actionTypes.SET_CHART_META: {
+      const payload = action.payload || {};
+      return {
+        ...state,
+        chartMeta: {
+          dataResolution:
+            typeof payload.dataResolution === 'string' && payload.dataResolution
+              ? payload.dataResolution
+              : 'auto',
+          sourceInterval: payload.sourceInterval ?? null,
+          isDownsampled: Boolean(payload.isDownsampled),
+          points: Number.isFinite(payload.points) ? payload.points : null,
+          from: Number.isFinite(payload.from) ? payload.from : null,
+          to: Number.isFinite(payload.to) ? payload.to : null,
+          nextTime: Number.isFinite(payload.nextTime) ? payload.nextTime : null,
+          noData: Boolean(payload.noData),
+        },
+      };
+    }
 
     case actionTypes.SET_CANVAS_METRICS:
       return { ...state, canvasMetrics: { ...state.canvasMetrics, ...(action.payload || {}) } };
@@ -212,49 +224,13 @@ export const ChartProvider = ({ children, initialData }) => {
     dispatch({ type: actionTypes.SET_CANVAS_METRICS, payload: metrics });
   }, []);
 
-  const setInterval = useCallback((requested) => {
-    const mode = state.isExpanded ? 'expanded' : 'compact';
-    const { forced, allowed } = fixIntervalForTimeframe({
-      timeframe: state.currentTimeframe,
-      requested,
-      mode,
-    });
-    if (process.env.NODE_ENV !== 'production' && forced !== requested) {
-      // eslint-disable-next-line no-console
-      console.log('[FG][UX][TFGuard]', {
-        tf: state.currentTimeframe,
-        requested,
-        forced,
-        mode,
-        allowed,
-      });
-    }
-    dispatch({ type: actionTypes.SET_INTERVAL, payload: forced });
-  }, [state.isExpanded, state.currentTimeframe]);
+  const setInterval = useCallback((interval) => {
+    dispatch({ type: actionTypes.SET_INTERVAL, payload: interval });
+  }, []);
 
   const setTimeframe = useCallback((timeframe) => {
     dispatch({ type: actionTypes.SET_TIMEFRAME, payload: timeframe });
-    // при смене TF — валидируем interval и форсим, если нужно
-    const mode = state.isExpanded ? 'expanded' : 'compact';
-    const { forced, allowed } = fixIntervalForTimeframe({
-      timeframe,
-      requested: state.currentInterval,
-      mode,
-    });
-    if (process.env.NODE_ENV !== 'production' && forced !== state.currentInterval) {
-      // eslint-disable-next-line no-console
-      console.log('[FG][UX][TFGuard]', {
-        tf: timeframe,
-        requested: state.currentInterval,
-        forced,
-        mode,
-        allowed,
-      });
-    }
-    if (forced !== state.currentInterval) {
-      dispatch({ type: actionTypes.SET_INTERVAL, payload: forced });
-    }
-  }, [state.isExpanded, state.currentInterval]);
+  }, []);
 
   const setExpanded = useCallback((expanded) => {
     dispatch({ type: actionTypes.SET_EXPANDED, payload: expanded });

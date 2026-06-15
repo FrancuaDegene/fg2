@@ -68,6 +68,54 @@ const pickNumber = (...values) => {
   return null;
 };
 
+const normalizeVisibleTimeRange = (range) => {
+  const from = Number(range?.from);
+  const to = Number(range?.to);
+  if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return null;
+  return { from, to };
+};
+
+const buildVisibleRangeIdentityKey = ({
+  symbolId,
+  interval,
+  timeframe,
+  candleType,
+  candles,
+}) => {
+  const safeCandles = Array.isArray(candles) ? candles : [];
+  const first = safeCandles[0];
+  const last = safeCandles[safeCandles.length - 1];
+  const firstTime = first?.time != null ? Number(first.time) : null;
+  const lastTime = last?.time != null ? Number(last.time) : null;
+
+  return [
+    symbolId || 'nosymbol',
+    interval || 'nointerval',
+    timeframe || 'notimeframe',
+    candleType || 'nocandletype',
+    safeCandles.length,
+    Number.isFinite(firstTime) ? firstTime : 'nofirst',
+    Number.isFinite(lastTime) ? lastTime : 'nolast',
+  ].join('|');
+};
+
+function pushRangeLifecycleDiagnostic(event) {
+  if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+
+  try {
+    const prev = Array.isArray(window.__FG_94_RANGE_LIFECYCLE_DIAG__)
+      ? window.__FG_94_RANGE_LIFECYCLE_DIAG__
+      : [];
+    window.__FG_94_RANGE_LIFECYCLE_DIAG__ = [
+      ...prev.slice(-199),
+      {
+        ts: Date.now(),
+        ...event,
+      },
+    ];
+  } catch {}
+}
+
 const parseToggleValue = (value) => {
   if (!value || typeof value !== 'string') return null;
   const normalized = value.trim().toLowerCase();
@@ -134,6 +182,7 @@ const ChartRenderer = ({
   const [hoverSnapshot, setHoverSnapshot] = useState(null);
   const hoverFrameRef = useRef({ frameId: null, payload: null });
   const multiPaneContainerRef = useRef(null);
+  const lastVisibleRangeSnapshotRef = useRef(null);
   const [multiPaneTooltip, setMultiPaneTooltip] = useState({
     data: null,
     position: null,
@@ -141,14 +190,7 @@ const ChartRenderer = ({
   });
   const [topMetricsPref, setTopMetricsPref] = useState(() => resolveInitialTopMetricsPreference());
   const hasRightRail = false;
-  const shouldUseMultiPane = useMemo(() => {
-    if (!isExpanded) return false;
-    if (!Array.isArray(activeIndicators) || activeIndicators.length === 0) return false;
-    const visibleIndicators = activeIndicators.filter((indicator) => indicator && indicator.visible !== false);
-    return visibleIndicators.some((indicator) =>
-      indicator && (indicator.id === 'volume' || indicator.id === 'rsi')
-    );
-  }, [activeIndicators, isExpanded]);
+  const shouldUseMultiPane = false;
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -196,9 +238,69 @@ const ChartRenderer = ({
     () => buildSymbolId(resolvedSymbol, resolvedExchange, metaSymbolId),
     [resolvedSymbol, resolvedExchange, metaSymbolId]
   );
+  const chartCandles = useMemo(
+    () => (Array.isArray(chartData?.candles) ? chartData.candles : []),
+    [chartData?.candles]
+  );
+  const visibleRangeIdentityKey = useMemo(
+    () =>
+      buildVisibleRangeIdentityKey({
+        symbolId: resolvedSymbolId,
+        interval: currentInterval,
+        timeframe: currentTimeframe,
+        candleType: currentCandleType,
+        candles: chartCandles,
+      }),
+    [resolvedSymbolId, currentInterval, currentTimeframe, currentCandleType, chartCandles]
+  );
+  const handleVisibleRangeChange = useCallback(
+    (range) => {
+      const normalizedRange = normalizeVisibleTimeRange(range);
+      if (!normalizedRange) {
+        pushRangeLifecycleDiagnostic({
+          event: 'ChartRenderer.saveSnapshot',
+          path: 'ChartRenderer',
+          snapshotKey: null,
+          currentIdentityKey: visibleRangeIdentityKey,
+          visibleRange: range || null,
+          reason: 'rejected-invalid-range',
+        });
+        return;
+      }
+      lastVisibleRangeSnapshotRef.current = {
+        key: visibleRangeIdentityKey,
+        range: normalizedRange,
+      };
+      pushRangeLifecycleDiagnostic({
+        event: 'ChartRenderer.saveSnapshot',
+        path: 'ChartRenderer',
+        snapshotKey: visibleRangeIdentityKey,
+        currentIdentityKey: visibleRangeIdentityKey,
+        visibleRange: normalizedRange,
+        reason: 'accepted',
+      });
+    },
+    [visibleRangeIdentityKey]
+  );
+  const visibleRangeSnapshot = lastVisibleRangeSnapshotRef.current;
+  const initialVisibleRange =
+    visibleRangeSnapshot?.key === visibleRangeIdentityKey ? visibleRangeSnapshot.range : null;
+
+  useEffect(() => {
+    if (!shouldUseMultiPane) return;
+    pushRangeLifecycleDiagnostic({
+      event: 'ChartRenderer.passInitialRange',
+      path: 'ChartRenderer',
+      initialVisibleRange,
+      initialVisibleRangeKey: initialVisibleRange ? visibleRangeIdentityKey : null,
+      snapshotKey: visibleRangeSnapshot?.key || null,
+      currentIdentityKey: visibleRangeIdentityKey,
+      reason: initialVisibleRange ? 'key-match' : 'key-mismatch-or-empty',
+    });
+  }, [initialVisibleRange, shouldUseMultiPane, visibleRangeIdentityKey, visibleRangeSnapshot?.key]);
 
   const lastCandleData = useMemo(() => {
-    const candles = chartData?.candles;
+    const candles = chartCandles;
     if (!Array.isArray(candles) || candles.length === 0) {
       return {
         open: null,
@@ -223,7 +325,7 @@ const ChartRenderer = ({
       ts: last?.time != null ? Number(last.time) : null,
       prevClose: toNumber(prev?.close),
     };
-  }, [chartData?.candles]);
+  }, [chartCandles]);
 
   const defaultPrice = useMemo(() => {
     const provided = toNumber(metaLastPrice);
@@ -635,8 +737,10 @@ const ChartRenderer = ({
               style={{ position: 'relative', width: '100%', height: '100%' }}
             >
               <MultiPaneChart
-                data={Array.isArray(chartData?.candles) ? chartData.candles : []}
+                data={chartCandles}
                 indicators={activeIndicators}
+                initialVisibleRange={initialVisibleRange}
+                initialVisibleRangeKey={initialVisibleRange ? visibleRangeIdentityKey : null}
                 onHover={handleMultiPaneHover}
                 symbolId={resolvedSymbolId}
                 referencePrice={dayPrevClose}
@@ -674,6 +778,7 @@ const ChartRenderer = ({
               isChartLoading={isChartLoading}
               isExpanded={isExpanded}
               onHover={scheduleHoverUpdate}
+              onVisibleRangeChange={handleVisibleRangeChange}
               symbolId={resolvedSymbolId}
               prevClose={dayPrevClose}
               showTooltip={!isExpanded || !isTopMetricsEnabled}

@@ -3,6 +3,13 @@ import { createChart } from 'lightweight-charts';
 import { resolvePriceScaleBorder } from '../utils/chartTimeUtils';
 import { createSeries } from '../utils/chartUtils';
 
+const clearCrosshairSafely = (chart) => {
+  if (!chart || typeof chart.clearCrosshairPosition !== 'function') return;
+  try {
+    chart.clearCrosshairPosition();
+  } catch {}
+};
+
 export const useLightweightChart = ({
   containerRef,
   chartInstanceRef,
@@ -283,6 +290,7 @@ export const useLightweightChart = ({
       }
       isResizingRef.current = false;
 
+      clearCrosshairSafely(chart);
       Object.values(indicatorsSeriesRef.current).forEach((series) => {
         try {
           series.setData([]);

@@ -29,6 +29,25 @@ const MAX_VIRTUAL_VIEWPORT = 15000;
 const INDICATORS_MAX_LOOKBACK = 200;
 
 const ZOOM_IDLE_TIMEOUT = 160;   // ms after wheel/zoom to re-enable hover
+const TRANSITION_VEIL_MIN_MS = 90;
+const TRANSITION_VEIL_MAX_MS = 420;
+
+function pushRangeLifecycleDiagnostic(event) {
+  if (process.env.NODE_ENV === 'production' || typeof window === 'undefined') return;
+
+  try {
+    const prev = Array.isArray(window.__FG_94_RANGE_LIFECYCLE_DIAG__)
+      ? window.__FG_94_RANGE_LIFECYCLE_DIAG__
+      : [];
+    window.__FG_94_RANGE_LIFECYCLE_DIAG__ = [
+      ...prev.slice(-199),
+      {
+        ts: Date.now(),
+        ...event,
+      },
+    ];
+  } catch {}
+}
 
 // Глобовая статистика по работе графика (для отладки производительности)
 if (typeof window !== 'undefined') {
@@ -50,6 +69,7 @@ const ChartCanvas = memo(function ChartCanvas({
   isChartLoading,
   isExpanded,
   onHover,
+  onVisibleRangeChange,
   symbolId,
   prevClose,
   showTooltip = true,
@@ -119,20 +139,35 @@ const ChartCanvas = memo(function ChartCanvas({
   const virtualRafRef = useRef(null);
   const wasAtRightRef = useRef(false);
   const didInitViewRef = useRef(false);
+  const activePriceSliceRef = useRef([]);
   const lastRangeTsRef = useRef(0);
   const isVirtualizingRef = useRef(false);
   const isResizingRef = useRef(false);
   const navOwnerEnabled = String(process.env.REACT_APP_FG_NAV_OWNER || '') === '1';
+  const [transitionVeilVisible, setTransitionVeilVisible] = React.useState(false);
+  const transitionModeKeyRef = useRef(null);
+  const transitionVeilRafRef = useRef(null);
+  const incomingPayloadVersionRef = useRef(0);
+  const lastIncomingChartCandlesRef = useRef(null);
 
   const indCacheRef = useRef(new Map());
   const indGenRef   = useRef(0);
 
   // Вид серии (line vs candles) для валидации/инфраструктуры
   const seriesKind = resolveSeriesKind(currentCandleType);
+  const incomingChartCandles = Array.isArray(chartData?.candles) ? chartData.candles : [];
+  const incomingPayloadVersion = useMemo(() => {
+    if (lastIncomingChartCandlesRef.current !== incomingChartCandles) {
+      lastIncomingChartCandlesRef.current = incomingChartCandles;
+      incomingPayloadVersionRef.current += 1;
+    }
+    return incomingPayloadVersionRef.current;
+  }, [incomingChartCandles]);
+  const payloadVersion = incomingPayloadVersion;
 
    const normalizedCandles = useMemo(() => {
     const t0 = performance.now();
-    const raw = Array.isArray(chartData?.candles) ? chartData.candles : [];
+    const raw = Array.isArray(incomingChartCandles) ? incomingChartCandles : [];
     if (raw.length === 0) {
       const result = { list: [], byTime: new Map(), baseline: null };
       const t1 = performance.now();
@@ -192,7 +227,7 @@ const ChartCanvas = memo(function ChartCanvas({
     const t1 = performance.now();
 
     return result;
-  }, [chartData?.candles]);
+  }, [incomingChartCandles]);
 
   const candleByTime = normalizedCandles.byTime;
   const candleBaseline = normalizedCandles.baseline;
@@ -219,6 +254,9 @@ const ChartCanvas = memo(function ChartCanvas({
 
   const navMinBarsInView =
     isExpanded && navOwnerEnabled && effectiveTimeframe === '1d' ? 120 : 30;
+  const navModeKey = `${effectiveTimeframe || currentTimeframe}|${currentInterval}`;
+  const navAutoFitOnModeChange =
+    Boolean(isExpanded && navOwnerEnabled && (effectiveTimeframe || currentTimeframe) === '1d');
 
   useFGTimeNavigation({
     chartInstanceRef,
@@ -227,11 +265,13 @@ const ChartCanvas = memo(function ChartCanvas({
     debugTag: 'ChartCanvas',
     minBarsInView: navMinBarsInView,
     maxBarsInView: 50000,
+    modeKey: navModeKey,
+    autoFitOnModeChange: navAutoFitOnModeChange,
   });
 
-  // ���?�?�?�?�'�?�?��� �?���?�?�<�: �?�?��ؐ��/�+���?�?�?
+  // Prepare normalized chart data for the active series type.
   const preparedData = useMemo(() => {
-    const rawCandles = chartData?.candles || [];
+    const rawCandles = incomingChartCandles || [];
     const t0 = performance.now();
     const data =
       Array.isArray(rawCandles) && rawCandles.length > 0
@@ -241,7 +281,7 @@ const ChartCanvas = memo(function ChartCanvas({
         : [];
     const t1 = performance.now();
     return data;
-  }, [chartData?.candles, currentCandleType]);
+  }, [incomingChartCandles, currentCandleType]);
 
   const loadMoreHistory = loadMoreHistoryProp || chartData?.loadMoreHistory;
 
@@ -260,6 +300,7 @@ const ChartCanvas = memo(function ChartCanvas({
     chartContainerRef,
     seriesRef,
     preparedData,
+    payloadVersion,
     currentInterval,
     currentTimeframe: effectiveTimeframe || currentTimeframe,
     currentCandleType,
@@ -270,6 +311,7 @@ const ChartCanvas = memo(function ChartCanvas({
     virtualRafRef,
     wasAtRightRef,
     didInitViewRef,
+    activePriceSliceRef,
     lastTimeRef,
     lastRangeTsRef,
     isVirtualizingRef,
@@ -278,6 +320,109 @@ const ChartCanvas = memo(function ChartCanvas({
     indicatorsMaxLookback: INDICATORS_MAX_LOOKBACK,
     loadMoreHistory,
   });
+
+  useEffect(() => {
+    if (!isExpanded || typeof onVisibleRangeChange !== 'function') return undefined;
+    const chart = chartInstanceRef.current;
+    const timeScale = chart?.timeScale?.();
+    if (!timeScale) return undefined;
+
+    const emitRange = (range, reason) => {
+      const from = Number(range?.from);
+      const to = Number(range?.to);
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from) return;
+      let logicalRange = null;
+      try {
+        logicalRange = timeScale.getVisibleLogicalRange?.() || null;
+      } catch {}
+      pushRangeLifecycleDiagnostic({
+        event: 'ChartCanvas.captureVisibleRange',
+        path: 'ChartCanvas',
+        visibleRange: { from, to },
+        logicalRange,
+        reason,
+      });
+      onVisibleRangeChange({ from, to });
+    };
+
+    try {
+      emitRange(timeScale.getVisibleRange?.(), 'mount');
+    } catch {}
+
+    if (typeof timeScale.subscribeVisibleTimeRangeChange !== 'function') {
+      return undefined;
+    }
+
+    const handleRangeChange = (range) => {
+      emitRange(range, 'timeRangeChange');
+    };
+
+    timeScale.subscribeVisibleTimeRangeChange(handleRangeChange);
+    return () => {
+      try {
+        timeScale.unsubscribeVisibleTimeRangeChange?.(handleRangeChange);
+      } catch {}
+    };
+  }, [isExpanded, onVisibleRangeChange]);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      transitionModeKeyRef.current = navModeKey;
+      setTransitionVeilVisible(false);
+      if (transitionVeilRafRef.current) {
+        cancelAnimationFrame(transitionVeilRafRef.current);
+        transitionVeilRafRef.current = null;
+      }
+      return undefined;
+    }
+
+    const prevKey = transitionModeKeyRef.current;
+    transitionModeKeyRef.current = navModeKey;
+    if (!prevKey || prevKey === navModeKey) return undefined;
+
+    const startedAt =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+
+    setTransitionVeilVisible(true);
+
+    const pump = () => {
+      const now =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+      const elapsed = now - startedAt;
+      const minPassed = elapsed >= TRANSITION_VEIL_MIN_MS;
+      const timedOut = elapsed >= TRANSITION_VEIL_MAX_MS;
+      const settled =
+        didInitViewRef.current === true &&
+        virtualRafRef.current === null &&
+        !isVirtualizingRef.current;
+
+      if ((minPassed && settled) || timedOut) {
+        transitionVeilRafRef.current = null;
+        setTransitionVeilVisible(false);
+        return;
+      }
+
+      transitionVeilRafRef.current = requestAnimationFrame(pump);
+    };
+
+    if (transitionVeilRafRef.current) {
+      cancelAnimationFrame(transitionVeilRafRef.current);
+      transitionVeilRafRef.current = null;
+    }
+
+    transitionVeilRafRef.current = requestAnimationFrame(pump);
+
+    return () => {
+      if (transitionVeilRafRef.current) {
+        cancelAnimationFrame(transitionVeilRafRef.current);
+        transitionVeilRafRef.current = null;
+      }
+    };
+  }, [isExpanded, navModeKey]);
 
   const {
     tooltipData,
@@ -298,28 +443,41 @@ const ChartCanvas = memo(function ChartCanvas({
   useEffect(() => {
     const chart = chartInstanceRef.current;
     if (!chart) return;
+    const candlestickSeries = seriesRef.current;
 
     const layoutOptions = isExpanded
-      ? { textColor: '#6d768a', background: { type: 'solid', color: '#ffffff' } }
+      ? { textColor: '#6d768a', background: { type: 'solid', color: '#f1f3f6' } }
       : { textColor: '#d1d4dc', background: { type: 'solid', color: '#131722' } };
 
     const gridOptions = isExpanded
-      ? { vertLines: { color: 'rgba(210, 218, 233, 0.35)' }, horzLines: { color: 'rgba(210, 218, 233, 0.28)' } }
+      ? { vertLines: { color: 'rgba(148, 163, 184, 0.07)' }, horzLines: { color: 'rgba(148, 163, 184, 0.12)' } }
       : { vertLines: { color: 'rgba(42, 46, 57, 0.18)' },  horzLines: { color: 'rgba(42, 46, 57, 0.18)' } };
 
     chart.applyOptions({ layout: layoutOptions, grid: gridOptions });
     chart.timeScale().applyOptions({
       borderVisible: true,
-      borderColor: isExpanded ? 'rgba(210, 218, 233, 0.35)' : 'rgba(42, 46, 57, 0.18)',
+      borderColor: isExpanded ? 'rgba(148, 163, 184, 0.18)' : 'rgba(42, 46, 57, 0.18)',
       timeVisible: true,
     });
 
     chart.priceScale('right').applyOptions({
       visible: true,
       borderVisible: true,
-      borderColor: resolvePriceScaleBorder(isExpanded),
+      borderColor: isExpanded ? 'rgba(148, 163, 184, 0.18)' : resolvePriceScaleBorder(isExpanded),
       textColor: isExpanded ? '#6d768a' : '#d1d4dc',
     });
+
+    if (isExpanded && candlestickSeries) {
+      candlestickSeries.applyOptions({
+        // calm current price line
+        priceLineVisible: true,
+        priceLineColor: 'rgba(100, 116, 139, 0.45)',
+
+        // depth: wick lighter than body (no FOMO, just hierarchy)
+        wickUpColor: 'rgba(38, 166, 154, 0.55)',   // #26a69a with alpha
+        wickDownColor: 'rgba(239, 83, 80, 0.55)',  // #ef5350 with alpha
+      });
+    }
   }, [isExpanded]);
 
   const lineBaseline = useMemo(() => {
@@ -429,6 +587,7 @@ const ChartCanvas = memo(function ChartCanvas({
     currentInterval,
     currentTimeframe,
     indicatorsSeriesRef,
+    activePriceSliceRef,
     indCacheRef,
     indGenRef,
     sma,
@@ -465,6 +624,25 @@ const ChartCanvas = memo(function ChartCanvas({
           containerRef={chartContainerRef}
         />
       )}
+
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: 'none',
+          zIndex: 14,
+          opacity: transitionVeilVisible ? 1 : 0,
+          visibility: transitionVeilVisible ? 'visible' : 'hidden',
+          transition: 'opacity 140ms ease',
+          background: isExpanded
+            ? 'linear-gradient(180deg, rgba(241, 245, 249, 0.26) 0%, rgba(241, 245, 249, 0.12) 100%)'
+            : 'rgba(19, 23, 34, 0.18)',
+        }}
+      />
     </div>
   );
 });

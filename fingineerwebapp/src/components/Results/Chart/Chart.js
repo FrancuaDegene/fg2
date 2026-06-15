@@ -37,6 +37,8 @@ const Chart = ({
   onTimeframeChange,
   isExpanded,         // ++ Принимаем состояние снаружи
   onToggleExpand,     // ++ Принимаем обработчик снаружи
+  onRestOwnershipSignal,
+  sourceAuthority,
 }) => {
   // -- Полностью убираем локальное состояние для isExpanded
   // const [isExpanded, setIsExpanded] = useState(false); 
@@ -227,6 +229,8 @@ const Chart = ({
           query={query}
           isExpanded={isExpanded} // ++ Передаем пропс, который получили
           onToggleExpand={handleToggleExpand} // ++ Передаем наш новый обработчик
+          sourceAuthority={sourceAuthority}
+          onRestOwnershipSignal={onRestOwnershipSignal}
           onToggleSearch={onToggleSearch}
           onSearch={onSearch}
         />
@@ -272,6 +276,8 @@ Chart.propTypes = {
   onSearch: PropTypes.func.isRequired,
   isExpanded: PropTypes.bool, // ++ Добавляем в propTypes
   onToggleExpand: PropTypes.func, // ++ Добавляем в propTypes
+  onRestOwnershipSignal: PropTypes.func,
+  sourceAuthority: PropTypes.oneOf(['app', 'rest']).isRequired,
 };
 
 export default Chart;

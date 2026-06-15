@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import config from '../config/api';
 import { TF_SECONDS } from '../components/Results/Chart/utils/chartTimeUtils';
-import { resolveCountBackByTimeframe } from '../utils/chart/timeframes';
-import { useChart } from '../components/Results/Chart/ChartContext';
+import { resolveCountBackByTimeframe } from '../constants';
 
 // ------------------------------------------------------------
 // FG: candles-v2 cache (module-level; survives unmount)
 // Key = requestUrl (exact params used by backend)
-// Value = { payload, ts }
+// Value = { payload, ts, selectionSignature }
 // ------------------------------------------------------------
 const CANDLES_V2_CACHE = new Map(); // requestUrl -> { payload, ts }
-const CANDLES_V2_INFLIGHT = new Map(); // requestUrl -> Promise<payload>
+const CANDLES_V2_INFLIGHT = new Map(); // requestUrl -> { promise, selectionSignature }
 const CANDLES_V2_MAX = 500; // safety cap (avoid unbounded growth)
 
 function getTtlMsForTimeframe(tf) {
@@ -107,11 +106,9 @@ export function useCandles({
   strict = false,
   enabled = true,
 }) {
-  const chartCtx = useChart?.();
-  const tfFromContext = chartCtx?.effectiveTimeframe ?? chartCtx?.currentTimeframe ?? timeframe;
-  const intervalFromContext = chartCtx?.currentInterval ?? interval;
   // SSOT для запросов: timeframe из пропсов (ChartContainer/App). Контекст может быть устаревшим.
   const tfForRequest = timeframe;
+  const intervalForRequest = interval;
 
   const PRESET_RANGES = new Set(['1d', '5d', '1mth', '3mth', '6mth', '1y']);
   const isPresetRange =
@@ -127,6 +124,8 @@ export function useCandles({
   const [candles, setCandles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState(null);
+  const [error, setError] = useState(null);
+  const [payloadSelectionSignature, setPayloadSelectionSignature] = useState('');
 
   const metaRef = useRef(null);
   const candlesRef = useRef([]);
@@ -146,29 +145,42 @@ export function useCandles({
     const d = Number.isFinite(dpr) ? dpr : 1;
     return JSON.stringify({
       ticker,
-      timeframe: tfFromContext,
-      interval: intervalFromContext,
+      timeframe: tfForRequest,
+      interval: intervalForRequest,
       selectedDate,
       width: w,
       dpr: d,
       resolution,
       strict,
     });
-  }, [ticker, tfFromContext, intervalFromContext, selectedDate, width, dpr, resolution, strict]);
+  }, [ticker, tfForRequest, intervalForRequest, selectedDate, width, dpr, resolution, strict]);
+
+  const selectionSignature = useMemo(() => JSON.stringify({
+    ticker,
+    timeframe: tfForRequest,
+    interval: intervalForRequest,
+    selectedDate,
+  }), [ticker, tfForRequest, intervalForRequest, selectedDate]);
+
+  const rangeKey = useMemo(() => {
+    const t = String(ticker || '').trim().toUpperCase() || 'NA';
+    const timeframeKey = String(tfForRequest || '').trim() || 'NA';
+    return `${t}|${timeframeKey}`;
+  }, [ticker, tfForRequest]);
 
   // авто-LOD
   const effectiveInterval = useMemo(() => {
     const w = Number.isFinite(width) ? width : 900;
     const d = Number.isFinite(dpr) ? dpr : 1;
-    const baseInterval = intervalFromContext;
-    const baseTf = tfFromContext;
+    const baseInterval = intervalForRequest;
+    const baseTf = tfForRequest;
     if (resolution !== 'auto' || strict) return baseInterval;
     try {
       return pickAutoInterval(baseTf, baseInterval, w, d) || baseInterval;
     } catch {
       return baseInterval;
     }
-  }, [resolution, strict, tfFromContext, intervalFromContext, width, dpr]);
+  }, [resolution, strict, tfForRequest, intervalForRequest, width, dpr]);
 
   const decimateCandles = useCallback((list = []) => {
     const w = Number.isFinite(width) ? width : 900;
@@ -205,6 +217,10 @@ export function useCandles({
 
     const flushNow = () => {
       const out = bufferRef.current || decimated;
+      const nextPayloadSelectionSignature =
+        typeof payload?.params?.selectionSignature === 'string'
+          ? payload.params.selectionSignature
+          : '';
       bufferRef.current = null;
       const newLen = out.length;
       const newLastTime = newLen ? (out[newLen - 1]?.time ?? null) : null;
@@ -219,6 +235,8 @@ export function useCandles({
       startTransition(() => {
         setCandles(out);
         candlesRef.current = out;
+        setError(null);
+        setPayloadSelectionSignature(nextPayloadSelectionSignature);
         setMeta((prevMeta) => {
           const prevTo = prevMeta?.to;
           const incomingTo = m.to;
@@ -233,7 +251,7 @@ export function useCandles({
             isDownsampled: Boolean(
               m.downsampled ??
               m.isDownsampled ??
-              ((effectiveInterval && effectiveInterval !== intervalFromContext) || didDecimate)
+              ((effectiveInterval && effectiveInterval !== intervalForRequest) || didDecimate)
             ),
             points: Number.isFinite(m.points) ? m.points : decimated.length,
             from: m.from ?? prevMeta?.from ?? null,
@@ -258,7 +276,7 @@ export function useCandles({
     } else if (!rafRef.current) {
       rafRef.current = requestAnimationFrame(flushNow);
     }
-  }, [decimateCandles, resolution, effectiveInterval, intervalFromContext]);
+  }, [decimateCandles, resolution, effectiveInterval, intervalForRequest]);
 
   const loadMoreHistory = useCallback(async (to) => {
     // Для preset ranges (только compact) не делаем догрузку: диапазон уже фиксирован по from/to.
@@ -275,7 +293,7 @@ export function useCandles({
 
     const w = Number.isFinite(width) ? width : 900;
     const intervalUsed =
-      resolution === 'auto' && !strict ? effectiveInterval || intervalFromContext : intervalFromContext;
+      resolution === 'auto' && !strict ? effectiveInterval || intervalForRequest : intervalForRequest;
 
     if (!ticker || !intervalUsed) return;
 
@@ -313,7 +331,7 @@ export function useCandles({
             m.downsampled ??
             m.isDownsampled ??
             prevMeta?.isDownsampled ??
-            (effectiveInterval && effectiveInterval !== intervalFromContext)
+            (effectiveInterval && effectiveInterval !== intervalForRequest)
           ),
           points: Number.isFinite(m.points) ? m.points : prevMeta?.points ?? null,
           from: m.from ?? prevMeta?.from ?? null,
@@ -367,7 +385,7 @@ export function useCandles({
           m.downsampled ??
           m.isDownsampled ??
           prevMeta?.isDownsampled ??
-          ((effectiveInterval && effectiveInterval !== intervalFromContext) || didDecimate)
+          ((effectiveInterval && effectiveInterval !== intervalForRequest) || didDecimate)
         ),
         points: Number.isFinite(m.points) ? m.points : decimated.length,
         from: m.from ?? prevMeta?.from ?? null,
@@ -394,7 +412,7 @@ export function useCandles({
     resolution,
     strict,
     effectiveInterval,
-    intervalFromContext,
+    intervalForRequest,
     ticker,
     tfForRequest,
     usePreset,
@@ -404,9 +422,11 @@ export function useCandles({
   // валидация входа / cleanup rAF
   useEffect(() => {
     if (!enabled) return undefined;
-    if (!ticker || !tfFromContext || !intervalFromContext || !selectedDate) {
+    if (!ticker || !tfForRequest || !intervalForRequest || !selectedDate) {
       setCandles([]);
       setMeta(null);
+      setError(null);
+      setPayloadSelectionSignature('');
       candlesRef.current = [];
       metaRef.current = null;
       setLoading(false);
@@ -417,7 +437,7 @@ export function useCandles({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
     };
-  }, [enabled, ticker, tfFromContext, intervalFromContext, selectedDate]);
+  }, [enabled, ticker, tfForRequest, intervalForRequest, selectedDate]);
 
   // REST-запрос (debounce 100ms) с intervalUsed + pointsWanted
   useEffect(() => {
@@ -425,6 +445,7 @@ export function useCandles({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     setLoading(true);
+    setError(null);
     const controller = new AbortController();
     debounceRef.current = setTimeout(() => {
       const w = Number.isFinite(width) ? width : 900;
@@ -433,7 +454,7 @@ export function useCandles({
       lastSignatureRef.current = signature;
 
       const intervalUsed =
-        resolution === 'auto' && !strict ? effectiveInterval || intervalFromContext : intervalFromContext;
+        resolution === 'auto' && !strict ? effectiveInterval || intervalForRequest : intervalForRequest;
       const countBack = resolveCountBackByTimeframe(tfForRequest, intervalUsed, w);
 
       const baseUrl = config.API_BASE_URL || '';
@@ -471,53 +492,84 @@ export function useCandles({
         url.searchParams.set('to', String(toSec));
       } else {
         url.searchParams.set('interval', intervalUsed);
-        url.searchParams.set('countBack', String(countBack));
+        if (tfForRequest === '1d' && selectedDate) {
+          const safeDate = selectedDate;
+          const fromSec1d = Math.floor(
+            new Date(`${safeDate}T07:00:00+03:00`).getTime() / 1000
+          );
+          const toSec1d = Math.floor(
+            new Date(`${safeDate}T23:50:00+03:00`).getTime() / 1000
+          );
+          url.searchParams.set('from', String(fromSec1d));
+          url.searchParams.set('to', String(toSec1d));
+          if (process.env.NODE_ENV !== 'production') {
+            console.debug('[FG][REQ][1d]', {
+              ticker: String(ticker).trim().toUpperCase(),
+              intervalUsed,
+              safeDate,
+              fromSec: fromSec1d,
+              toSec: toSec1d,
+            });
+          }
+        } else {
+          url.searchParams.set('countBack', String(countBack));
+        }
       }
 
       const requestUrl = url.toString();
+      const backendRequestKey = requestUrl;
 
-      // ---- Cache layer (exact URL key) ----
+      // Fresh cache may suppress reload only for the same visible selection.
+      // Different selection with the same shaped backend URL still revalidates.
       const now = Date.now();
       const ttlMs = getTtlMsForTimeframe(tfForRequest);
-      const cached = CANDLES_V2_CACHE.get(requestUrl);
+      const cached = CANDLES_V2_CACHE.get(backendRequestKey);
       const isFresh = cached && now - (cached.ts || 0) <= ttlMs;
+      const cachedSelectionSignature =
+        typeof cached?.selectionSignature === 'string' ? cached.selectionSignature : null;
+      const isFreshForSelection = Boolean(isFresh && cachedSelectionSignature === selectionSignature);
 
-      if (isFresh) {
+      if (isFreshForSelection) {
         handlePayload({
           ...(cached.payload || {}),
           requestId,
           params: {
             ...((cached.payload && cached.payload.params) ? cached.payload.params : {}),
             signature,
+            selectionSignature: cachedSelectionSignature || selectionSignature,
           },
         });
         setLoading(false);
         return;
       }
 
-      // stale-while-revalidate: show cache now, but still revalidate
-      if (cached && !isFresh) {
+      // stale-while-revalidate: same URL cache can still warm the UI,
+      // but visible selection changes must not suppress revalidation.
+      if (cached && !isFreshForSelection) {
         handlePayload({
           ...(cached.payload || {}),
           requestId,
           params: {
             ...((cached.payload && cached.payload.params) ? cached.payload.params : {}),
             signature,
+            selectionSignature: cachedSelectionSignature || '',
           },
         });
         setLoading(false);
       }
 
-      // inflight dedupe
-      if (CANDLES_V2_INFLIGHT.has(requestUrl)) {
-        CANDLES_V2_INFLIGHT.get(requestUrl)
-          .then((payload) => {
+      // Inflight dedupe stays keyed by exact backend request identity.
+      if (CANDLES_V2_INFLIGHT.has(backendRequestKey)) {
+        const inflightEntry = CANDLES_V2_INFLIGHT.get(backendRequestKey);
+        inflightEntry.promise
+          .then(({ payload, selectionSignature: payloadSelectionSignatureValue }) => {
             handlePayload({
               ...(payload || {}),
               requestId,
               params: {
                 ...((payload && payload.params) ? payload.params : {}),
                 signature,
+                selectionSignature: payloadSelectionSignatureValue || '',
               },
             });
           })
@@ -525,34 +577,46 @@ export function useCandles({
         return;
       }
 
-      const p = fetch(requestUrl, { signal: controller.signal, cache: 'no-store' })
+      const p = fetch(backendRequestKey, { signal: controller.signal, cache: 'no-store' })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then((payload) => {
-          CANDLES_V2_CACHE.set(requestUrl, { payload, ts: Date.now() });
+          CANDLES_V2_CACHE.set(backendRequestKey, {
+            payload,
+            ts: Date.now(),
+            selectionSignature,
+          });
           pruneCandlesCacheIfNeeded();
-          return payload;
+          return {
+            payload,
+            selectionSignature,
+          };
         })
         .finally(() => {
-          CANDLES_V2_INFLIGHT.delete(requestUrl);
+          CANDLES_V2_INFLIGHT.delete(backendRequestKey);
         });
 
-      CANDLES_V2_INFLIGHT.set(requestUrl, p);
+      CANDLES_V2_INFLIGHT.set(backendRequestKey, {
+        promise: p,
+        selectionSignature,
+      });
 
-      p.then((payload) => {
+      p.then(({ payload, selectionSignature: payloadSelectionSignatureValue }) => {
         handlePayload({
           ...(payload || {}),
           requestId,
           params: {
             ...((payload && payload.params) ? payload.params : {}),
             signature,
+            selectionSignature: payloadSelectionSignatureValue || selectionSignature,
           },
         });
       })
         .catch((err) => {
           if (controller.signal.aborted) return;
+          setError(err?.message || 'Failed to load candles.');
           if (process.env.NODE_ENV !== 'production') {
             console.error('[FG][CANDLES_V2_ERR]', err);
           }
@@ -568,7 +632,7 @@ export function useCandles({
     signature,
     enabled,
     effectiveInterval,
-    intervalFromContext,
+    intervalForRequest,
     resolution,
     strict,
     width,
@@ -577,7 +641,16 @@ export function useCandles({
     tfForRequest,
     selectedDate,
     handlePayload,
+    selectionSignature,
   ]);
 
-  return { candles, loading, meta, loadMoreHistory };
+  return {
+    candles,
+    loading,
+    meta,
+    error,
+    loadMoreHistory,
+    rangeKey,
+    isSelectionFresh: payloadSelectionSignature === selectionSignature,
+  };
 }

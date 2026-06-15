@@ -8,6 +8,7 @@ import './Chart.css';
 const ChartContent = ({
   onIntervalChange,
   onTimeframeChange,
+  onCandleTypeChange,
   onToggleExpand,
   onToggleSearch,
   onSearch,
@@ -21,8 +22,8 @@ const ChartContent = ({
     currentTimeframe,
     currentCandleType,
     isExpanded,
-    setCandleType,
     activeIndicators,
+    setCandleType,
   } = useChart();
   const { activeTicker, instrumentMeta: stateInstrumentMeta, lastCandleData, chartMeta } = useChartState();
   const enableDashboard = String(process.env.REACT_APP_FEATURE_DASHBOARD) === '1';
@@ -57,7 +58,10 @@ const ChartContent = ({
     if (typeof setCandleType === 'function') {
       setCandleType(type);
     }
-  }, [setCandleType]);
+    if (typeof onCandleTypeChange === 'function') {
+      onCandleTypeChange(type);
+    }
+  }, [onCandleTypeChange, setCandleType]);
 
   return (
     <>
@@ -94,6 +98,7 @@ ChartContent.propTypes = {
   onIntervalChange: PropTypes.func,
   onTimeframeChange: PropTypes.func,
   onToggleExpand: PropTypes.func,
+  onCandleTypeChange: PropTypes.func,
   onToggleSearch: PropTypes.func,
   onSearch: PropTypes.func,
   instrumentMeta: PropTypes.object,
@@ -104,6 +109,7 @@ const MemoizedChartContent = memo(ChartContent, (prevProps, nextProps) => {
   return (
     prevProps.onIntervalChange === nextProps.onIntervalChange &&
     prevProps.onTimeframeChange === nextProps.onTimeframeChange &&
+    prevProps.onCandleTypeChange === nextProps.onCandleTypeChange &&
     prevProps.onToggleExpand === nextProps.onToggleExpand &&
     prevProps.onToggleSearch === nextProps.onToggleSearch &&
     prevProps.onSearch === nextProps.onSearch &&
