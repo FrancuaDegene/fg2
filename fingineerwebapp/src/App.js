@@ -127,6 +127,9 @@ function App() {
     const sourceAuthority = FG_AGG_ENABLED ? 'rest' : 'app';
     // Состояния для управления данными и UI
     const [query, setQuery] = useState('');
+    const [pendingTicker, setPendingTicker] = useState('');
+    const [primaryRequestAttempt, setPrimaryRequestAttempt] = useState(0);
+    const [primaryRequestError, setPrimaryRequestError] = useState(null);
     const [data, setData] = useState(null);
     const [chartData, setChartData] = useState({ candles: [], error: null, rangeKey: '' });
     const [chartOwnershipState, setChartOwnershipState] = useState(createEmptyChartOwnershipState);
@@ -141,9 +144,9 @@ function App() {
     const [isChartExpanded, setIsChartExpanded] = useState(false); // Состояние развернутого графика
     const [isSearchVisible, setIsSearchVisible] = useState(false); // Видимость формы поиска в развернутом режиме
     const [isSearchActive, setIsSearchActive] = useState(false); // Активность поля поиска (для затемнения фона)
-    // --- Unified search entry point (single source of truth: query) ---
+    // --- Unified search entry point ---
     // Любая точка "поиска" (верхний SearchForm, Results/Chart/Expanded) делает одно и то же:
-    // нормализовать строку и обновить query → дальше эффекты сами запускают fetchTickerInfo + emitChartDataRequest.
+    // нормализует строку и обновляет pendingTicker, а committed active query меняется только после successful primary commit.
     const handleSearchQuery = useCallback((q) => {
         const next = String(q || '').trim().toUpperCase();
         if (!next) {
@@ -151,7 +154,10 @@ function App() {
             return;
         }
         if (FG_DEBUG) console.warn('[FG][App][onSearch]', { next });
-        setQuery(next);
+        primaryRequestSeqRef.current += 1;
+        setPrimaryRequestError(null);
+        setPendingTicker(next);
+        setPrimaryRequestAttempt((prev) => prev + 1);
     }, []);
     
     if (FG_DEBUG) {
@@ -208,6 +214,7 @@ function App() {
     }, [tfGuard, interval, isChartExpanded]);
     
     const newsContainerRef = useRef(null);
+    const activeQueryRef = useRef(query);
     const chartDataCacheRef = useRef(new Map());
     const inflightRef = useRef(new Map());
     const pendingByRequestIdRef = useRef(new Map()); // requestId -> { key, rangeKey, silent }
@@ -215,10 +222,16 @@ function App() {
     const lastRangeKeyRef = useRef('');
     const isChartExpandedRef = useRef(false);
     const chartOwnershipStateRef = useRef(chartOwnershipState);
+    const primaryRequestSeqRef = useRef(0);
+    const chartRequestSeqRef = useRef(0);
 
     useEffect(() => {
         isChartExpandedRef.current = isChartExpanded;
     }, [isChartExpanded]);
+
+    useEffect(() => {
+        activeQueryRef.current = query;
+    }, [query]);
 
     useEffect(() => {
         chartOwnershipStateRef.current = chartOwnershipState;
@@ -226,6 +239,19 @@ function App() {
 
     const resetChartOwnershipState = useCallback(() => {
         setChartOwnershipState(createEmptyChartOwnershipState());
+    }, []);
+
+    const isChartResponseForActiveTicker = useCallback((selection, payload) => {
+        const selectionTicker = String(selection?.ticker || '').trim().toUpperCase();
+        const payloadTicker = String(payload?.ticker || payload?.secid || '').trim().toUpperCase();
+        const responseTicker = selectionTicker || payloadTicker;
+        const activeTicker = String(activeQueryRef.current || '').trim().toUpperCase();
+
+        if (!responseTicker || !activeTicker) {
+            return false;
+        }
+
+        return responseTicker === activeTicker;
     }, []);
 
     const beginChartOwnershipRequest = useCallback((selection) => {
@@ -331,9 +357,23 @@ function App() {
                 lastRequestKeyRef.current = key;
                 lastRangeKeyRef.current = rangeKey;
             }
-            if (FG_DEBUG) console.log('[FG][App][cache] emit', { key });
-            const requestId = Date.now();
-            pendingByRequestIdRef.current.set(requestId, { key, rangeKey, silent, selection });
+            chartRequestSeqRef.current += 1;
+            const requestId =
+                Date.now() * 1000 +
+                (chartRequestSeqRef.current % 1000);
+            const requestIdKey = String(requestId);
+            pendingByRequestIdRef.current.set(requestIdKey, { key, rangeKey, silent, selection });
+            if (FG_DEBUG) {
+                console.log('[FG][CHART][REQUEST_EMIT]', {
+                    requestId,
+                    requestIdKey,
+                    requestIdType: typeof requestId,
+                    ticker,
+                    timeframe: currenttimeframe,
+                    silent,
+                    key,
+                });
+            }
             socket.emit('requestChartData', {
                 ticker,
                 timeframe: currenttimeframe,
@@ -354,20 +394,20 @@ function App() {
     );
 
     // Функция для получения ОСНОВНОЙ информации о тикере (без данных графика)
-    const fetchTickerInfo = useCallback(async (searchQuery) => {
+    const fetchTickerInfo = useCallback(async (requestTicker, requestSeq, options = {}) => {
+        const hasActiveWorkspace = options.hasActiveWorkspace === true;
+        const isLatestRequest = () => primaryRequestSeqRef.current === requestSeq;
+        const notFoundMessage = 'Тикер не найден. Пожалуйста, проверьте правильность ввода.';
+        const loadErrorMessage = 'Произошла ошибка при загрузке данных. Пожалуйста, попробуйте еще раз.';
         setIsLoading(true); // Начинаем общую загрузку
-        setData(null);
-        setNews([]);
-        setDividends([]);
-        setChartData({ candles: [], error: null, rangeKey: '' }); // Сбрасываем старые данные графика
-        resetChartOwnershipState();
+        setPrimaryRequestError(null);
 
         try {
             if (FG_DEBUG) {
                 // eslint-disable-next-line no-console
-                console.log('[FG][fetchTickerInfo][start]', { query: searchQuery });
+                console.log('[FG][fetchTickerInfo][start]', { requestTicker, requestSeq, hasActiveWorkspace });
             }
-            const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.TICKER}/${searchQuery}`, {
+            const response = await fetch(`${config.API_BASE_URL}${config.ENDPOINTS.TICKER}/${requestTicker}`, {
                 // FG: search is a user-triggered action; avoid browser 304/ETag cache artifacts
                 cache: 'no-store',
                 headers: {
@@ -380,47 +420,88 @@ function App() {
                 console.log('[FG][fetchTickerInfo][response]', { status: response.status, ok: response.ok });
             }
             if (!response.ok) {
-                if (response.status === 404) {
-                    setData({ error: 'Тикер не найден. Пожалуйста, проверьте правильность ввода.' });
-                } else {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                const nextMessage = response.status === 404 ? notFoundMessage : loadErrorMessage;
+
+                if (!isLatestRequest()) {
+                    return;
                 }
-            } else {
-                const result = await response.json();
-                if (FG_DEBUG) {
-                    // eslint-disable-next-line no-console
-                    console.log('[FG][fetchTickerInfo][resultKeys]', {
-                        keys: Object.keys(result || {}),
-                        hasError: !!result?.error,
-                    });
+
+                if (!hasActiveWorkspace) {
+                    setData({ error: nextMessage });
                 }
-                setData(result);
-                setNews(result.news || []);
-                setDividends(result.dividends || []);
-                if (result?.date) {
-                    setSelectedDate(result.date);
-                }
-                // Данные для графика будут запрошены в отдельном useEffect
+                setPendingTicker('');
+                setPrimaryRequestError({
+                    scope: hasActiveWorkspace ? 'switch' : 'initial',
+                    ticker: requestTicker,
+                    message: nextMessage,
+                });
+                return;
             }
+
+            const result = await response.json();
+            if (FG_DEBUG) {
+                // eslint-disable-next-line no-console
+                console.log('[FG][fetchTickerInfo][resultKeys]', {
+                    keys: Object.keys(result || {}),
+                    hasError: !!result?.error,
+                });
+            }
+
+            if (!isLatestRequest()) {
+                return;
+            }
+
+            setData(result);
+            setNews(result.news || []);
+            setDividends(result.dividends || []);
+            setSelectedDate(result?.date || '');
+            activeQueryRef.current = requestTicker;
+            pendingByRequestIdRef.current.clear();
+            inflightRef.current.clear();
+            lastRequestKeyRef.current = '';
+            lastRangeKeyRef.current = '';
+            setChartData({ candles: [], error: null, rangeKey: '' });
+            resetChartOwnershipState();
+            setQuery(requestTicker);
+            setPendingTicker('');
+            setPrimaryRequestError(null);
         } catch (error) {
             if (FG_DEBUG) {
                 // eslint-disable-next-line no-console
                 console.log('[FG][fetchTickerInfo][catch]', { message: error?.message });
             }
             console.error('Ошибка при получении информации о тикере:', error);
-            setData({ error: 'Произошла ошибка при загрузке данных. Пожалуйста, попробуйте еще раз.' });
+            if (!isLatestRequest()) {
+                return;
+            }
+
+            if (!hasActiveWorkspace) {
+                setData({ error: loadErrorMessage });
+            }
+            setPendingTicker('');
+            setPrimaryRequestError({
+                scope: hasActiveWorkspace ? 'switch' : 'initial',
+                ticker: requestTicker,
+                message: loadErrorMessage,
+            });
         } finally {
+            if (!isLatestRequest()) {
+                return;
+            }
             setIsLoading(false); // Завершаем общую загрузку
         }
     }, [resetChartOwnershipState]); // Убираем все зависимости, эта функция должна быть стабильной
 
-    // Эффект для вызова fetchTickerInfo ТОЛЬКО при изменении 'query'
+    // Эффект для вызова fetchTickerInfo ТОЛЬКО при изменении pendingTicker
     useEffect(() => {
-        if (FG_DEBUG) console.log('[FG][App][queryEffect]', { query });
-        if (query) {
-            fetchTickerInfo(query);
+        if (FG_DEBUG) console.log('[FG][App][primaryRequestEffect]', { pendingTicker, primaryRequestAttempt, activeQuery: activeQueryRef.current });
+        if (pendingTicker && primaryRequestAttempt > 0) {
+            const requestSeq = primaryRequestSeqRef.current;
+            fetchTickerInfo(pendingTicker, requestSeq, {
+                hasActiveWorkspace: Boolean(String(activeQueryRef.current || '').trim()),
+            });
         }
-    }, [query, fetchTickerInfo]);
+    }, [pendingTicker, primaryRequestAttempt, fetchTickerInfo]);
 
     useEffect(() => {
         if (isChartExpanded && !data && !isLoading) {
@@ -483,7 +564,40 @@ function App() {
             }
             const hasCandles = Array.isArray(payload?.candles);
             const nextCandlesLen = hasCandles ? payload.candles.length : null;
-            const meta = payload?.requestId ? pendingByRequestIdRef.current.get(payload.requestId) : null;
+            const rawRequestId = payload?.requestId;
+            const hasRequestId = rawRequestId !== undefined && rawRequestId !== null;
+            const requestIdKey = hasRequestId
+                ? String(rawRequestId)
+                : '';
+            const meta = hasRequestId
+                ? pendingByRequestIdRef.current.get(requestIdKey)
+                : null;
+            if (FG_DEBUG) {
+                console.log('[FG][CHART][RESPONSE_IDENTITY]', {
+                    kind: 'initialData',
+                    rawRequestId,
+                    requestIdKey,
+                    rawRequestIdType: typeof rawRequestId,
+                    metaFound: Boolean(meta),
+                    activeTicker: activeQueryRef.current,
+                    responseTicker:
+                        meta?.selection?.ticker ||
+                        payload?.ticker ||
+                        payload?.secid ||
+                        null,
+                    silent: meta?.silent === true,
+                });
+            }
+            if (hasRequestId && !meta) {
+                if (FG_DEBUG) {
+                    console.warn('[FG][App][setChartData][initialData][missingMetaIgnored]', {
+                        activeTicker: activeQueryRef.current,
+                        payloadTicker: payload?.ticker || payload?.secid || null,
+                        requestId: rawRequestId,
+                    });
+                }
+                return;
+            }
             const key = meta?.key || lastRequestKeyRef.current;
             const rk = meta?.rangeKey || lastRangeKeyRef.current || '';
             const silent = meta?.silent === true;
@@ -491,6 +605,20 @@ function App() {
                 meta?.selection ||
                 chartOwnershipStateRef.current.requestedSelection ||
                 chartOwnershipStateRef.current.confirmedSelection;
+            const isActiveTickerResponse = isChartResponseForActiveTicker(selection, payload);
+            if (!silent && !isActiveTickerResponse) {
+                if (FG_DEBUG) {
+                    console.warn('[FG][App][setChartData][initialData][staleTickerIgnored]', {
+                        activeTicker: activeQueryRef.current,
+                        selectionTicker: selection?.ticker || null,
+                        payloadTicker: payload?.ticker || payload?.secid || null,
+                        requestId: rawRequestId || null,
+                    });
+                }
+                if (key) inflightRef.current.delete(key);
+                if (hasRequestId) pendingByRequestIdRef.current.delete(requestIdKey);
+                return;
+            }
             if (hasCandles) {
                 if (FG_DEBUG) console.warn('[FG][App][setChartData][initialData][before]', { prevLen: null, nextLen: nextCandlesLen });
                 if (!silent) {
@@ -526,16 +654,62 @@ function App() {
                 if (key) inflightRef.current.delete(key);
             }
             if (!silent) setIsChartLoading(false); // Завершаем загрузку графика
-            if (payload?.requestId) pendingByRequestIdRef.current.delete(payload.requestId);
+            if (hasRequestId) pendingByRequestIdRef.current.delete(requestIdKey);
         };
 
         const handleUpdateData = (payload) => {
             if (FG_DEBUG) console.log('[SOCKET] Received updateData:', payload);
-            const meta = payload?.requestId ? pendingByRequestIdRef.current.get(payload.requestId) : null;
+            const rawRequestId = payload?.requestId;
+            const hasRequestId = rawRequestId !== undefined && rawRequestId !== null;
+            const requestIdKey = hasRequestId
+                ? String(rawRequestId)
+                : '';
+            const meta = hasRequestId
+                ? pendingByRequestIdRef.current.get(requestIdKey)
+                : null;
+            if (FG_DEBUG) {
+                console.log('[FG][CHART][RESPONSE_IDENTITY]', {
+                    kind: 'updateData',
+                    rawRequestId,
+                    requestIdKey,
+                    rawRequestIdType: typeof rawRequestId,
+                    metaFound: Boolean(meta),
+                    activeTicker: activeQueryRef.current,
+                    responseTicker:
+                        meta?.selection?.ticker ||
+                        payload?.ticker ||
+                        payload?.secid ||
+                        null,
+                    silent: meta?.silent === true,
+                });
+            }
+            if (hasRequestId && !meta) {
+                if (FG_DEBUG) {
+                    console.warn('[FG][App][setChartData][updateData][missingMetaIgnored]', {
+                        activeTicker: activeQueryRef.current,
+                        payloadTicker: payload?.ticker || payload?.secid || null,
+                        requestId: rawRequestId,
+                    });
+                }
+                return;
+            }
             const key = meta?.key || lastRequestKeyRef.current;
             const rk = meta?.rangeKey || lastRangeKeyRef.current || '';
             const silent = meta?.silent === true;
             const selection = meta?.selection || null;
+            const isActiveTickerResponse = isChartResponseForActiveTicker(selection, payload);
+            if (!silent && !isActiveTickerResponse) {
+                if (FG_DEBUG) {
+                    console.warn('[FG][App][setChartData][updateData][staleTickerIgnored]', {
+                        activeTicker: activeQueryRef.current,
+                        selectionTicker: selection?.ticker || null,
+                        payloadTicker: payload?.ticker || payload?.secid || null,
+                        requestId: rawRequestId || null,
+                    });
+                }
+                if (hasRequestId) pendingByRequestIdRef.current.delete(requestIdKey);
+                return;
+            }
             if (payload && Array.isArray(payload.candles)) {
                 if (!silent) {
                     setChartData(prevData => ({
@@ -563,6 +737,7 @@ function App() {
                     }
                 }
             }
+            if (hasRequestId) pendingByRequestIdRef.current.delete(requestIdKey);
         };
 
         const handleError = (error) => {
@@ -664,6 +839,15 @@ function App() {
         resetChartOwnershipState,
     ]);
 
+    const hasActiveWorkspace = Boolean(String(query || '').trim());
+    const isInitialLoading = isLoading && !hasActiveWorkspace;
+    const resultsQuery = hasActiveWorkspace
+        ? query
+        : (primaryRequestError?.scope === 'initial' && data?.error
+            ? String(primaryRequestError?.ticker || '').trim().toUpperCase()
+            : '');
+    const isSearchSubmitted = Boolean(hasActiveWorkspace || data);
+
     return (
         <div className="App">
             <Header />
@@ -672,6 +856,17 @@ function App() {
                 <>
                     <SearchForm 
                         onSearch={handleSearchQuery}                   onClear={() => {
+                            primaryRequestSeqRef.current += 1;
+                            setPendingTicker('');
+                            setPrimaryRequestAttempt(0);
+                            setPrimaryRequestError(null);
+                            setIsLoading(false);
+                            setIsChartLoading(false);
+                            activeQueryRef.current = '';
+                            pendingByRequestIdRef.current.clear();
+                            inflightRef.current.clear();
+                            lastRequestKeyRef.current = '';
+                            lastRangeKeyRef.current = '';
                             setQuery('');
                             setData(null);
                             setChartData({ candles: [], error: null, rangeKey: '' });
@@ -680,18 +875,18 @@ function App() {
                             setDividends([]);
                             setSelectedDate('');
                         }}
-                        isSubmitted={!!data}
+                        isSubmitted={isSearchSubmitted}
                     />
                 </>
             )}
 
-            {isLoading && !isChartExpanded ? (
+            {isInitialLoading && !isChartExpanded ? (
                 <LoadingSkeleton />
             ) : (
                 <>
                 <Results
                     sourceAuthority={sourceAuthority}
-                    query={query}
+                    query={resultsQuery}
                     data={data}
                     socket={socket}
                     chartData={chartData}
