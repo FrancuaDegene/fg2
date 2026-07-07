@@ -7,6 +7,8 @@
 }
 
 .company-identity-card {
+  --company-chamfer: 16px;
+  --company-inner-chamfer: calc(var(--company-chamfer) - 2px);
   position: relative;
   isolation: isolate;
   display: grid;
@@ -18,15 +20,25 @@
   overflow: hidden;
   box-sizing: border-box;
   padding: 20px 22px;
-  border: 1px solid rgba(103, 232, 249, 0.26);
-  border-radius: 28px;
+  border: 1px solid transparent;
   background:
-    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.12), transparent 30%),
-    linear-gradient(145deg, rgba(2, 18, 26, 0.96), rgba(6, 35, 46, 0.9));
+    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.12), transparent 30%) padding-box,
+    linear-gradient(145deg, rgba(2, 18, 26, 0.96), rgba(6, 35, 46, 0.9)) padding-box,
+    linear-gradient(rgba(103, 232, 249, 0.26), rgba(103, 232, 249, 0.26)) border-box;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 18px 36px rgba(0, 0, 0, 0.2);
   transition: border-color 0.2s ease, background 0.2s ease;
+  clip-path: polygon(
+    var(--company-chamfer) 0,
+    calc(100% - var(--company-chamfer)) 0,
+    100% var(--company-chamfer),
+    100% calc(100% - var(--company-chamfer)),
+    calc(100% - var(--company-chamfer)) 100%,
+    var(--company-chamfer) 100%,
+    0 calc(100% - var(--company-chamfer)),
+    0 var(--company-chamfer)
+  );
 }
 
 .company-identity-card::before {
@@ -34,16 +46,25 @@
   position: absolute;
   inset: 1px;
   z-index: -1;
-  border-radius: 26px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.045), transparent 48%);
   pointer-events: none;
+  clip-path: polygon(
+    var(--company-inner-chamfer) 0,
+    calc(100% - var(--company-inner-chamfer)) 0,
+    100% var(--company-inner-chamfer),
+    100% calc(100% - var(--company-inner-chamfer)),
+    calc(100% - var(--company-inner-chamfer)) 100%,
+    var(--company-inner-chamfer) 100%,
+    0 calc(100% - var(--company-inner-chamfer)),
+    0 var(--company-inner-chamfer)
+  );
 }
 
 .company-identity-card:hover {
-  border-color: rgba(103, 232, 249, 0.34);
   background:
-    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.15), transparent 32%),
-    linear-gradient(145deg, rgba(3, 22, 31, 0.97), rgba(7, 39, 51, 0.92));
+    radial-gradient(circle at 88% 36%, rgba(14, 165, 233, 0.15), transparent 32%) padding-box,
+    linear-gradient(145deg, rgba(3, 22, 31, 0.97), rgba(7, 39, 51, 0.92)) padding-box,
+    linear-gradient(rgba(103, 232, 249, 0.34), rgba(103, 232, 249, 0.34)) border-box;
 }
 
 .company-identity-main {
@@ -183,6 +204,12 @@
   background: rgba(15, 23, 42, 0.08);
 }
 
+@media (max-width: 1024px) {
+  .company-identity-card {
+    --company-chamfer: 12px;
+  }
+}
+
 @media (max-width: 900px) {
   .company-identity-card {
     grid-template-columns: minmax(0, 1fr) minmax(56px, 70px);
@@ -198,9 +225,9 @@
 
 @media (max-width: 640px) {
   .company-identity-card {
+    --company-chamfer: 8px;
     grid-template-columns: minmax(0, 1fr);
     padding: 20px;
-    border-radius: 24px;
   }
 
   .company-section-label {

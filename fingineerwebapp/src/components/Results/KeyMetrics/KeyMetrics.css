@@ -1,10 +1,29 @@
 .key-indicators {
+  --km-chamfer: 16px;
+  box-sizing: border-box;
   min-height: 100%;
   padding: 16px;
-  border: 1px solid rgba(45, 212, 191, 0.18);
-  border-radius: 14px;
-  background: rgba(6, 32, 42, 0.66);
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      rgba(6, 32, 42, 0.66),
+      rgba(6, 32, 42, 0.66)
+    ) padding-box,
+    linear-gradient(
+      rgba(45, 212, 191, 0.22),
+      rgba(45, 212, 191, 0.22)
+    ) border-box;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  clip-path: polygon(
+    var(--km-chamfer) 0,
+    calc(100% - var(--km-chamfer)) 0,
+    100% var(--km-chamfer),
+    100% calc(100% - var(--km-chamfer)),
+    calc(100% - var(--km-chamfer)) 100%,
+    var(--km-chamfer) 100%,
+    0 calc(100% - var(--km-chamfer)),
+    0 var(--km-chamfer)
+  );
 }
 
 .key-indicators h3 {
@@ -50,8 +69,15 @@
   text-align: right;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .key-indicators {
+    --km-chamfer: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .key-indicators {
+    --km-chamfer: 8px;
     padding: 16px;
   }
 }

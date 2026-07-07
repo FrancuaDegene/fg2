@@ -1,17 +1,54 @@
 .price-block {
+  --price-chamfer: 16px;
+  --price-surface: rgba(7, 34, 44, 0.72);
+  --price-border: rgba(45, 212, 191, 0.22);
+  box-sizing: border-box;
   width: 100%;
   margin: 0;
-  background: rgba(7, 34, 44, 0.72);
-  border: 1px solid rgba(45, 212, 191, 0.2);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   padding: 16px;
-  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.price-block::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      var(--price-surface),
+      var(--price-surface)
+    ) padding-box,
+    linear-gradient(
+      var(--price-border),
+      var(--price-border)
+    ) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  clip-path: polygon(
+    var(--price-chamfer) 0,
+    calc(100% - var(--price-chamfer)) 0,
+    100% var(--price-chamfer),
+    100% calc(100% - var(--price-chamfer)),
+    calc(100% - var(--price-chamfer)) 100%,
+    var(--price-chamfer) 100%,
+    0 calc(100% - var(--price-chamfer)),
+    0 var(--price-chamfer)
+  );
+  transition: background 0.2s ease;
 }
 
 .price-block:hover {
-  background: rgba(8, 43, 54, 0.8);
-  border-color: rgba(45, 212, 191, 0.32);
+  --price-surface: rgba(8, 43, 54, 0.8);
+  --price-border: rgba(45, 212, 191, 0.32);
 }
 
 .price-block .company-content {
@@ -118,6 +155,12 @@
   z-index: 0;
 }
 
+@media (max-width: 1024px) {
+  .price-block {
+    --price-chamfer: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .price-block {
     padding: 14px;
@@ -147,5 +190,11 @@
   .info-button {
     width: 18px;
     height: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .price-block {
+    --price-chamfer: 8px;
   }
 }
