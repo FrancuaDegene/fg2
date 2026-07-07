@@ -2,14 +2,16 @@
 
 ## Status
 
-`active / Phase 0 completed / Phase 1 pending`
+`active / Phase 1 completed / Phase 2 pending`
 
 - sprint contract accepted by Owner;
 - sprint activated;
 - source routing updated;
 - authoritative current-state created;
-- product implementation is not started yet.
-- Phase 1 is the next step.
+- `Phase 1` authoritative closure accepted.
+- `AnalyticalWorkspaceShell` / `Phase 2` implementation has not started.
+- `dc6c06e feat(results): finalize visual baseline` remains the accepted pre-shell `Results` baseline.
+- `Phase 2` is the next step.
 
 ## Purpose
 
@@ -173,6 +175,8 @@ Contract:
 - `×` очищает draft, но не уничтожает active workspace;
 - полный возврат в entry выполняется через логотип FG.
 
+These are target interaction contracts for Phases 3-4, not a claim that all clear/reset behavior is already implemented in the current runtime baseline.
+
 ## Sprint phases
 
 ### Phase 0 — Sprint activation and source routing
@@ -200,6 +204,10 @@ DoD:
 
 ### Phase 1 — Current composition anchor
 
+Status:
+
+`completed / accepted / PATCH-READY FOR PHASE 2`
+
 Задачи:
 
 - установить текущую композицию `App -> SearchForm -> Results`;
@@ -213,9 +221,16 @@ DoD:
 
 - code-level evidence;
 - patch-ready anchors;
-- no product changes.
+- authoritative `Phase 1` record created;
+- no `Phase 2` shell implementation;
+- `Phase 1` anchor remained read-only;
+- supporting pre-shell `Results` visual baseline is recorded separately by commit `dc6c06e`.
 
 ### Phase 2 — AnalyticalWorkspaceShell
+
+Status:
+
+`pending / not started`
 
 Задачи:
 
@@ -346,6 +361,12 @@ Sprint завершён, когда:
 - docs/current-state/source pack/handoff синхронизированы;
 - closure commit принят.
 
-## Immediate next step after contract creation
+## Historical immediate next step after contract creation
 
 `MODE: ANCHOR / PHASE 1 CURRENT COMPOSITION`
+
+## Current next safe entry
+
+`MODE: EXECUTE / PHASE 2 ANALYTICAL WORKSPACE SHELL`
+
+Authoritative current-state wins for the current stop-point and immediate next step.

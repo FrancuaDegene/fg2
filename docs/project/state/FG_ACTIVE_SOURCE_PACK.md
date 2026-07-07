@@ -21,33 +21,39 @@
 ## 2. Текущий статус работы
 
 - current active sprint: `FG Analytical Workspace Shell and Search Integration Sprint`
-- current sprint status: `active / Phase 0 completed / Phase 1 pending`
+- current sprint status: `active / Phase 1 completed / Phase 2 pending`
 - latest completed sprint: `FG Analytical Workspace UX Design Sprint` — `completed / final docs-only UX contract accepted`
 - previous completed sprint: `Bounded Frontend Contract Hardening Sprint` — `completed / docs-only closure accepted`
 - earlier completed sprint: `Frontend Architecture Discovery Pass` — `completed / final verdict accepted / archived`
 - previous sprint: `FG Chart Architecture Stabilization Sprint` — fully administratively closed
 - current authoritative current-state: `docs/project/state/FG_analytical_workspace_shell_search_integration_current_state_2026-07-07.md`
 - current active sprint contract: `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/FG_analytical_workspace_shell_search_integration_sprint_contract.md`
+- current Phase 1 authoritative record: `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_1_current_composition_anchor.md`
 - current Phase 0 checklist: `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_0_sprint_activation_checklist.md`
-- completed bounded implementation baseline: `0af5b2d feat(app): stabilize ticker switch and chart request identity`
+- protected prior implementation baseline: `0af5b2d feat(app): stabilize ticker switch and chart request identity`
 - baseline scope: `fingineerwebapp/src/App.js`
 - baseline verification: `accepted for bounded scope`
 - baseline guard: `do not reopen without genuinely new runtime evidence`
-- current next safe entry: `MODE: ANCHOR / PHASE 1 CURRENT COMPOSITION`
+- accepted pre-shell `Results` visual baseline: `dc6c06e feat(results): finalize visual baseline`
+- baseline scope: `Results.css`, `CompanyInfo.css`, `KeyMetrics.css`, `Price.css`
+- baseline verification: `accepted Browser QA / exact-file commit`
+- baseline guard: do not treat it as `AnalyticalWorkspaceShell` implementation
+- supporting active sprint handoff: `.claude/handoffs/active/FG_analytical_workspace_shell_search_integration_2026/FG_analytical_workspace_shell_search_integration_session_handoff_2026-07-07.md`
+- current next safe entry: `MODE: EXECUTE / PHASE 2 ANALYTICAL WORKSPACE SHELL`
 - supporting completed implementation slice: `SearchForm / Search Suggestions V1` - `completed / accepted / manual QA passed`
 - slice scope: `main SearchForm picker only`
-- routing note: product implementation for the new sprint is not started by Phase 0 activation
+- routing note: `Phase 1` authoritative closure accepted; `Phase 2` `AnalyticalWorkspaceShell` implementation is not started yet
 
 Сводка прогресса active sprint:
 
 - Phase 0: `completed / activation accepted`
-- Phase 1: `pending / next safe entry`
-- Phase 2: `not started`
+- Phase 1: `completed / current composition and visual baseline accepted`
+- Phase 2: `pending / not started`
 - Phase 3: `not started`
 - Phase 4: `not started`
 - Phase 5: `not started`
 - Phase 6: `not started`
-- Next: `MODE: ANCHOR / PHASE 1 CURRENT COMPOSITION`
+- Next: `MODE: EXECUTE / PHASE 2 ANALYTICAL WORKSPACE SHELL`
 
 Сводка latest completed UX sprint:
 
@@ -71,23 +77,25 @@
 1. `docs/project/state/FG_ACTIVE_SOURCE_PACK.md` — source routing entry point.
 2. `docs/project/state/FG_analytical_workspace_shell_search_integration_current_state_2026-07-07.md` — authoritative current-state for the active sprint.
 3. `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/FG_analytical_workspace_shell_search_integration_sprint_contract.md` — active sprint contract.
-4. `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_0_sprint_activation_checklist.md` — Phase 0 activation record.
-5. `docs/domain/FG_FRONTEND_FOUNDATION_CONTRACTS.md` — durable frontend foundation contracts.
-6. `docs/domain/FG_INSTRUMENT_PICKER_CONTRACT.md` — durable instrument picker contract.
-7. `docs/project/debt/FG_TECHNICAL_DEBT_REGISTER.md` — global technical debt register.
-8. `.claude/handoffs/active/FG_atomic_ticker_lifecycle_and_chart_request_identity_2026/FG_atomic_ticker_lifecycle_and_chart_request_identity_handoff_2026-07-03.md` — supporting continuity evidence for committed baseline `0af5b2d`; not authority replacement.
-9. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_sprint_contract.md` — completed sprint contract.
-10. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_5_final_analytical_workspace_ux_contract_handoff.md` — completed final UX contract / handoff.
-11. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_4_chart_surrounding_controls_boundary.md` — completed Phase 4 boundary decision.
-12. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_3_results_blocks_ux_structure.md` — completed phase evidence.
-13. `.claude/handoffs/active/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_final_contract_handoff_2026-06-08.md` — supporting final handoff only.
-14. `.claude/handoffs/active/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_phase_3_handoff_2026-06-03.md` — supporting prior handoff only.
-15. `.claude/handoffs/active/FG_search_suggestions_v1_2026/searchform_search_suggestions_v1_closure_handoff_2026-06-11.md` — supporting continuity evidence only; not authority replacement; not current-state override.
-16. `.claude/handoffs/active/FG_search_suggestions_v1_2026/searchform_browse_v1_handoff_2026-06-11.md` — supporting continuity evidence only; not authority replacement; not current-state override.
-17. `docs/project/sprint/archive/FG_bounded_frontend_contract_hardening_2026/FG_bounded_frontend_contract_hardening_closure_review.md` — previous completed sprint closure review.
-18. `docs/project/sprint/archive/FG_frontend_architecture_discovery_2026/FG_frontend_architecture_discovery_closure_review.md` — archived previous completed-sprint evidence.
-19. Archived memory as background only.
-20. `gbrain` helper only, never authority replacement.
+4. `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_1_current_composition_anchor.md` — authoritative `Phase 1` record.
+5. `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_0_sprint_activation_checklist.md` — Phase 0 activation record.
+6. `docs/domain/FG_FRONTEND_FOUNDATION_CONTRACTS.md` — durable frontend foundation contracts.
+7. `docs/domain/FG_INSTRUMENT_PICKER_CONTRACT.md` — durable instrument picker contract.
+8. `docs/project/debt/FG_TECHNICAL_DEBT_REGISTER.md` — global technical debt register.
+9. `.claude/handoffs/active/FG_analytical_workspace_shell_search_integration_2026/FG_analytical_workspace_shell_search_integration_session_handoff_2026-07-07.md` — supporting continuity evidence for `Phase 0-1` closure; not authority replacement.
+10. `.claude/handoffs/active/FG_atomic_ticker_lifecycle_and_chart_request_identity_2026/FG_atomic_ticker_lifecycle_and_chart_request_identity_handoff_2026-07-03.md` — supporting continuity evidence for committed baseline `0af5b2d`; not authority replacement.
+11. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_sprint_contract.md` — completed sprint contract.
+12. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_5_final_analytical_workspace_ux_contract_handoff.md` — completed final UX contract / handoff.
+13. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_4_chart_surrounding_controls_boundary.md` — completed Phase 4 boundary decision.
+14. `docs/project/sprint/archive/FG_analytical_workspace_ux_design_sprint_2026/phase_3_results_blocks_ux_structure.md` — completed phase evidence.
+15. `.claude/handoffs/active/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_final_contract_handoff_2026-06-08.md` — supporting final handoff only.
+16. `.claude/handoffs/active/FG_analytical_workspace_ux_design_sprint_2026/FG_analytical_workspace_ux_design_phase_3_handoff_2026-06-03.md` — supporting prior handoff only.
+17. `.claude/handoffs/active/FG_search_suggestions_v1_2026/searchform_search_suggestions_v1_closure_handoff_2026-06-11.md` — supporting continuity evidence only; not authority replacement; not current-state override.
+18. `.claude/handoffs/active/FG_search_suggestions_v1_2026/searchform_browse_v1_handoff_2026-06-11.md` — supporting continuity evidence only; not authority replacement; not current-state override.
+19. `docs/project/sprint/archive/FG_bounded_frontend_contract_hardening_2026/FG_bounded_frontend_contract_hardening_closure_review.md` — previous completed sprint closure review.
+20. `docs/project/sprint/archive/FG_frontend_architecture_discovery_2026/FG_frontend_architecture_discovery_closure_review.md` — archived previous completed-sprint evidence.
+21. Archived memory as background only.
+22. `gbrain` helper only, never authority replacement.
 
 Current-state wins для current stop-point и immediate next step.
 
@@ -111,6 +119,7 @@ Current-state wins для current stop-point и immediate next step.
 - `docs/project/state/FG_ACTIVE_SOURCE_PACK.md`
 - `docs/project/state/FG_analytical_workspace_shell_search_integration_current_state_2026-07-07.md`
 - `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/FG_analytical_workspace_shell_search_integration_sprint_contract.md`
+- `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_1_current_composition_anchor.md`
 - `docs/project/sprint/FG_analytical_workspace_shell_search_integration_2026/phase_0_sprint_activation_checklist.md`
 - `docs/project/policy/FG DNA — CANONS v1.4 (WORKING).md`
 - `docs/domain/FG_FRONTEND_FOUNDATION_CONTRACTS.md`
