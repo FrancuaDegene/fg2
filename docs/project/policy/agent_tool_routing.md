@@ -51,6 +51,17 @@ Patch planning не начинается только потому, что вы�
 
 ## Tool Routing Table
 
+### Web platform, library docs, and FG evidence
+
+Route by the contract being verified:
+
+- Use repository code, lockfiles, accepted current-state, and authoritative FG docs for factual FG state. Follow `agent_authority_and_sources.md` for source precedence.
+- Use MDN MCP for HTML, CSS, DOM, browser JavaScript APIs, Web APIs, browser behavior, compatibility, Baseline, accessibility, storage, service workers, page lifecycle, and browser security.
+- Use Context7 for React, Vite, lightweight-charts, Express, Socket.IO, Django, Celery, SDKs, and version-specific library or framework documentation.
+- In mixed cases, verify the library contract with Context7 and the underlying browser contract with MDN.
+- Do not call both MCPs automatically for every frontend task.
+- Send only bounded abstract documentation queries. Do not send repository source code, secrets, tokens, private URLs, user data, or market-data payloads to external MCPs.
+
 ### External library / API / framework / SDK behavior
 - truth needed first: upstream truth
 - repo truth first: no
