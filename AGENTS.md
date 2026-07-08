@@ -57,6 +57,23 @@ symptom
 - 2+ genuinely independent evidence lanes -> minimal sufficient subagents.
 - Subagent canon -> `docs/project/policy/agent_subagent_routing.md`.
 
+### Conditional UX policy routing
+
+- Before making or changing a user-facing decision that can alter what
+  the user notices, understands, trusts, or feels expected to do, read
+  `docs/project/policy/ux_cognitive_guardrails.md`.
+
+- This includes hierarchy, placement, ordering, visibility, emphasis,
+  wording, color meaning, defaults, interaction logic, states,
+  notifications, AI output, signals, and recovery semantics.
+
+- Skip this policy for purely mechanical or non-user-facing work and
+  for exact implementation of an approved bounded contract.
+
+- If mechanical work reveals an unapproved UX ambiguity, stop, read the
+  policy and relevant contract, and report the authority gap before
+  proceeding.
+
 ## Change Discipline
 
 - Minimal localized change.
