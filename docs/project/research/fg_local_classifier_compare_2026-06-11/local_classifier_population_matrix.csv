@@ -1,0 +1,49 @@
+grouping_key,value_1,value_2,value_3,value_4,count,evidence_note
+INSTRID,EQIN,,,,114585,dominant current share-like family but not sufficient alone
+INSTRID,IFA1,,,,23103,fund-looking but mixed subtype family
+INSTRID,IFTF,,,,18911,clean current ETF/fund family for V1
+INSTRID,EILP,,,,2952,not classified in current V1
+INSTRID,EIND,,,,1246,fund-looking/index-like ambiguity remains
+SECTYPE,1,,,,94707,strong share-like population
+SECTYPE,2,,,,20554,strong preferred-share-like population
+SECTYPE,J,,,,19859,strong fund-like population but spans multiple INSTRID
+SECTYPE,B,,,,12321,ambiguous without INSTRID context
+SECTYPE,9,,,,7665,ambiguous without INSTRID context
+SECTYPE,A,,,,4304,ambiguous without INSTRID context
+SECTYPE,D,,,,2276,ADR/GDR-like population inside EQIN
+SECTYPE,F,,,,288,small mixed population; needs INSTRID context
+INSTRID_SECTYPE,EQIN,1,,,92111,supports current share rule
+INSTRID_SECTYPE,EQIN,2,,,20198,supports current share rule
+INSTRID_SECTYPE,IFTF,J,,,18911,supports current fund rule
+INSTRID_SECTYPE,IFA1,B,,,11253,fund-looking but not yet proven for product rule
+INSTRID_SECTYPE,IFA1,9,,,7492,fund-looking but not yet proven for product rule
+INSTRID_SECTYPE,IFA1,A,,,4248,fund-looking but not yet proven for product rule
+INSTRID_SECTYPE,EQIN,D,,,2276,breaks naive EQIN=share rule
+INSTRID_SECTYPE,EIND,B,,,1068,needs audit
+INSTRID_SECTYPE,EIND,F,,,178,needs audit
+BOARDID,TQBR,,,,59904,primary share board in current ranking
+BOARDID,SMAL,,,,40997,secondary share board appears heavily
+BOARDID,TQIF,,,,21239,fund-related board cluster
+BOARDID,TQTF,,,,18609,ETF/fund board cluster
+BOARDID,SPEQ,,,,16005,repo/private-like board context
+BOARDID,TQPI,,,,3657,alt fund/investment board context
+MARKETCODE,FNDT,,,,145969,too broad to classify instrument family safely
+MARKETCODE,RPST,,,,16005,mostly board-context signal not family truth
+CURRENCYID,SUR,,,,160411,dominant local currency
+CURRENCYID,CNY,,,,746,currency-specific board evidence exists
+CURRENCYID,USD,,,,677,currency-specific board evidence exists
+CURRENCYID,EUR,,,,140,currency-specific board evidence exists
+STATUS,A,,,,159812,active rows dominate
+STATUS,N,,,,2162,non-active rows still meaningful for ranking/filtering
+BOARDID_MARKETCODE,TQBR,FNDT,,,59904,share board under broad marketcode
+BOARDID_MARKETCODE,SMAL,FNDT,,,40997,share alt board under broad marketcode
+BOARDID_MARKETCODE,TQIF,FNDT,,,21239,fund-oriented board under same marketcode
+BOARDID_MARKETCODE,TQTF,FNDT,,,18609,ETF/fund board under same marketcode
+BOARDID_MARKETCODE,SPEQ,RPST,,,16005,board-context split visible
+INSTRID_SECTYPE_BOARDID_MARKETCODE,EQIN,1,TQBR,FNDT,46985,core local ordinary-share pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,EQIN,1,SMAL,FNDT,30068,ordinary-share alt board pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,IFTF,J,TQTF,FNDT,18149,core local ETF/fund pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,EQIN,1,SPEQ,RPST,14642,ordinary-share private-like board pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,EQIN,2,TQBR,FNDT,11148,core preferred-share pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,IFA1,B,TQIF,FNDT,10205,important but unproven future fund taxonomy pattern
+INSTRID_SECTYPE_BOARDID_MARKETCODE,EIND,B,TQPI,FNDT,1068,important but unproven future fund/index taxonomy pattern

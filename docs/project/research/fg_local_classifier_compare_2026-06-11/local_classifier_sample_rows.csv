@@ -1,0 +1,37 @@
+sample_group,SECID,BOARDID,SHORTNAME,SECNAME,INSTRID,SECTYPE,MARKETCODE,CURRENCYID,STATUS,ISIN,evidence_note
+EQIN,ABIO,SMAL,"iАРТГЕН ао","ПАО ""Артген""",EQIN,1,FNDT,SUR,A,RU000A0JNAB6,ordinary-share-like
+EQIN,ABIO,SPEQ,"iАРТГЕН ао","ПАО ""Артген""",EQIN,1,RPST,SUR,A,RU000A0JNAB6,same SECID across boards
+EQIN,ABIO,TQBR,"iАРТГЕН ао","ПАО ""Артген""",EQIN,1,FNDT,SUR,A,RU000A0JNAB6,core board candidate
+EQIN,ABRD,SMAL,АбрауДюрсо,Абрау-Дюрсо ПАО ао,EQIN,1,FNDT,SUR,A,RU000A0JS5T7,ordinary-share-like
+EQIN,ABRD,TQBR,АбрауДюрсо,Абрау-Дюрсо ПАО ао,EQIN,1,FNDT,SUR,A,RU000A0JS5T7,ordinary-share-like
+EQIN,AFKS,SMAL,Система ао,"АФК ""Система"" ПАО ао",EQIN,1,FNDT,SUR,A,RU000A0DQZE3,ordinary-share-like
+EQIN,AFKS,SPEQ,Система ао,"АФК ""Система"" ПАО ао",EQIN,1,RPST,SUR,A,RU000A0DQZE3,same SECID across boards
+EQIN,AFKS,TQBR,Система ао,"АФК ""Система"" ПАО ао",EQIN,1,FNDT,SUR,A,RU000A0DQZE3,core board candidate
+EQIN,AFLT,SMAL,Аэрофлот,Аэрофлот-росс.авиалин(ПАО)ао,EQIN,1,FNDT,SUR,A,RU0009062285,ordinary-share-like
+EQIN,AFLT,SPEQ,Аэрофлот,Аэрофлот-росс.авиалин(ПАО)ао,EQIN,1,RPST,SUR,A,RU0009062285,same SECID across boards
+EQIN,AFLT,TQBR,Аэрофлот,Аэрофлот-росс.авиалин(ПАО)ао,EQIN,1,FNDT,SUR,A,RU0009062285,core board candidate
+EQIN_D,AGRO,TQBR,AGRO-гдр,ГДР ROS AGRO PLC ORD SHS,EQIN,D,FNDT,SUR,A,US7496552057,breaks naive EQIN=share rule
+EQIN_D,CIAN,TQBR,CIAN-адр,АДР Cian PLC ORD SHS,EQIN,D,FNDT,SUR,A,US83418T1088,depositary-receipt-like
+EQIN_D,FIVE,SPEQ,FIVE-гдр,ГДР X5 RetailGroup N.V.ORD SHS,EQIN,D,RPST,SUR,N,US98387E2054,non-active depositary receipt
+EQIN_D,OZON,TQBR,OZON-адр,АДР Ozon Holdings PLC ORD SHS,EQIN,D,FNDT,SUR,A,US69269L1044,depositary-receipt-like
+IFTF,AKAI,TQTF,AKAI ETF,БПИФ Антиинфляционный,IFTF,J,FNDT,SUR,A,RU000A109PQ9,core V1 fund evidence
+IFTF,AKFB,TQTF,AKFB ETF,БПИФ Альфа Обл с перем купоном,IFTF,J,FNDT,SUR,A,RU000A109T66,core V1 fund evidence
+IFTF,AKGD,TQTF,AKGD ETF,БПИФ Альфа Капитал Золото,IFTF,J,FNDT,SUR,A,RU000A1045N8,core V1 fund evidence
+IFTF,AKMM,TQTF,AKMM ETF,БПИФ Альфа Денежный рынок,IFTF,J,FNDT,SUR,A,RU000A104X08,core V1 fund evidence
+IFTF,AMNY,TQTF,AMNY ETF,АТОН - Накопительный в юанях,IFTF,J,FNDT,SUR,A,RU000A108P04,core board in RUB
+IFTF,AMNY,TQTY,AMNY ETF,АТОН - Накопительный в юанях,IFTF,J,FNDT,CNY,A,RU000A108P04,currency-specific alt board
+IFTF,AMRB,TQTF,AMRB ETF,БПИФ АТОН – Рынок облигаций,IFTF,J,FNDT,SUR,N,RU000A10AFJ8,non-active fund row exists
+EIND,RU000A0JNUM1,TQPI,ЗПИФ КапВл,ПИФ Капитал.влож УК Навигатор,EIND,B,FNDT,SUR,A,RU000A0JNUM1,fund-looking but unproven classifier
+EIND,RU000A0JVEZ0,TQPI,ИСУ ГК-3,"ИСУ ГК-3 ""Ай Кью Джи"" УА",EIND,F,FNDT,SUR,A,RU000A0JVEZ0,mixed SECTYPE inside EIND
+EIND,RU000A0ZZ422,TQPI,ЛобняЗПИФ,ЗПИФ Торговые ряды Лобня,EIND,B,FNDT,SUR,A,RU000A0ZZ422,closed-fund-like
+EIND,RU000A1034U7,TQPI,СФНАрБиз7,ПИФ СФН Арендный бизнес 7,EIND,B,FNDT,SUR,A,RU000A1034U7,fund-looking but unproven classifier
+IFA1,RU0005418747,TQIF,ФондПервый,ОПИФ Фонд Первый,IFA1,9,FNDT,SUR,A,RU0005418747,fund-looking but not V1-safe
+IFA1,RU000A0ERGA7,SMAL,ПИФСбер-КН,ПИФСбербанк Комм.недвижимость,IFA1,B,FNDT,SUR,A,RU000A0ERGA7,multi-board fund-looking row
+IFA1,RU000A0ERGA7,TQIF,ПИФСбер-КН,ПИФСбербанк Комм.недвижимость,IFA1,B,FNDT,SUR,A,RU000A0ERGA7,fund-looking but mixed subtype
+IFA1,RU000A0JNK00,TQIF,ПервыйИПИФ,Первый ИПИФ УК КапиталЪ,IFA1,A,FNDT,SUR,A,RU000A0JNK00,another subtype inside IFA1
+IFA1,RU000A0JNUM1,TQIF,ЗПИФ КапВл,ПИФ Капитал.влож УК Навигатор,IFA1,B,FNDT,SUR,A,RU000A0JNUM1,overlaps conceptually with EIND row
+IFA1,RU000A0JNUM1,TQPI,ЗПИФ КапВл,ПИФ Капитал.влож УК Навигатор,IFA1,B,FNDT,SUR,A,RU000A0JNUM1,board ambiguity remains
+NON_IFTF_FUND,CNYM,TQTF,CNYM ETF,Ликвидность. Юань,IFAY,J,FNDT,SUR,A,RU000A107D41,fund-looking outside current IFTF rule
+NON_IFTF_FUND,TEUR,TQTF,TEUR ETF,БПИФ ТИНЬКОФФ ВЕЧНЫЙ ПОРТФ ЕВР,IFTE,J,FNDT,SUR,A,RU000A1011T7,fund-looking outside current IFTF rule
+NON_IFTF_FUND,TECH,TQTF,TECH ETF,БПИФ ТИНЬКОФФ ТЕХНОЛОГИИ,IFTU,J,FNDT,SUR,A,RU000A101X68,fund-looking outside current IFTF rule
+IMOEX,IMOEX,,,,,,,,"Индекс supplement comes only from d_tickers, not from moex_securities"
