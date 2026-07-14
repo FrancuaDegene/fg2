@@ -56,6 +56,7 @@ test-results/
 playwright-report/
 fingineerwebapp/test-results/
 fingineerwebapp/playwright-report/
+.playwright-mcp/page-*.yml
 
 # deps/build (на всякий)
 **/node_modules/
