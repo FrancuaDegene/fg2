@@ -1,0 +1,12 @@
+{
+  "endpoint": "/iss/securities/SBER.json",
+  "tables": ["description", "boards"],
+  "description_sample": [
+    ["SECID", "Код ценной бумаги", "SBER", "string"],
+    ["ISSUENAME", "Наименование ценной бумаги", "Акции обыкновенные", "string"]
+  ],
+  "boards_sample": [
+    ["SBER", "TQBR", "Т+: Акции и ДР - безадрес.", "shares", "stock", 1, "RUB"],
+    ["SBER", "EQBR", "Основной режим: А1 - безадрес.", "shares", "stock", 1, "RUB"]
+  ]
+}

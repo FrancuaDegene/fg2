@@ -1,0 +1,10 @@
+{
+  "endpoint": "/iss/securities/SBER/dividends.json?limit=3",
+  "tables": ["dividends"],
+  "columns": ["secid", "isin", "registryclosedate", "value", "currencyid"],
+  "sample_rows": [
+    ["SBER", "RU0009029540", "2019-06-13", 16, "RUB"],
+    ["SBER", "RU0009029540", "2020-10-05", 18.7, "RUB"],
+    ["SBER", "RU0009029540", "2021-05-12", 18.7, "RUB"]
+  ]
+}

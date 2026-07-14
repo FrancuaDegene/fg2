@@ -1,0 +1,36 @@
+{
+  "endpoint": "/iss/engines/futures/markets/options/securities.json?limit=3",
+  "tables": ["securities", "marketdata", "dataversion", "marketdata_yields"],
+  "securities_columns_head": [
+    "SECID",
+    "BOARDID",
+    "SHORTNAME",
+    "SECNAME",
+    "PREVSETTLEPRICE",
+    "DECIMALS",
+    "MINSTEP",
+    "LASTTRADEDATE",
+    "LASTDELDATE",
+    "LATNAME",
+    "ASSETCODE",
+    "PREVOPENPOSITION"
+  ],
+  "sample_rows": [
+    {
+      "SECID": "AF2000BI6",
+      "BOARDID": "ROPD",
+      "SHORTNAME": "AFLT-9.26M160926CA2000",
+      "ASSETCODE": "AFLT",
+      "LASTTRADEDATE": "2026-09-16",
+      "LASTDELDATE": "2026-09-16"
+    },
+    {
+      "SECID": "AF2000BL6",
+      "BOARDID": "ROPD",
+      "SHORTNAME": "AFLT-12.26M161226CA2000",
+      "ASSETCODE": "AFLT",
+      "LASTTRADEDATE": "2026-12-16",
+      "LASTDELDATE": "2026-12-16"
+    }
+  ]
+}

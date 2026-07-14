@@ -1,0 +1,51 @@
+family,endpoint_path,table,column,observed_role_or_type,probe_note
+catalog,/iss/securities.json?limit=3,securities,secid,identifier,broad catalog code
+catalog,/iss/securities.json?limit=3,securities,shortname,label,short display label
+catalog,/iss/securities.json?limit=3,securities,name,label,full instrument name
+catalog,/iss/securities.json?limit=3,securities,isin,identifier,international identifier
+catalog,/iss/securities.json?limit=3,securities,type,classifier,broad MOEX type hint
+catalog,/iss/securities.json?limit=3,securities,group,classifier,broad grouping hint
+security_detail,/iss/securities/SBER.json,description,name,key,metadata key name
+security_detail,/iss/securities/SBER.json,description,value,value,metadata value
+security_detail,/iss/securities/SBER.json,boards,boardid,board,board identifier
+security_detail,/iss/securities/SBER.json,boards,market,market,market family
+security_detail,/iss/securities/SBER.json,boards,engine,engine,engine family
+security_detail,/iss/securities/SBER.json,boards,currencyid,currency,board currency
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,SECID,identifier,primary share/fund security id
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,BOARDID,board,board identifier
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,SECNAME,label,full display name
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,STATUS,status,active/inactive hint
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,INSTRID,classifier,important for family mapping
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,SECTYPE,classifier,important for family mapping
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,ISIN,identifier,security isin
+shares,/iss/engines/stock/markets/shares/securities.json?limit=3,securities,CURRENCYID,currency,currency code
+shares_marketdata,/iss/engines/stock/markets/shares/securities.json?limit=3,marketdata,LAST,marketdata,last price
+shares_marketdata,/iss/engines/stock/markets/shares/securities.json?limit=3,marketdata,VOLTODAY,marketdata,liquidity hint in live feed
+fund_sample,/iss/engines/stock/markets/shares/securities/SBMX.json,securities,MARKETCODE,classifier,observed as FNDT for fund sample
+fund_sample,/iss/engines/stock/markets/shares/securities/SBMX.json,securities,BOARDID,board,observed as TQTF for ETF/fund board
+fund_sample,/iss/engines/stock/markets/shares/securities/SBMX.json,securities,SECNAME,label,fund/ETF display name
+bonds,/iss/engines/stock/markets/bonds/securities.json?limit=3,securities,SECID,identifier,bond code
+bonds,/iss/engines/stock/markets/bonds/securities.json?limit=3,securities,COUPONVALUE,finance,coupon amount
+bonds,/iss/engines/stock/markets/bonds/securities.json?limit=3,securities,NEXTCOUPON,date,next coupon date
+bonds,/iss/engines/stock/markets/bonds/securities.json?limit=3,securities,ACCRUEDINT,finance,accrued interest
+bonds,/iss/engines/stock/markets/bonds/securities.json?limit=3,securities,FACEVALUE,finance,nominal value
+futures,/iss/engines/futures/markets/forts/securities.json?limit=3,securities,SECID,identifier,futures contract code
+futures,/iss/engines/futures/markets/forts/securities.json?limit=3,securities,LASTTRADEDATE,date,contract expiry-related date
+futures,/iss/engines/futures/markets/forts/securities.json?limit=3,securities,LASTDELDATE,date,delivery-related date
+futures,/iss/engines/futures/markets/forts/securities.json?limit=3,securities,ASSETCODE,classifier,underlying linkage hint
+futures,/iss/engines/futures/markets/forts/securities.json?limit=3,securities,MINSTEP,market_rule,min price step
+options,/iss/engines/futures/markets/options/securities.json?limit=3,securities,SECID,identifier,option contract code
+options,/iss/engines/futures/markets/options/securities.json?limit=3,securities,ASSETCODE,classifier,underlying linkage hint
+options,/iss/engines/futures/markets/options/securities.json?limit=3,securities,LASTTRADEDATE,date,option expiry-related date
+options,/iss/engines/futures/markets/options/securities.json?limit=3,securities,SHORTNAME,label,series label
+options,/iss/engines/futures/markets/options/securities.json?limit=3,securities,SECNAME,label,full option display name
+dividends,/iss/securities/SBER/dividends.json?limit=3,dividends,registryclosedate,date,record date
+dividends,/iss/securities/SBER/dividends.json?limit=3,dividends,value,finance,dividend amount
+dividends,/iss/securities/SBER/dividends.json?limit=3,dividends,currencyid,currency,dividend currency
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,BOARDID,board,history comes per board
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,TRADEDATE,date,candle date
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,OPEN,ohlc,open price
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,HIGH,ohlc,high price
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,LOW,ohlc,low price
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history,CLOSE,ohlc,close price
+history,/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24,history.cursor,TOTAL,pagination,total sample rows in result window

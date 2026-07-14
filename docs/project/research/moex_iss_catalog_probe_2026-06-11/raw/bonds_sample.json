@@ -1,0 +1,36 @@
+{
+  "endpoint": "/iss/engines/stock/markets/bonds/securities.json?limit=3",
+  "tables": ["securities", "marketdata", "dataversion", "marketdata_yields"],
+  "securities_columns_head": [
+    "SECID",
+    "BOARDID",
+    "SHORTNAME",
+    "PREVWAPRICE",
+    "YIELDATPREVWAPRICE",
+    "COUPONVALUE",
+    "NEXTCOUPON",
+    "ACCRUEDINT",
+    "PREVPRICE",
+    "LOTSIZE",
+    "FACEVALUE",
+    "BOARDNAME"
+  ],
+  "sample_rows": [
+    {
+      "SECID": "SU26228RMFS5",
+      "SHORTNAME": "ОФЗ 26228",
+      "COUPONVALUE": 38.15,
+      "NEXTCOUPON": "2026-10-14",
+      "FACEVALUE": 1000,
+      "CURRENCYID": "SUR"
+    },
+    {
+      "SECID": "SU26244RMFS2",
+      "SHORTNAME": "ОФЗ 26244",
+      "COUPONVALUE": 56.1,
+      "NEXTCOUPON": "2026-07-15",
+      "FACEVALUE": 1000,
+      "CURRENCYID": "SUR"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "endpoint": "/iss/history/engines/stock/markets/shares/securities/SBER/candles.json?from=2024-01-10&till=2024-01-12&interval=24",
+  "tables": ["history", "history.cursor"],
+  "history_columns_head": [
+    "BOARDID",
+    "TRADEDATE",
+    "SHORTNAME",
+    "SECID",
+    "NUMTRADES",
+    "VALUE",
+    "OPEN",
+    "LOW",
+    "HIGH",
+    "LEGALCLOSEPRICE",
+    "WAPRICE",
+    "CLOSE"
+  ],
+  "sample_rows": [
+    ["SMAL", "2024-01-10", "Сбербанк", "SBER", 42, 33544.36, 275.5, 273.95, 276.99, null, 275.39, 274.5],
+    ["TQBR", "2024-01-10", "Сбербанк", "SBER", 45305, 5689654961.5, 275.3, 273.64, 276.16, 275.68, 275.39, 274.49]
+  ],
+  "cursor": [0, 6, 100]
+}

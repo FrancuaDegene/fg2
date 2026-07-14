@@ -1,0 +1,36 @@
+{
+  "endpoint": "/iss/engines/futures/markets/forts/securities.json?limit=3",
+  "tables": ["securities", "marketdata", "dataversion", "marketdata_yields"],
+  "securities_columns_head": [
+    "SECID",
+    "BOARDID",
+    "SHORTNAME",
+    "SECNAME",
+    "PREVSETTLEPRICE",
+    "DECIMALS",
+    "MINSTEP",
+    "LASTTRADEDATE",
+    "LASTDELDATE",
+    "SECTYPE",
+    "LATNAME",
+    "ASSETCODE"
+  ],
+  "sample_rows": [
+    {
+      "SECID": "92M6",
+      "BOARDID": "RFUD",
+      "SHORTNAME": "AI92-6.26",
+      "ASSETCODE": "AFLT",
+      "LASTTRADEDATE": "2026-06-29",
+      "LASTDELDATE": "2026-07-01"
+    },
+    {
+      "SECID": "92N6",
+      "BOARDID": "RFUD",
+      "SHORTNAME": "AI92-7.26",
+      "ASSETCODE": "AFLT",
+      "LASTTRADEDATE": "2026-07-30",
+      "LASTDELDATE": "2026-08-03"
+    }
+  ]
+}

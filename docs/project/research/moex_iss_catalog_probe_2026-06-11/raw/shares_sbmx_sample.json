@@ -1,0 +1,27 @@
+{
+  "endpoint": "/iss/engines/stock/markets/shares/securities/SBMX.json",
+  "tables": ["securities", "marketdata", "dataversion", "marketdata_yields"],
+  "securities_columns_head": [
+    "SECID",
+    "BOARDID",
+    "SHORTNAME",
+    "PREVPRICE",
+    "LOTSIZE",
+    "FACEVALUE",
+    "STATUS",
+    "BOARDNAME",
+    "DECIMALS",
+    "SECNAME",
+    "REMARKS",
+    "MARKETCODE"
+  ],
+  "security_sample": {
+    "SECID": "SBMX",
+    "BOARDID": "TQTF",
+    "SHORTNAME": "SBMX ETF",
+    "STATUS": "A",
+    "SECNAME": "БПИФ Первая Топ Рос. акций",
+    "MARKETCODE": "FNDT",
+    "ISIN": "RU000A0ZZH92"
+  }
+}
